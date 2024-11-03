@@ -4,9 +4,21 @@ const MENU = 'MENU';
 const PLAYING = 'PLAYING';
 const RECORDING = 'RECORDING';
 
+// directions
+const UP = 'UP';
+const DOWN = 'DOWN';
+const LEFT = 'LEFT';
+const RIGHT = 'RIGHT';
+const CENTER = 'CENTER';
+
+
 // make a global state dictionary to store the game state
 const state = {
+  // the id of the current video being played or recorded
   currentVideo: null,
+  // a list of attack structs for the current video
+  // each attack struct has a time and direction
+  attackData: [],
   gameMode: MENU,
 };
 
@@ -14,6 +26,14 @@ const state = {
 // keep all elements on the page in this dictionary
 const elements = {
 };
+
+
+// keep track of which keys are pressed
+const keyPressed = {};
+
+// also keep track of which keys were just pressed
+const keyJustPressed = {};
+
 
 
 // Function to create and add all necessary HTML elements
@@ -176,6 +196,18 @@ function initializeGamePage() {
           alert('Please enter a valid YouTube URL.');
       }
   });
+
+
+  // track keypressed and keyjustpressed
+  document.addEventListener('keydown', (event) => {
+    if (!keyPressed[event.key]) {
+      keyPressed[event.key] = true;
+      keyJustPressed[event.key] = true;
+    }
+  });
+  document.addEventListener('keyup', (event) => {
+    keyPressed[event.key] = false;
+  });
 }
 
 
@@ -213,8 +245,31 @@ function mainLoop(event) {
   // update debug text
   const timeInSeconds = elements.player.getCurrentTime();
   const timeInMilliseconds = Math.floor(timeInSeconds * 1000);
-  elements.currentTimeDebug.textContent = `Time: ${timeInMilliseconds} ms`;
+  elements.currentTimeDebug.textContent = `Time: ${timeInMilliseconds} ms data: ${state.attackData.length}`;
 
+
+  // if the game mode is recording, record attacks based on button presses (WASD)
+  if (state.gameMode == RECORDING) {
+    // check key just pressed for each direction
+    if (keyJustPressed['w']) {
+      state.attackData.push({ time: timeInMilliseconds, direction: UP });
+    }
+    if (keyJustPressed['s']) {
+      state.attackData.push({ time: timeInMilliseconds, direction: DOWN });
+    }
+    if (keyJustPressed['a']) {
+      state.attackData.push({ time: timeInMilliseconds, direction: LEFT });
+    }
+    if (keyJustPressed['d']) {
+      state.attackData.push({ time: timeInMilliseconds, direction: RIGHT });
+    }
+  }
+
+
+  // clear keyJustPressed
+  for (const key in keyJustPressed) {
+    keyJustPressed[key] = false;
+  }
   requestAnimationFrame(mainLoop); // Schedule the next update
 }
 
@@ -244,10 +299,16 @@ function setGameMode(mode) {
   }
   // if the new mode is recording, show the game hud
   if (mode === RECORDING) {
+    // delete the current recorded attacks
+    state.attackData = [];
     elements.gameHUD.style.display = 'flex';
   }
 
   state.gameMode = mode;
+}
+
+function setCurrentVideo(videoId) {
+  state.currentVideo = videoId;
 }
 
 // Function to play a YouTube video by extracting the video ID from the URL
@@ -258,8 +319,7 @@ function recordVideo(videoUrl) {
       elements.player.setPlaybackRate(0.5); // Set playback speed to half
       // set recording to true
       setGameMode(RECORDING);
-      // hide the floating menu
-      elements.floatingMenu.style.display = 'none';
+      setCurrentVideo(videoId);
   } else {
       alert('Invalid YouTube URL');
   }
