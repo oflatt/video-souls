@@ -10,6 +10,29 @@ const DOWN = 'DOWN';
 const LEFT = 'LEFT';
 const RIGHT = 'RIGHT';
 const CENTER = 'CENTER';
+const REST = 'REST';
+
+const BLOCKING = 'BLOCKING';
+const ATTACKING = 'ATTACKING';
+
+
+// block direction angles
+const blockDirectionVectors = {
+  UP: [0, 1],
+  DOWN: [0, -1],
+  LEFT: [-1, 0],
+  RIGHT: [1, 0],
+  CENTER: [0, 1],
+  Rest: [0.5, 0.86602540378],
+}
+
+const blockDirectionPositions = {
+  UP: [0.5, 0.7],
+  DOWN: [0.5, 0.3],
+  LEFT: [0.3, 0.5],
+  RIGHT: [0.7, 0.5],
+  CENTER: [0.5, 0.5],
+}
 
 
 // make a global state dictionary to store the game state
@@ -22,6 +45,18 @@ const state = {
     attackData: [],
   },
   gameMode: MENU,
+  // sword coordinates and direction
+  // coordinates are 0.0 to 1.0 with 0.0 being the bottom left and 1.0 being the top right
+  // moving the sword requires a interpolation of the direction and position to the target
+  sword: {
+    pos: [0.5, 0.5],
+    dir: [0, 1],
+    state: BLOCKING,
+    blockDir: REST,
+    // readyAt encodes end lag for blocking or attacking
+    // only after this time in the video can another input be made
+    readyAt: 0,
+  },
   // each alert has a message element and a time to live
   alerts: [],
 };
@@ -39,6 +74,9 @@ const keyPressed = {};
 const keyJustPressed = {};
 
 
+// load sword.png
+const swordImage = new Image();
+swordImage.src = 'sword.png';
 
 // Function to create and add all necessary HTML elements
 function initializeGamePage() {
@@ -213,6 +251,31 @@ function initializeGamePage() {
   // make the game hud hidden by default
   gameHUD.style.display = 'none';
 
+  // make the html canvas for the game, spanning the entire screen
+  // it needs to be overlayed on top of the video
+  const canvas = document.createElement('canvas');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  canvas.style.position = 'absolute';
+  canvas.style.top = '0';
+  canvas.style.left = '0';
+  document.body.appendChild(canvas);
+  // it also needs to not be clickable
+  canvas.style.pointerEvents = 'none';
+  elements.canvas = canvas;
+
+  // add a scaled sword image to elements once swordImage is loaded
+  swordImage.onload = () => {
+    let new_canvas = document.createElement('canvas');
+    let scale_factor = (0.15 * canvas.width) / swordImage.width;
+    new_canvas.width = scale_factor * swordImage.width;
+    new_canvas.height = scale_factor * swordImage.height;
+    let new_ctx = new_canvas.getContext('2d');
+    new_ctx.drawImage(swordImage, 0, 0, new_canvas.width, new_canvas.height);
+    elements.swordImage = new_canvas;
+  }
+  
+
   // Add event listener to record button
   recordButton.addEventListener('click', () => {
       const videoUrl = videoUrlInput.value;
@@ -316,10 +379,15 @@ function mainLoop(event) {
   const timeInMilliseconds = Math.floor(timeInSeconds * 1000);
   elements.currentTimeDebug.textContent = `Time: ${timeInMilliseconds} ms data: ${state.level.attackData.length}`;
 
+  // clear the canvas
+  const ctx = elements.canvas.getContext('2d');
+  ctx.clearRect(0, 0, elements.canvas.width, elements.canvas.height);
+  // draw the canvas
+  drawCanvas();
 
   // if the game mode is recording, record attacks based on button presses (WASD)
   if (state.gameMode == RECORDING) {
-    // check key just pressed for each direction
+    // check key just pressed for each direction, adding to attack data
     if (keyJustPressed['w']) {
       state.level.attackData.push({ time: timeInMilliseconds, direction: UP });
     }
@@ -331,6 +399,31 @@ function mainLoop(event) {
     }
     if (keyJustPressed['d']) {
       state.level.attackData.push({ time: timeInMilliseconds, direction: RIGHT });
+    }
+  }
+
+  // snap the sword to the block direction
+  if (state.gameMode == PLAYING || state.gameMode == RECORDING) {
+    if (keyPressed['w']) {
+      state.sword.blockDir = UP;
+      state.sword.dir = blockDirectionVectors.UP;
+      state.sword.pos = blockDirectionPositions.UP;
+    } else if (keyPressed['s']) {
+      state.sword.blockDir = DOWN;
+      state.sword.dir = blockDirectionVectors.DOWN;
+      state.sword.pos = blockDirectionPositions.DOWN;
+    } else if (keyPressed['a']) {
+      state.sword.blockDir = LEFT;
+      state.sword.dir = blockDirectionVectors.LEFT;
+      state.sword.pos = blockDirectionPositions.LEFT;
+    } else if (keyPressed['d']) {
+      state.sword.blockDir = RIGHT;
+      state.sword.dir = blockDirectionVectors.RIGHT;
+      state.sword.pos = blockDirectionPositions.RIGHT;
+    } else {
+      state.sword.blockDir = REST;
+      state.sword.dir = blockDirectionVectors.Rest;
+      state.sword.pos = blockDirectionPositions.CENTER;
     }
   }
 
@@ -368,6 +461,21 @@ function mainLoop(event) {
 }
 
 
+// Draw the sword, health bars, ect to the canvas based on the data in state
+function drawCanvas() {
+  // draw swordImage to the canvas at it's current position
+  // center it on the xpos and ypos
+  const ctx = elements.canvas.getContext('2d');
+  const topLeftX = elements.canvas.width * state.sword.pos[0] - elements.swordImage.width / 2;
+  const topLeftY = elements.canvas.height * state.sword.pos[1] - elements.swordImage.height / 2;
+  ctx.save();
+  ctx.translate(topLeftX + elements.swordImage.width / 2, topLeftY + elements.swordImage.height / 2);
+  ctx.rotate(Math.atan2(state.sword.dir[0], state.sword.dir[1]));
+  ctx.drawImage(elements.swordImage, -elements.swordImage.width / 2, -elements.swordImage.height / 2);
+  ctx.restore();
+}
+
+
 function setGameMode(mode) {
   // if the current mode is menu, hide the menu
   if (state.gameMode === MENU) {
@@ -382,6 +490,11 @@ function setGameMode(mode) {
     elements.gameHUD.style.display = 'none';
   }
 
+  // if the video is valid, load it
+  if (state.level.video) {
+    elements.player.loadVideoById(state.level.video);
+    elements.player.pauseVideo();
+  }
 
   // if the new mode is menu, show the menu
   if (mode === MENU) {
@@ -405,14 +518,15 @@ function setGameMode(mode) {
   // if the new mode is playing, show the game hud
   if (mode === PLAYING) {
     elements.gameHUD.style.display = 'flex';
+    elements.player.playVideo();
   }
   // if the new mode is recording, show the game hud
   if (mode === RECORDING) {
     // delete the current recorded attacks
     state.level.attackData = [];
     elements.gameHUD.style.display = 'flex';
-    elements.player.loadVideoById(state.level.video);
     elements.player.setPlaybackRate(0.5); // Set playback speed to half
+    elements.player.playVideo();
   }
 
   state.gameMode = mode;
