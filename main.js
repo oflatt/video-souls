@@ -266,10 +266,17 @@ function mainLoop(event) {
   }
 
 
+  // check for the escape key
+  if (keyJustPressed['Escape']) {
+    // set game mode to menu
+    setGameMode(MENU);
+  }
+
   // clear keyJustPressed
   for (const key in keyJustPressed) {
     keyJustPressed[key] = false;
   }
+
   requestAnimationFrame(mainLoop); // Schedule the next update
 }
 
@@ -292,6 +299,8 @@ function setGameMode(mode) {
   // if the new mode is menu, show the menu
   if (mode === MENU) {
     elements.floatingMenu.style.display = 'flex';
+    // pause the video
+    elements.player.pauseVideo();
   }
   // if the new mode is playing, show the game hud
   if (mode === PLAYING) {
@@ -302,6 +311,8 @@ function setGameMode(mode) {
     // delete the current recorded attacks
     state.attackData = [];
     elements.gameHUD.style.display = 'flex';
+    elements.player.loadVideoById(state.currentVideo);
+    elements.player.setPlaybackRate(0.5); // Set playback speed to half
   }
 
   state.gameMode = mode;
@@ -315,11 +326,9 @@ function setCurrentVideo(videoId) {
 function recordVideo(videoUrl) {
   const videoId = extractVideoID(videoUrl);
   if (videoId) {
-      elements.player.loadVideoById(videoId);
-      elements.player.setPlaybackRate(0.5); // Set playback speed to half
-      // set recording to true
-      setGameMode(RECORDING);
-      setCurrentVideo(videoId);
+    setCurrentVideo(videoId);
+    // set recording to true
+    setGameMode(RECORDING);
   } else {
       alert('Invalid YouTube URL');
   }
