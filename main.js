@@ -70,6 +70,7 @@ function initializeGamePage() {
           width: 100%;
           height: 100%;
           background-color: #000; /* Placeholder for video */
+          pointer-events: none; /* Disable mouse events on video */
       }
       /* Floating menu styles */
       #floating-menu {
@@ -106,7 +107,7 @@ function initializeGamePage() {
           border-radius: 4px;
           font-size: 1em;
       }
-      #record-button {
+      button {
           padding: 5px 10px;
           font-size: 1em;
           cursor: pointer;
@@ -163,9 +164,17 @@ function initializeGamePage() {
   recordButton.textContent = 'Record Video Attacks';
   elements.playButton = recordButton;
 
+  // Create export button, hidden by default
+  const exportButton = document.createElement('button');
+  exportButton.id = 'export-button';
+  exportButton.textContent = 'Export Boss';
+  elements.exportButton = exportButton;
+  exportButton.style.display = 'none';
+
   // Add elements to floating menu
   floatingMenu.appendChild(videoUrlInput);
   floatingMenu.appendChild(recordButton);
+  floatingMenu.appendChild(exportButton);
 
   // Append floating menu to body
   document.body.appendChild(floatingMenu);
@@ -272,6 +281,11 @@ function mainLoop(event) {
     setGameMode(MENU);
   }
 
+  // check for when the video ends, go back to menu
+  if (state.gameMode === RECORDING && elements.player.getPlayerState() === YT.PlayerState.ENDED) {
+    setGameMode(MENU);
+  }
+
   // clear keyJustPressed
   for (const key in keyJustPressed) {
     keyJustPressed[key] = false;
@@ -301,6 +315,12 @@ function setGameMode(mode) {
     elements.floatingMenu.style.display = 'flex';
     // pause the video
     elements.player.pauseVideo();
+    // show the export button if there is any recorded data
+    if (state.attackData.length > 0) {
+      elements.exportButton.style.display = 'block';
+    } else {
+      elements.exportButton.style.display = 'none';
+    }
   }
   // if the new mode is playing, show the game hud
   if (mode === PLAYING) {
