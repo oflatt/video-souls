@@ -14,12 +14,16 @@ const CENTER = 'CENTER';
 
 // make a global state dictionary to store the game state
 const state = {
-  // the id of the current video being played or recorded
-  currentVideo: null,
-  // a list of attack structs for the current video
-  // each attack struct has a time and direction
-  attackData: [],
+  level: {
+    // the id of the current video being played or recorded
+    video: null,
+    // a list of attack structs for the current video
+    // each attack struct has a time and direction
+    attackData: [],
+  },
   gameMode: MENU,
+  // each alert has a message element and a time to live
+  alerts: [],
 };
 
 
@@ -144,11 +148,22 @@ function initializeGamePage() {
   floatingMenu.id = 'floating-menu';
   elements.floatingMenu = floatingMenu;
 
-  // add video souls title to floating menu on it's own line
+  // add video souls title to floating menu
   const videoSoulsTitle = document.createElement('h1');
   videoSoulsTitle.textContent = 'Video Souls';
   floatingMenu.appendChild(videoSoulsTitle);
   elements.videoSoulsTitle = videoSoulsTitle;
+  // margin on bottom of 20 px
+  videoSoulsTitle.style.marginBottom = '20px';
+
+  // add a play button
+  const playButton = document.createElement('button');
+  playButton.textContent = 'Play';
+  floatingMenu.appendChild(playButton);
+  elements.playButton = playButton;
+  // hide play button by default
+  playButton.style.display = 'none';
+  playButton.style.marginBottom = '20px';
 
 
   // Create video URL input
@@ -158,18 +173,20 @@ function initializeGamePage() {
   videoUrlInput.placeholder = 'Enter YouTube video URL';
   elements.videoUrlInput = videoUrlInput;
 
-  // Create play button
+  // Create record button
   const recordButton = document.createElement('button');
   recordButton.id = 'record-button';
   recordButton.textContent = 'Record Video Attacks';
-  elements.playButton = recordButton;
+  elements.recordButton = recordButton;
+  recordButton.style.marginBottom = '20px';
 
   // Create export button, hidden by default
   const exportButton = document.createElement('button');
   exportButton.id = 'export-button';
-  exportButton.textContent = 'Export Boss';
+  exportButton.textContent = 'Export';
   elements.exportButton = exportButton;
   exportButton.style.display = 'none';
+  exportButton.style.marginBottom = '20px';
 
   // Add elements to floating menu
   floatingMenu.appendChild(videoUrlInput);
@@ -196,14 +213,26 @@ function initializeGamePage() {
   // make the game hud hidden by default
   gameHUD.style.display = 'none';
 
-  // Add event listener to play button
+  // Add event listener to record button
   recordButton.addEventListener('click', () => {
       const videoUrl = videoUrlInput.value;
       if (videoUrl) {
           recordVideo(videoUrl);
       } else {
-          alert('Please enter a valid YouTube URL.');
+          fadingAlert('Please enter a valid YouTube URL.');
       }
+  });
+
+  // Add event listener to play button
+  playButton.addEventListener('click', () => {
+    // set game mode to playing
+    setGameMode(PLAYING);
+  });
+
+  // Add event listener to export button
+  exportButton.addEventListener('click', () => {
+    // export the level
+    exportLevel();
   });
 
 
@@ -216,6 +245,37 @@ function initializeGamePage() {
   });
   document.addEventListener('keyup', (event) => {
     keyPressed[event.key] = false;
+  });
+}
+
+function fadingAlert(message) {
+  // make an alert text element on top of the screen
+  const alertText = document.createElement('div');
+  alertText.textContent = message;
+  alertText.style.position = 'absolute';
+  alertText.style.top = '20px';
+  alertText.style.left = '50%';
+  alertText.style.transform = 'translateX(-50%)';
+  alertText.style.padding = '10px 20px';
+  alertText.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+  alertText.style.borderRadius = '8px';
+  alertText.style.zIndex = '1000';
+  document.body.appendChild(alertText);
+
+  state.alerts.push({ message: alertText, ttl: 3000 });
+}
+
+
+
+// Function to export the level data to a link
+// link in dev mode is local host
+function exportLevel() {
+  const link = `http://localhost:8000/?data=${encodeURIComponent(JSON.stringify(state.level))}`;
+  // copy the link to the clipboard
+  navigator.clipboard.writeText(link).then(() => {
+    // TODO show a success message
+  }).catch((error) => {
+    console.error('Failed to copy: ', error);
   });
 }
 
@@ -254,23 +314,23 @@ function mainLoop(event) {
   // update debug text
   const timeInSeconds = elements.player.getCurrentTime();
   const timeInMilliseconds = Math.floor(timeInSeconds * 1000);
-  elements.currentTimeDebug.textContent = `Time: ${timeInMilliseconds} ms data: ${state.attackData.length}`;
+  elements.currentTimeDebug.textContent = `Time: ${timeInMilliseconds} ms data: ${state.level.attackData.length}`;
 
 
   // if the game mode is recording, record attacks based on button presses (WASD)
   if (state.gameMode == RECORDING) {
     // check key just pressed for each direction
     if (keyJustPressed['w']) {
-      state.attackData.push({ time: timeInMilliseconds, direction: UP });
+      state.level.attackData.push({ time: timeInMilliseconds, direction: UP });
     }
     if (keyJustPressed['s']) {
-      state.attackData.push({ time: timeInMilliseconds, direction: DOWN });
+      state.level.attackData.push({ time: timeInMilliseconds, direction: DOWN });
     }
     if (keyJustPressed['a']) {
-      state.attackData.push({ time: timeInMilliseconds, direction: LEFT });
+      state.level.attackData.push({ time: timeInMilliseconds, direction: LEFT });
     }
     if (keyJustPressed['d']) {
-      state.attackData.push({ time: timeInMilliseconds, direction: RIGHT });
+      state.level.attackData.push({ time: timeInMilliseconds, direction: RIGHT });
     }
   }
 
@@ -284,6 +344,19 @@ function mainLoop(event) {
   // check for when the video ends, go back to menu
   if (state.gameMode === RECORDING && elements.player.getPlayerState() === YT.PlayerState.ENDED) {
     setGameMode(MENU);
+  }
+
+
+  // handle fading alerts by making them slowly fade out
+  for (let i = state.alerts.length - 1; i >= 0; i--) {
+    const alert = state.alerts[i];
+    alert.ttl -= 1000 / 60;
+    if (alert.ttl <= 0) {
+      alert.message.remove();
+      state.alerts.splice(i, 1);
+    } else {
+      alert.message.style.opacity = alert.ttl / 3000;
+    }
   }
 
   // clear keyJustPressed
@@ -315,11 +388,18 @@ function setGameMode(mode) {
     elements.floatingMenu.style.display = 'flex';
     // pause the video
     elements.player.pauseVideo();
-    // show the export button if there is any recorded data
-    if (state.attackData.length > 0) {
+    // show the export and play buttons if there is any recorded data
+    if (state.level.attackData.length > 0) {
       elements.exportButton.style.display = 'block';
+      elements.playButton.style.display = 'block';
+
+      // set the play button's text to "Play {title of youtube video}"
+      const currentVideoName = elements.player.getVideoData().title;
+      elements.playButton.textContent = `Play "${currentVideoName}"`;
+      elements.exportButton.textContent = `Export "${currentVideoName}"`;
     } else {
       elements.exportButton.style.display = 'none';
+      elements.playButton.style.display = 'none';
     }
   }
   // if the new mode is playing, show the game hud
@@ -329,9 +409,9 @@ function setGameMode(mode) {
   // if the new mode is recording, show the game hud
   if (mode === RECORDING) {
     // delete the current recorded attacks
-    state.attackData = [];
+    state.level.attackData = [];
     elements.gameHUD.style.display = 'flex';
-    elements.player.loadVideoById(state.currentVideo);
+    elements.player.loadVideoById(state.level.video);
     elements.player.setPlaybackRate(0.5); // Set playback speed to half
   }
 
@@ -339,7 +419,7 @@ function setGameMode(mode) {
 }
 
 function setCurrentVideo(videoId) {
-  state.currentVideo = videoId;
+  state.level.video = videoId;
 }
 
 // Function to play a YouTube video by extracting the video ID from the URL
@@ -350,7 +430,7 @@ function recordVideo(videoUrl) {
     // set recording to true
     setGameMode(RECORDING);
   } else {
-      alert('Invalid YouTube URL');
+      fadingAlert('Invalid YouTube URL');
   }
 }
 
