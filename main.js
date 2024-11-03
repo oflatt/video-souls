@@ -16,12 +16,25 @@ const BLOCKING = 'BLOCKING';
 const ATTACKING = 'ATTACKING';
 
 
+const keyToDirection = {
+  w: UP,
+  a: LEFT,
+  s: DOWN,
+  d: RIGHT,
+  space: CENTER,
+};
+
+
 // block direction angles
 const blockDirectionVectors = {
-  UP: [0, 1],
-  DOWN: [0, -1],
-  LEFT: [-1, 0],
-  RIGHT: [1, 0],
+  // point the sword left to block up
+  UP: [-1, 0],
+  // same for down
+  DOWN: [-1, 0],
+  // point the sword up to block left
+  LEFT: [0, 1],
+  // same for right
+  RIGHT: [0, 1],
   CENTER: [0, 1],
   Rest: [0.5, 0.86602540378],
 }
@@ -73,6 +86,8 @@ const keyPressed = {};
 // also keep track of which keys were just pressed
 const keyJustPressed = {};
 
+
+const BLOCK_END_LAG = 0.2;
 
 // load sword.png
 const swordImage = new Image();
@@ -382,8 +397,6 @@ function mainLoop(event) {
   // clear the canvas
   const ctx = elements.canvas.getContext('2d');
   ctx.clearRect(0, 0, elements.canvas.width, elements.canvas.height);
-  // draw the canvas
-  drawCanvas();
 
   // if the game mode is recording, record attacks based on button presses (WASD)
   if (state.gameMode == RECORDING) {
@@ -402,31 +415,52 @@ function mainLoop(event) {
     }
   }
 
-  // snap the sword to the block direction
-  if (state.gameMode == PLAYING || state.gameMode == RECORDING) {
-    if (keyPressed['w']) {
-      state.sword.blockDir = UP;
-      state.sword.dir = blockDirectionVectors.UP;
-      state.sword.pos = blockDirectionPositions.UP;
-    } else if (keyPressed['s']) {
-      state.sword.blockDir = DOWN;
-      state.sword.dir = blockDirectionVectors.DOWN;
-      state.sword.pos = blockDirectionPositions.DOWN;
-    } else if (keyPressed['a']) {
-      state.sword.blockDir = LEFT;
-      state.sword.dir = blockDirectionVectors.LEFT;
-      state.sword.pos = blockDirectionPositions.LEFT;
-    } else if (keyPressed['d']) {
-      state.sword.blockDir = RIGHT;
-      state.sword.dir = blockDirectionVectors.RIGHT;
-      state.sword.pos = blockDirectionPositions.RIGHT;
-    } else {
-      state.sword.blockDir = REST;
-      state.sword.dir = blockDirectionVectors.Rest;
-      state.sword.pos = blockDirectionPositions.CENTER;
+  if ((state.gameMode == PLAYING || state.gameMode == RECORDING) && timeInSeconds >= state.sword.readyAt) {
+    // for each direction in keyToDirection, check if the key is just pressed
+    // if it is, set the sword block direction to the corresponding direction
+    // this starts it moving towards that position
+    for (const key in keyToDirection) {
+      if (keyJustPressed[key]) {
+        state.sword.state = BLOCKING;
+        state.sword.blockDir = keyToDirection[key];
+        state.sword.readyAt = timeInSeconds + BLOCK_END_LAG;
+      }
     }
   }
 
+  // if the sword is blocking and the readyAt time has passed
+  if (state.sword.state === BLOCKING && timeInSeconds >= state.sword.readyAt) {
+    // set the sword state to resting
+    state.sword.state = REST;
+  }
+
+  // if the sword is blocking, move it towards the block direction and position
+  if (state.sword.state === BLOCKING) {
+    const targetDir = blockDirectionVectors[state.sword.blockDir];
+    const targetPos = blockDirectionPositions[state.sword.blockDir];
+
+    // if the position is some epsilon close to the target position, set the position to the target position
+    if (Math.abs(state.sword.pos[0] - targetPos[0]) < 0.01 && Math.abs(state.sword.pos[1] - targetPos[1]) < 0.01) {
+      state.sword.pos[0] = targetPos[0];
+      state.sword.pos[1] = targetPos[1];
+    } else {
+      // otherwise, move the sword towards the target position
+      state.sword.pos[0] += (targetPos[0] - state.sword.pos[0]) / 20;
+      state.sword.pos[1] += (targetPos[1] - state.sword.pos[1]) / 20;
+    }
+
+    // if the direction is some epsilon close to the target direction, set the direction to the target direction
+    if (Math.abs(state.sword.dir[0] - targetDir[0]) < 0.01 && Math.abs(state.sword.dir[1] - targetDir[1]) < 0.01) {
+      state.sword.dir[0] = targetDir[0];
+      state.sword.dir[1] = targetDir[1];
+    } else {
+      // otherwise, move the sword towards the target direction by rotating it
+      const angle = Math.atan2(state.sword.dir[0], state.sword.dir[1]);
+      const targetAngle = Math.atan2(targetDir[0], targetDir[1]);
+      const newAngle = angle + (targetAngle - angle) / 20;
+      state.sword.dir = [Math.sin(newAngle), Math.cos(newAngle)];
+    }
+  }
 
   // check for the escape key
   if (keyJustPressed['Escape']) {
@@ -438,6 +472,9 @@ function mainLoop(event) {
   if (state.gameMode === RECORDING && elements.player.getPlayerState() === YT.PlayerState.ENDED) {
     setGameMode(MENU);
   }
+
+  // draw the canvas
+  drawCanvas();
 
 
   // handle fading alerts by making them slowly fade out
@@ -467,7 +504,9 @@ function drawCanvas() {
   // center it on the xpos and ypos
   const ctx = elements.canvas.getContext('2d');
   const topLeftX = elements.canvas.width * state.sword.pos[0] - elements.swordImage.width / 2;
-  const topLeftY = elements.canvas.height * state.sword.pos[1] - elements.swordImage.height / 2;
+  // invert sword pos since it starts from the bottom of the screen
+  const swordYPos = 1 - state.sword.pos[1];
+  const topLeftY = elements.canvas.height * swordYPos - elements.swordImage.height / 2;
   ctx.save();
   ctx.translate(topLeftX + elements.swordImage.width / 2, topLeftY + elements.swordImage.height / 2);
   ctx.rotate(Math.atan2(state.sword.dir[0], state.sword.dir[1]));
