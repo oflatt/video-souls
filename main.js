@@ -129,10 +129,11 @@ const state = {
     // the id of the current video being played or recorded
     video: null,
     // a list of attack structs for the current video
-    // each attack struct has a frame and direction : { frame: number_frames, direction: direction_num }
-    // frames are relative to 15 frames per second
+    // each attack struct has a time and direction : { time: time_in_seconds, direction: direction_num }
     // see directionNum for the direction_num values
     attackData: [],
+    // version number for this version of video souls
+    version: 1,
   },
   gameMode: MENU,
   sword: initialSwordState,
@@ -497,38 +498,16 @@ function uncompressAttackData(compressedData) {
   return attackData;
 }
 
-function linkToLevel(level) {
-  const compressedAttackData = compressAttackData(level.attackData);
-  console.log(compressedAttackData);
-
-  const link = `http://localhost:8000/?v=0&vid=${level.video}&t=${encodeURIComponent(compressedAttackData[0])}&d=${encodeURIComponent(compressedAttackData[1])}`;
-
-  // check that the link is small enough
-  if (link.length > 2000) {
-    return undefined;
-  }
-  return link;
-}
-
-
-
-// Function to export the level data to a link
-// link in dev mode is local host
+// Function to export the level data to json
 function exportLevel(level) {
-  const link = linkToLevel(level);
-
-  // check that the link is small enough
-  if (link === undefined) {
-    fadingAlert('Level data too large to export to a link, sorry ):');
-  } else {
+  const json = JSON.stringify(level);
   // copy the link to the clipboard
-  navigator.clipboard.writeText(link).then(() => {
-      fadingAlert('Level data copied to clipboard.');
-    }).catch((error) => {
-      fadingAlert('Failed to copy level data to clipboard.');
-      console.error('Failed to copy: ', error);
-    });
-  }
+  navigator.clipboard.writeText(json).then(() => {
+    fadingAlert('Level data copied to clipboard.');
+  }).catch((error) => {
+    fadingAlert('Failed to copy level data to clipboard.');
+    console.error('Failed to copy: ', error);
+  });
 }
 
 
@@ -879,26 +858,3 @@ function extractVideoID(url) {
 initializeGamePage();
 
 console.log("Game script loaded and game page initialized.");
-
-
-function tests() {
-  // check that we can encode 1000 attacks to a link
-  const level = {
-    video: 'test',
-    attackData: [],
-  };
-
-  for (let i = 0; i < 200; i++) {
-    // there are 9 directions
-    level.attackData.push({ frame: i*15, direction: i % 9 });
-  }
-
-  const link = linkToLevel(level);
-  if (link === undefined) {
-    alert('Failed to encode 500 attacks to a link');
-    console.error('Failed to encode 500 attacks to a link');
-  }
-  console.log('500 attack sequence link: ', link);
-}
-
-tests();
