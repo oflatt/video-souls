@@ -7,8 +7,6 @@ Welcome to the repo for video souls. For local development, simply serve the sta
 
 # TODO
 
-- Separate direction from parry
-- Parry window and lag time
 - Attacking animations
 - Health bars
   - Getting hit makes screen flash transparent red
