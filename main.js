@@ -9,10 +9,10 @@ const UP = 'UP';
 const DOWN = 'DOWN';
 const LEFT = 'LEFT';
 const RIGHT = 'RIGHT';
-const CENTER = 'CENTER';
 const REST = 'REST';
 
-const BLOCKING = 'BLOCKING';
+const NONE = 'NONE';
+const PARRYING = 'PARRYING';
 const ATTACKING = 'ATTACKING';
 
 
@@ -21,31 +21,67 @@ const keyToDirection = {
   a: LEFT,
   s: DOWN,
   d: RIGHT,
-  space: CENTER,
 };
 
+const parryKey = 'j';
 
-// block direction angles
-const blockDirectionVectors = {
-  // point the sword left to block up
-  UP: [-1, 0],
-  // same for down
-  DOWN: [-1, 0],
-  // point the sword up to block left
-  LEFT: [0, 1],
-  // same for right
-  RIGHT: [0, 1],
-  CENTER: [0, 1],
-  REST: [0.5, 0.86602540378],
+function arrayEquals(a, b) {
+  return Array.isArray(a) &&
+      Array.isArray(b) &&
+      a.length === b.length &&
+      a.every((val, index) => val === b[index]);
 }
 
+const eqSet = (xs, ys) =>
+  xs.size === ys.size &&
+  [...xs].every((x) => ys.has(x));
+
+function getBlockDirUnnormal(directionsArr) {
+  const directions = new Set(directionsArr);
+  // sort directions
+  if (eqSet(directions, new Set([UP]))) {
+    console.log("up");
+    return [-1, 0];
+  }
+  if (eqSet(directions, new Set([UP, RIGHT]))) {
+    return [-1, 1];
+  }
+  if (eqSet(directions, new Set([RIGHT]))) {
+    return [0, 1];
+  }
+  if (eqSet(directions, new Set([DOWN]))) {
+    return [-1, 0];
+  }
+  if (eqSet(directions, new Set([DOWN, RIGHT]))) {
+    return [-1, -1];
+  }
+  if (eqSet(directions, new Set([LEFT]))) {
+    return [0, 1];
+  }
+  if (eqSet(directions, new Set([UP, LEFT]))) {
+    return [-1, -1];
+  }
+  if (eqSet(directions, new Set([DOWN, LEFT]))) {
+    return [-1, 1];
+  }
+
+  return [0, 1];
+}
+function blockDir(directions) {
+  const vec = getBlockDirUnnormal(directions);
+  const mag = Math.sqrt(vec[0] * vec[0] + vec[1] * vec[1]);
+  return [vec[0] / mag, vec[1] / mag];
+}
+
+
+// positions relative to center of screen
 const blockDirectionPositions = {
-  UP: [0.5, 0.7],
-  DOWN: [0.5, 0.3],
-  LEFT: [0.3, 0.5],
-  RIGHT: [0.7, 0.5],
-  CENTER: [0.5, 0.5],
-  REST: [0.5, 0.5],
+  UP: [0, 0.2],
+  DOWN: [0, -0.2],
+  LEFT: [-0.2, 0.0],
+  RIGHT: [0.2, 0.0],
+  CENTER: [0.0, 0.0],
+  REST: [0.0, 0.0],
 }
 
 
@@ -65,8 +101,16 @@ const state = {
   sword: {
     pos: [0.5, 0.5],
     dir: [0, 1],
-    state: BLOCKING,
-    blockDir: REST,
+    anim: {
+      // none, attacking, or parrying
+      state: NONE,
+      startTime: 0,
+      endTime: 0,
+      startPos: [0, 0],
+      endPos: [0, 0],
+      startAngle: 0,
+      endAngle: 0,
+    },
     // readyAt encodes end lag for blocking or attacking
     // only after this time in the video can another input be made
     readyAt: 0,
@@ -90,7 +134,8 @@ const keyPressed = {};
 const keyJustPressed = {};
 
 
-const BLOCK_END_LAG = 0.2;
+const PARRY_WINDOW = 0.2;
+const PARRY_END_LAG = 0.1;
 
 // load sword.png
 const swordImage = new Image();
@@ -474,40 +519,70 @@ function mainLoop(event) {
   }
 
   if ((state.gameMode == PLAYING || state.gameMode == RECORDING)) {
-    // for each direction in keyToDirection, check if the key is just pressed
-    // if it is, set the sword block direction to the corresponding direction
-    // this starts it moving towards that position
-    for (const key in keyToDirection) {
-      // if a key was just pressed, buffer it
-      if (keyJustPressed[key]) {
-        if (state.sword.bufferedInput === null) {
-          state.sword.bufferedInput = key;
-        }
-      }
+    // check if parry button pressed
+    if (keyJustPressed[parryKey] && state.sword.bufferedInput === null) {
+      // buffer the parry
+      state.sword.bufferedInput = parryKey;
     }
+
 
     // ready for new buffered action
     if (timeInSeconds >= state.sword.readyAt && state.sword.bufferedInput !== null) {
-      // do the buffered input
-      state.sword.state = BLOCKING;
-      state.sword.blockDir = keyToDirection[state.sword.bufferedInput];
-      state.sword.readyAt = timeInSeconds + BLOCK_END_LAG;
-      state.sword.bufferedInput = null;
+      if (state.sword.bufferedInput === parryKey) {
+        // do the buffered input
+        state.sword.anim.state = PARRYING;
+        state.sword.anim.startTime = timeInSeconds;
+        state.sword.anim.endTime = timeInSeconds + PARRY_WINDOW + PARRY_END_LAG;
+        state.sword.anim.startPos = [...state.sword.pos];
+        state.sword.anim.endPos = [...state.sword.pos];
+        state.sword.anim.startAngle = Math.atan2(state.sword.dir[0], state.sword.dir[1]);
+        state.sword.anim.endAngle = state.sword.anim.startAngle - (Math.PI / 10);
+
+        state.sword.bufferedInput = null;
+      }
     }
 
-    // otherwise if the sword is blocking and the ready time has passed, set the sword to rest
-    if (state.sword.state === BLOCKING && timeInSeconds >= state.sword.readyAt) {
-      // set the sword state to resting
-      state.sword.state = BLOCKING;
-      state.sword.blockDir = REST;
+    // check if we finished an animation
+    if (state.sword.anim.state !== NONE && timeInSeconds >= state.sword.anim.endTime) {
+      state.sword.anim.state = NONE;
     }
   }
 
-  // if the sword is blocking, move it towards the block direction and position
-  if (state.sword.state === BLOCKING) {
-    const state1 = state;
-    const targetDir = blockDirectionVectors[state.sword.blockDir];
-    const targetPos = blockDirectionPositions[state.sword.blockDir];
+  // if the sword is not in an animation, move towards user input dir
+  if (state.sword.anim.state === NONE) {
+    // find the target direction based on combination of keys pressed
+    var directions = [];
+    for (const key in keyToDirection) {
+      if (keyPressed[key]) {
+        directions.push(keyToDirection[key]);
+      }
+    }
+    console.log(directions);
+    const targetDir = blockDir(directions);
+
+    var positions = [];
+    for (const key in keyToDirection) {
+      if (keyPressed[key]) {
+        positions.push(blockDirectionPositions[keyToDirection[key]]);
+      } 
+    }
+
+    // clone the target position so we don't mutate it!
+    var targetPos = [...blockDirectionPositions[REST]];
+    if (positions.length > 0) {
+      var avgPos = [0, 0];
+      for (const pos of positions) {
+        avgPos[0] += pos[0];
+        avgPos[1] += pos[1];
+      }
+      avgPos[0] /= positions.length;
+      avgPos[1] /= positions.length;
+      targetPos = avgPos;
+    }
+
+    // offset the target position to center of screen
+    targetPos[0] += 0.5;
+    targetPos[1] += 0.5;
 
     // if the position is some epsilon close to the target position, set the position to the target position
     if (Math.abs(state.sword.pos[0] - targetPos[0]) < 0.01 && Math.abs(state.sword.pos[1] - targetPos[1]) < 0.01) {
@@ -570,19 +645,45 @@ function mainLoop(event) {
 
 // Draw the sword, health bars, ect to the canvas based on the data in state
 function drawCanvas() {
+  const currentTime = elements.player.getCurrentTime();
+  var swordPos = state.sword.pos;
+  var swordDir = state.sword.dir;
+  var swordOutlineStrength = 0.0;
+
+  // first, determine swordPos and swordDir from animation
+  if (state.sword.anim.state !== NONE) {
+    console.log("animating sword");
+    const animProgressUncapped = (currentTime - state.sword.anim.startTime) / (state.sword.anim.endTime - state.sword.anim.startTime);
+    const animProgress = Math.max(Math.min(1.0, animProgressUncapped), 0.0);
+    swordPos = [
+      state.sword.anim.startPos[0] + (state.sword.anim.endPos[0] - state.sword.anim.startPos[0]) * animProgress,
+      state.sword.anim.startPos[1] + (state.sword.anim.endPos[1] - state.sword.anim.startPos[1]) * animProgress,
+    ];
+
+    const fastExponentialAnimProgress = Math.sqrt(Math.sqrt(animProgress));
+    const currentAngle = state.sword.anim.startAngle + (state.sword.anim.endAngle - state.sword.anim.startAngle) * fastExponentialAnimProgress;
+    swordDir = [Math.sin(currentAngle), Math.cos(currentAngle)];
+
+    // sword outline is only visible during the parry window
+    const parryWindowProportion = PARRY_WINDOW / (PARRY_WINDOW + PARRY_END_LAG);
+    if (state.sword.anim.state === PARRYING && animProgress < parryWindowProportion) {
+      swordOutlineStrength = animProgress / parryWindowProportion;
+      swordOutlineStrength = 1.0 - swordOutlineStrength;
+    }
+  }
+
+
   // draw swordImage to the canvas at it's current position
   // center it on the xpos and ypos
-  const topLeftX = elements.canvas.width * state.sword.pos[0] - elements.swordImage.width / 2;
+  const topLeftX = elements.canvas.width * swordPos[0] - elements.swordImage.width / 2;
   // invert sword pos since it starts from the bottom of the screen
-  const swordYPos = 1 - state.sword.pos[1];
+  const swordYPos = 1 - swordPos[1];
   const topLeftY = elements.canvas.height * swordYPos - elements.swordImage.height / 2;
   const swortOutlineX = topLeftX - (elements.swordOutlineImage.width - elements.swordImage.width) / 2;
   const swordOutlineY = topLeftY - (elements.swordOutlineImage.height - elements.swordImage.height) / 2;
-  const currentTime = elements.player.getCurrentTime();
-  const swordOutlineStrength = Math.max(state.sword.readyAt - currentTime, 0.0) / BLOCK_END_LAG;
 
-  drawCenteredRotated(elements.swordOutlineImage, swortOutlineX, swordOutlineY, Math.atan2(state.sword.dir[0], state.sword.dir[1]), swordOutlineStrength);
-  drawCenteredRotated(elements.swordImage, topLeftX, topLeftY, Math.atan2(state.sword.dir[0], state.sword.dir[1]), 1.0);
+  drawCenteredRotated(elements.swordOutlineImage, swortOutlineX, swordOutlineY, Math.atan2(swordDir[0], swordDir[1]), swordOutlineStrength);
+  drawCenteredRotated(elements.swordImage, topLeftX, topLeftY, Math.atan2(swordDir[0], swordDir[1]), 1.0);
 }
 
 function drawCenteredRotated(image, xpos, ypos, angle, alpha) {
