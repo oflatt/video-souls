@@ -12,9 +12,11 @@ const LEFT = 'LEFT';
 const RIGHT = 'RIGHT';
 const REST = 'REST';
 
+// animations
 const NONE = 'NONE';
 const PARRYING = 'PARRYING';
 const ATTACKING = 'ATTACKING';
+const STAGGERING = 'STAGGERING';
 
 
 const keyToDirection = {
@@ -87,23 +89,26 @@ for (const key in directionNumToDir) {
 }
 
 
-function blockDir(directions) {
-  const directionNumer = directionNum(directions);
-  return directionNumToDir[directionNumer];
-}
 
 // positions relative to center of screen
 const blockDirectionPositions = {
-  UP: [0, 0.2],
-  DOWN: [0, -0.2],
-  LEFT: [-0.2, 0.0],
-  RIGHT: [0.2, 0.0],
-  CENTER: [0.0, 0.0],
-  REST: [0.0, 0.0],
+  0: [0.0, 0.2],
+  1: [0.2, 0.2],
+  2: [0.2, 0.0],
+  3: [0.2, -0.2],
+  4: [0.0, -0.2],
+  5: [-0.2, -0.2],
+  6: [-0.2, 0.0],
+  7: [-0.2, 0.2],
+  8: [0.0, 0.0],
 }
 
+// position relative to bottom left of screen
+const attackedPosition = [0.7, 0.4];
+const attackedAngle = Math.PI / 2;
 
-const initialSwordState = {
+
+const initialBattleState = {
   pos: [0.5, 0.5],
   dir: [0, 1],
   anim: {
@@ -115,12 +120,22 @@ const initialSwordState = {
     endPos: [0, 0],
     startAngle: 0,
     endAngle: 0,
+    // last parry time adds a green glow after a successful parry
+    lastParryTime: -100,
   },
   // readyAt encodes end lag for blocking or attacking
   // only after this time in the video can another input be made
   readyAt: 0,
   // inputs are buffered so that they are not missed and punishes for spam
   bufferedInput: null,
+
+  // health of the player
+  health: 1.0,
+  // health of the boss
+  healthBoss: 1.0,
+
+  // the last time we checked for attacks
+  prevTime: 0,
 };
 
 // make a global state dictionary to store the game state
@@ -136,7 +151,7 @@ const state = {
     version: 1,
   },
   gameMode: MENU,
-  sword: initialSwordState,
+  battle: initialBattleState,
   // each alert has a message element and a time to live
   alerts: [],
 };
@@ -156,6 +171,10 @@ const keyJustPressed = {};
 
 const PARRY_WINDOW = 0.2;
 const PARRY_END_LAG = 0.2;
+
+const STAGGER_TIME = 0.4;
+
+const ATTACK_WARNING_ADVANCE = 0.2;
 
 // load sword.png
 const swordImage = new Image();
@@ -381,7 +400,8 @@ function initializeGamePage() {
     elements.swordImage = scaleImage(swordImage, scale_factor);
     let outlineScaleFactor = (0.16 * canvas.width) / swordImage.width;
     let untinted = scaleImage(swordImage, outlineScaleFactor);
-    elements.swordOutlineImage = tintImage(untinted, [1.0, 0.2, 0.2]);
+    elements.swordRedOutline = tintImage(untinted, [1.0, 0.2, 0.2]);
+    elements.swordGreenOutline = tintImage(untinted, [0.2, 1.0, 0.2]);
   }
 
   // Add event listener to record button
@@ -436,67 +456,7 @@ function fadingAlert(message) {
   state.alerts.push({ message: alertText, ttl: 3000 });
 }
 
-function compressAttackData(attackData) {
-  // attack data is a list of attack structs
-  // we flatten this data into two strings, one for time and one for direction
 
-  // for time, we encode the information as a number of frames after the last attack
-  // this allows us to only use 8 bits per attack, with a maximum of (2^8)*15, about 3.75 seconds between attacks
-
-  var timeStr = '';
-  for (const attack of attackData) {
-    if (attack.frame > 0xFFFF) {
-      fadingAlert('Failed to compress attack data! Something has gone wrong, or your video is longer that 18 minutes.');
-      console.error('Attack time too large to compress. Frame num: ', attack.frame);
-      console.error('max frame num: ', 0xFFFF);
-      return;
-    }
-    timeStr += String.fromCharCode(attack.frame & 0xFFFF);
-  }
-  
-
-  var dirStr = '';
-  var i = 0;
-  while (i < attackData.length) {
-    var dirNum = 0;
-    for (var j = 0; j < 4; j++) {
-      if (i >= attackData.length) {
-        break;
-      }
-      dirNum |= (attackData[i].direction << (2 * j));
-      i++;
-    }
-    dirStr += String.fromCharCode(dirNum);
-  }
-  
-  return [timeStr, dirStr];
-}
-
-function uncompressAttackData(compressedData) {
-  var times = [];
-  var dirs = [];
-  for (const char of compressedData[0]) {
-    times.push(char.charCodeAt(0));
-  }
-  for (const char of compressedData[1]) {
-    var dirNum = char.charCodeAt(0);
-    for (var j = 0; j < 4; j++) {
-      dirs.push(dirNum & 0b11);
-      dirNum >>= 2;
-    }
-  }
-
-  var attackData = [];
-  if (times.length !== dirs.length) {
-    fadingAlert('Failed to uncompress attack data! Something has gone wrong, got different number of times and directions.');
-    console.error('Attack data compressed incorrectly');
-    return;
-  }
-  for (var i = 0; i < times.length; i++) {
-    attackData.push({ frame: times[i], direction: dirs[i] });
-  }
-  return attackData;
-}
 
 // Function to export the level data to json
 function exportLevel(level) {
@@ -572,133 +532,18 @@ function tintImage(image, color_multiplier) {
 // Main loop of the game
 function mainLoop(event) {
   // update debug text
-  const timeInSeconds = elements.player.getCurrentTime();
-  const timeInMilliseconds = Math.floor(timeInSeconds * 1000);
+  const currentTime = elements.player.getCurrentTime();
+  const timeInMilliseconds = Math.floor(currentTime * 1000);
   elements.currentTimeDebug.textContent = `Time: ${timeInMilliseconds} ms data: ${state.level.attackData.length}`;
 
   // clear the canvas
   const ctx = elements.canvas.getContext('2d');
   ctx.clearRect(0, 0, elements.canvas.width, elements.canvas.height);
 
-  // if the game mode is recording, record attacks based on button presses (WASD)
-  if (state.gameMode == RECORDING) {
-    // check key just pressed for each direction, adding to attack data
-    if (keyJustPressed['w']) {
-      state.level.attackData.push({ time: timeInMilliseconds, direction: UP });
-    }
-    if (keyJustPressed['s']) {
-      state.level.attackData.push({ time: timeInMilliseconds, direction: DOWN });
-    }
-    if (keyJustPressed['a']) {
-      state.level.attackData.push({ time: timeInMilliseconds, direction: LEFT });
-    }
-    if (keyJustPressed['d']) {
-      state.level.attackData.push({ time: timeInMilliseconds, direction: RIGHT });
-    }
-  }
-
-  if ((state.gameMode == PLAYING || state.gameMode == RECORDING)) {
-    // check if parry button pressed
-    if (keyJustPressed[parryKey] && state.sword.bufferedInput === null) {
-      // buffer the parry
-      state.sword.bufferedInput = parryKey;
-    }
-
-
-    // ready for new buffered action
-    if (timeInSeconds >= state.sword.readyAt && state.sword.bufferedInput !== null) {
-      if (state.sword.bufferedInput === parryKey) {
-        // do the buffered input
-        state.sword.anim.state = PARRYING;
-        state.sword.anim.startTime = timeInSeconds;
-        state.sword.anim.endTime = timeInSeconds + PARRY_WINDOW + PARRY_END_LAG;
-        state.sword.anim.startPos = [...state.sword.pos];
-        state.sword.anim.endPos = [...state.sword.pos];
-        state.sword.anim.startAngle = Math.atan2(state.sword.dir[0], state.sword.dir[1]);
-        state.sword.anim.endAngle = state.sword.anim.startAngle - (Math.PI / 10);
-
-        state.sword.bufferedInput = null;
-      }
-    }
-
-    // check if we finished an animation
-    if (state.sword.anim.state !== NONE && timeInSeconds >= state.sword.anim.endTime) {
-      state.sword.anim.state = NONE;
-    }
-  }
-
-  // if the sword is not in an animation, move towards user input dir
-  if (state.sword.anim.state === NONE) {
-    // find the target direction based on combination of keys pressed
-    var directions = [];
-    for (const key in keyToDirection) {
-      if (keyPressed[key]) {
-        directions.push(keyToDirection[key]);
-      }
-    }
-    const targetDir = blockDir(directions);
-
-    var positions = [];
-    for (const key in keyToDirection) {
-      if (keyPressed[key]) {
-        positions.push(blockDirectionPositions[keyToDirection[key]]);
-      } 
-    }
-
-    // clone the target position so we don't mutate it!
-    var targetPos = [...blockDirectionPositions[REST]];
-    if (positions.length > 0) {
-      var avgPos = [0, 0];
-      for (const pos of positions) {
-        avgPos[0] += pos[0];
-        avgPos[1] += pos[1];
-      }
-      avgPos[0] /= positions.length;
-      avgPos[1] /= positions.length;
-      targetPos = avgPos;
-    }
-
-    // offset the target position to center of screen
-    targetPos[0] += 0.5;
-    targetPos[1] += 0.5;
-
-    // if the position is some epsilon close to the target position, set the position to the target position
-    if (Math.abs(state.sword.pos[0] - targetPos[0]) < 0.01 && Math.abs(state.sword.pos[1] - targetPos[1]) < 0.01) {
-      state.sword.pos[0] = targetPos[0];
-      state.sword.pos[1] = targetPos[1];
-    } else {
-      // otherwise, move the sword towards the target position
-      state.sword.pos[0] += (targetPos[0] - state.sword.pos[0]) / 20;
-      state.sword.pos[1] += (targetPos[1] - state.sword.pos[1]) / 20;
-    }
-
-    // if the direction is some epsilon close to the target direction, set the direction to the target direction
-    if (Math.abs(state.sword.dir[0] - targetDir[0]) < 0.01 && Math.abs(state.sword.dir[1] - targetDir[1]) < 0.01) {
-      state.sword.dir[0] = targetDir[0];
-      state.sword.dir[1] = targetDir[1];
-    } else {
-      // otherwise, move the sword towards the target direction by rotating it
-      const angle = Math.atan2(state.sword.dir[0], state.sword.dir[1]);
-      const targetAngle = Math.atan2(targetDir[0], targetDir[1]);
-      const newAngle = angle + (targetAngle - angle) / 20;
-      state.sword.dir = [Math.sin(newAngle), Math.cos(newAngle)];
-    }
-  }
-
-  // check for the escape key
-  if (keyJustPressed['Escape']) {
-    // set game mode to menu
-    setGameMode(MENU);
-  }
-
-  // check for when the video ends, go back to menu
-  if (state.gameMode === RECORDING && elements.player.getPlayerState() === YT.PlayerState.ENDED) {
-    setGameMode(MENU);
-  }
+  updateState();
 
   // draw the canvas
   drawCanvas();
-
 
   // handle fading alerts by making them slowly fade out
   for (let i = state.alerts.length - 1; i >= 0; i--) {
@@ -717,34 +562,238 @@ function mainLoop(event) {
     keyJustPressed[key] = false;
   }
 
+  // lastly, set the last time to the current time
+  state.battle.prevTime = currentTime;
+
   requestAnimationFrame(mainLoop); // Schedule the next update
 }
 
+// gets the attack direction, if any, for this time period
+// starttime exclusive, endtime inclusive
+function getAttacksInInterval(startTime, endTime) {
+  const attacks = [];
+  for (const attack of state.level.attackData) {
+    if (attack.time > startTime && attack.time <= endTime) {
+      attacks.push(attack);
+    }
+  }
+  return attacks;
+}
+
+function successParry() {
+  const currentTime = elements.player.getCurrentTime();
+  // successful parry
+  state.battle.anim.lastParryTime = currentTime;
+
+  // cancel the lag on the parry now that it was successful
+  state.battle.readyAt = currentTime-1;
+  state.battle.anim.state = NONE;
+}
+
+function handleBossAttacks() {
+  const currentTime = elements.player.getCurrentTime();
+  const attacks = getAttacksInInterval(state.battle.prevTime, currentTime);
+  if (attacks.length > 0) {
+    // get the first attack (only one attack per frame allowed)
+    const attack = attacks[0];
+    // if the player is not parrying, take damage
+    if (state.battle.anim.state === PARRYING && currentDir() == attack.direction) {
+      console.log("parried");
+      successParry();
+    } else {
+      console.log("attacked");
+      state.battle.health -= 0.1;
+
+      // start a stagger animation
+      state.battle.anim.state = STAGGERING;
+      state.battle.anim.startTime = currentTime;
+      state.battle.anim.endTime = currentTime + STAGGER_TIME;
+      state.battle.anim.startPos = [...state.battle.pos];
+      // move the sword to the attacked position plus small random offset
+      state.battle.anim.endPos = [
+        attackedPosition[0] + (Math.random() - 0.5) * 0.1,
+        attackedPosition[1] + (Math.random() - 0.5) * 0.1,
+      ];
+      // change the angle randomly too
+      state.battle.anim.startAngle = Math.atan2(state.battle.dir[0], state.battle.dir[1]);
+      state.battle.anim.endAngle = attackedAngle;
+    }
+  }
+}
+
+function currentDir() {
+  // find the target direction based on combination of keys pressed
+  var directions = [];
+  for (const key in keyToDirection) {
+    if (keyPressed[key]) {
+      directions.push(keyToDirection[key]);
+    }
+  }
+  return directionNum(directions);
+}
+
+function currentDirVector() {
+  return directionNumToDir[currentDir()];
+}
+
+function doParry() {
+  const currentTime = elements.player.getCurrentTime();
+  state.battle.anim.state = PARRYING;
+  state.battle.anim.startTime = currentTime;
+  state.battle.anim.endTime = currentTime + PARRY_WINDOW + PARRY_END_LAG;
+  state.battle.anim.startPos = [...state.battle.pos];
+  state.battle.anim.endPos = [...state.battle.pos];
+  state.battle.anim.startAngle = Math.atan2(state.battle.dir[0], state.battle.dir[1]);
+  state.battle.anim.endAngle = state.battle.anim.startAngle - (Math.PI / 10);
+}
+
+function updateState() {
+  const currentTime = elements.player.getCurrentTime();
+  // if the game mode is recording, record attacks based on button presses (WASD)
+  if (state.gameMode == RECORDING) {
+    // check if the parry key is pressed, and add to the attack data if so
+    if (keyJustPressed[parryKey]) {
+      state.level.attackData.push({ time: currentTime, direction: currentDir() });
+    }
+  }
+
+  if ((state.gameMode == PLAYING || state.gameMode == RECORDING)) {
+    // check if parry button pressed
+    if (keyJustPressed[parryKey] && state.battle.bufferedInput === null) {
+      // buffer the parry
+      state.battle.bufferedInput = parryKey;
+    }
+
+
+    // ready for new buffered action
+    if (currentTime >= state.battle.readyAt && state.battle.bufferedInput !== null) {
+      if (state.battle.bufferedInput === parryKey) {
+        // in recording, do a successful parry
+        doParry();
+
+        state.battle.bufferedInput = null;
+      }
+    }
+
+    // check if we finished an animation
+    if (state.battle.anim.state !== NONE && currentTime >= state.battle.anim.endTime) {
+      state.battle.anim.state = NONE;
+    }
+
+    // check if we were attacked
+    handleBossAttacks();
+  }
+
+  // if the sword is not in an animation, move towards user input dir
+  if (state.battle.anim.state === NONE) {
+    const targetDir = currentDirVector();
+
+    // clone the target position so we don't mutate it!
+    var targetPos = [...blockDirectionPositions[currentDir()]];
+
+    // offset the target position to center of screen
+    targetPos[0] += 0.5;
+    targetPos[1] += 0.5;
+
+    // if the position is some epsilon close to the target position, set the position to the target position
+    if (Math.abs(state.battle.pos[0] - targetPos[0]) < 0.01 && Math.abs(state.battle.pos[1] - targetPos[1]) < 0.01) {
+      state.battle.pos[0] = targetPos[0];
+      state.battle.pos[1] = targetPos[1];
+    } else {
+      // otherwise, move the sword towards the target position
+      state.battle.pos[0] += (targetPos[0] - state.battle.pos[0]) / 20;
+      state.battle.pos[1] += (targetPos[1] - state.battle.pos[1]) / 20;
+    }
+
+    // if the direction is some epsilon close to the target direction, set the direction to the target direction
+    if (Math.abs(state.battle.dir[0] - targetDir[0]) < 0.01 && Math.abs(state.battle.dir[1] - targetDir[1]) < 0.01) {
+      state.battle.dir[0] = targetDir[0];
+      state.battle.dir[1] = targetDir[1];
+    } else {
+      // otherwise, move the sword towards the target direction by rotating it
+      const angle = Math.atan2(state.battle.dir[0], state.battle.dir[1]);
+      const targetAngle = Math.atan2(targetDir[0], targetDir[1]);
+      const newAngle = angle + (targetAngle - angle) / 20;
+      state.battle.dir = [Math.sin(newAngle), Math.cos(newAngle)];
+    }
+  }
+
+  // check for the escape key
+  if (keyJustPressed['Escape']) {
+    // set game mode to menu
+    setGameMode(MENU);
+  }
+
+  // check for when the video ends, go back to menu
+  if (state.gameMode === RECORDING && elements.player.getPlayerState() === YT.PlayerState.ENDED) {
+    setGameMode(MENU);
+  }
+}
+
+
+function drawAttackWarning() {
+  const currentTime = elements.player.getCurrentTime();
+  const ctx = elements.canvas.getContext('2d');
+
+  // check for attack warning sound
+  const soundAttack = getAttacksInInterval(state.battle.prevTime + ATTACK_WARNING_ADVANCE, currentTime + ATTACK_WARNING_ADVANCE);
+
+  // TODO play warning sound
+
+  const animAttacks = getAttacksInInterval(currentTime-ATTACK_WARNING_ADVANCE, currentTime);
+  for (const attack of animAttacks) {
+    // draw a white circle at the attack
+    const attackPos = [...blockDirectionPositions[attack.direction]];
+    // make attack pos a bit futher from the center
+    attackPos[0] = attackPos[0] * 1.2;
+    attackPos[1] = attackPos[1] * 1.2;
+
+    // offset the attack position to center of screen
+    attackPos[0] += 0.5;
+    attackPos[1] += 0.5;
+
+    const animTime = (currentTime - attack.time) / ATTACK_WARNING_ADVANCE;
+    const opacity = Math.max(0, 1 - animTime);
+
+    const attackX = elements.canvas.width * attackPos[0];
+    const attackY = elements.canvas.height * (1 - attackPos[1]);
+    ctx.save();
+    ctx.globalAlpha = opacity;
+    ctx.beginPath();
+    ctx.arc(attackX, attackY, 10, 0, 2 * Math.PI);
+    ctx.fillStyle = 'white';
+    ctx.fill();
+    ctx.restore();
+  }
+}
 
 // Draw the sword, health bars, ect to the canvas based on the data in state
 function drawCanvas() {
   const currentTime = elements.player.getCurrentTime();
-  var swordPos = state.sword.pos;
-  var swordDir = state.sword.dir;
+
+  drawAttackWarning();
+
+  var swordPos = state.battle.pos;
+  var swordDir = state.battle.dir;
   var swordOutlineStrength = 0.0;
 
   // first, determine swordPos and swordDir from animation
-  if (state.sword.anim.state !== NONE) {
+  if (state.battle.anim.state !== NONE) {
     console.log("animating sword");
-    const animProgressUncapped = (currentTime - state.sword.anim.startTime) / (state.sword.anim.endTime - state.sword.anim.startTime);
+    const animProgressUncapped = (currentTime - state.battle.anim.startTime) / (state.battle.anim.endTime - state.battle.anim.startTime);
     const animProgress = Math.max(Math.min(1.0, animProgressUncapped), 0.0);
     swordPos = [
-      state.sword.anim.startPos[0] + (state.sword.anim.endPos[0] - state.sword.anim.startPos[0]) * animProgress,
-      state.sword.anim.startPos[1] + (state.sword.anim.endPos[1] - state.sword.anim.startPos[1]) * animProgress,
+      state.battle.anim.startPos[0] + (state.battle.anim.endPos[0] - state.battle.anim.startPos[0]) * animProgress,
+      state.battle.anim.startPos[1] + (state.battle.anim.endPos[1] - state.battle.anim.startPos[1]) * animProgress,
     ];
 
     const fastExponentialAnimProgress = Math.sqrt(Math.sqrt(animProgress));
-    const currentAngle = state.sword.anim.startAngle + (state.sword.anim.endAngle - state.sword.anim.startAngle) * fastExponentialAnimProgress;
+    const currentAngle = state.battle.anim.startAngle + (state.battle.anim.endAngle - state.battle.anim.startAngle) * fastExponentialAnimProgress;
     swordDir = [Math.sin(currentAngle), Math.cos(currentAngle)];
 
     // sword outline is only visible during the parry window
     const parryWindowProportion = PARRY_WINDOW / (PARRY_WINDOW + PARRY_END_LAG);
-    if (state.sword.anim.state === PARRYING && animProgress < parryWindowProportion) {
+    if (state.battle.anim.state === PARRYING && animProgress < parryWindowProportion) {
       swordOutlineStrength = animProgress / parryWindowProportion;
       swordOutlineStrength = 1.0 - swordOutlineStrength;
     }
@@ -757,10 +806,10 @@ function drawCanvas() {
   // invert sword pos since it starts from the bottom of the screen
   const swordYPos = 1 - swordPos[1];
   const topLeftY = elements.canvas.height * swordYPos - elements.swordImage.height / 2;
-  const swortOutlineX = topLeftX - (elements.swordOutlineImage.width - elements.swordImage.width) / 2;
-  const swordOutlineY = topLeftY - (elements.swordOutlineImage.height - elements.swordImage.height) / 2;
+  const swortOutlineX = topLeftX - (elements.swordRedOutline.width - elements.swordImage.width) / 2;
+  const swordOutlineY = topLeftY - (elements.swordRedOutline.height - elements.swordImage.height) / 2;
 
-  drawCenteredRotated(elements.swordOutlineImage, swortOutlineX, swordOutlineY, Math.atan2(swordDir[0], swordDir[1]), swordOutlineStrength);
+  drawCenteredRotated(elements.swordRedOutline, swortOutlineX, swordOutlineY, Math.atan2(swordDir[0], swordDir[1]), swordOutlineStrength);
   drawCenteredRotated(elements.swordImage, topLeftX, topLeftY, Math.atan2(swordDir[0], swordDir[1]), 1.0);
 }
 
@@ -783,7 +832,7 @@ function setGameMode(mode) {
   }
 
   // reset the sword state
-  state.sword = initialSwordState;
+  state.battle = initialBattleState;
 
   // if the new mode is menu, show the menu
   if  (mode === MENU) {
@@ -804,25 +853,20 @@ function setGameMode(mode) {
     }
   }
   // if the new mode is playing, show the game hud
-  if (mode === PLAYING) {
+  if (mode === PLAYING || mode === RECORDING) {
     // hide the floating menu
     elements.floatingMenu.style.display = 'none';
 
-    elements.gameHUD.style.display = 'flex';
-    elements.player.playVideo();
-  }
-  // if the new mode is recording, show the game hud
-  if (mode === RECORDING) {
-    // hide the floating menu
-    elements.floatingMenu.style.display = 'none';
+    var playbackRate = 1.0;
+    if (mode === RECORDING) {
+      // delete the current recorded attacks
+      state.level.attackData = [];
+      // set the playback rate to the recording speed
+      playbackRate = Number(elements.recordSpeedInput.value);
+    }
+    elements.player.setPlaybackRate(playbackRate);
 
-    // delete the current recorded attacks
-    state.level.attackData = [];
     elements.gameHUD.style.display = 'flex';
-    // set the playback rate to the recording speed
-    elements.player.setPlaybackRate(Number(elements.recordSpeedInput.value));
-    console.log(elements.recordSpeedInput.value);
-
     elements.player.playVideo();
   }
 
