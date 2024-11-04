@@ -265,17 +265,17 @@ function initializeGamePage() {
   exportButton.style.marginBottom = '20px';
 
   // add a google adsense ad to the floating menu at the bottom
-  const script = document.createElement('script');
+  /*const script = document.createElement('script');
   script.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5102275085064362";
   script.setAttribute('async', '');
-  script.setAttribute('crossorigin', 'anonymous');
+  script.setAttribute('crossorigin', 'anonymous');*/
 
   // Add elements to floating menu
   floatingMenu.appendChild(videoUrlInput);
   floatingMenu.appendChild(recordButton);
   floatingMenu.appendChild(recordSpeedDiv);
   floatingMenu.appendChild(exportButton);
-  floatingMenu.appendChild(script);
+  //floatingMenu.appendChild(script);
 
   // Append floating menu to body
   document.body.appendChild(floatingMenu);
