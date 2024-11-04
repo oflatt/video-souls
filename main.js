@@ -340,6 +340,7 @@ function initializeGamePage() {
     if (!keyPressed[event.key]) {
       keyPressed[event.key] = true;
       keyJustPressed[event.key] = true;
+      console.log("key pressed ", event.key);
     }
   });
   document.addEventListener('keyup', (event) => {
