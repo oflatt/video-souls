@@ -340,6 +340,26 @@ function initializeGamePage() {
   recordSpeedInput.style.marginBottom = '20px';
   recordSpeedDiv.appendChild(recordSpeedInput);
 
+  // Add event listener to record button
+  recordButton.addEventListener('click', () => {
+    const videoUrl = videoUrlInput.value;
+    const recordSpeed = parseFloat(recordSpeedInput.value);
+
+    if (recordSpeed <= 0) {
+        fadingAlert('Please enter a recording speed greater than 0.');
+        return; // Prevent further execution if speed is invalid
+    }
+
+    if (videoUrl) {
+        recordVideo(videoUrl, recordSpeed);
+    } else {
+        fadingAlert('Please enter a valid YouTube URL.');
+    }
+  });
+
+
+
+
   // Create export button, hidden by default
   const exportButton = document.createElement('button');
   exportButton.id = 'export-button';
