@@ -157,7 +157,7 @@ function initializeGamePage() {
           padding: 10px 20px;
           border-radius: 8px;
       }
-      #video-url {
+      input {
           width: 300px;
           padding: 5px;
           border: none;
@@ -229,9 +229,29 @@ function initializeGamePage() {
   // Create record button
   const recordButton = document.createElement('button');
   recordButton.id = 'record-button';
-  recordButton.textContent = 'Record Video Attacks';
+  recordButton.textContent = 'Record Boss Fight';
   elements.recordButton = recordButton;
   recordButton.style.marginBottom = '20px';
+
+  // create a record speed input with a label
+  const recordSpeedDiv = document.createElement('div');
+  elements.recordSpeedDiv = recordSpeedDiv;
+
+  const recordSpeedLabel = document.createElement('label');
+  recordSpeedLabel.textContent = 'Recording Speed:';
+  recordSpeedLabel.htmlFor = 'record-speed';
+  elements.recordSpeedLabel = recordSpeedLabel;
+  recordSpeedDiv.appendChild(recordSpeedLabel);
+  
+  const recordSpeedInput = document.createElement('input');
+  recordSpeedInput.id = 'record-speed';
+  recordSpeedInput.type = 'number';
+  recordSpeedInput.placeholder = 'Enter recording speed';
+  elements.recordSpeedInput = recordSpeedInput;
+  // default to 0.5
+  recordSpeedInput.value = 0.5;
+  recordSpeedInput.style.marginBottom = '20px';
+  recordSpeedDiv.appendChild(recordSpeedInput);
 
   // Create export button, hidden by default
   const exportButton = document.createElement('button');
@@ -244,6 +264,7 @@ function initializeGamePage() {
   // Add elements to floating menu
   floatingMenu.appendChild(videoUrlInput);
   floatingMenu.appendChild(recordButton);
+  floatingMenu.appendChild(recordSpeedDiv);
   floatingMenu.appendChild(exportButton);
 
   // Append floating menu to body
@@ -564,7 +585,10 @@ function setGameMode(mode) {
     // delete the current recorded attacks
     state.level.attackData = [];
     elements.gameHUD.style.display = 'flex';
-    elements.player.setPlaybackRate(0.5); // Set playback speed to half
+    // set the playback rate to the recording speed
+    elements.player.setPlaybackRate(Number(elements.recordSpeedInput.value));
+    console.log(elements.recordSpeedInput.value);
+
     elements.player.playVideo();
   }
 
