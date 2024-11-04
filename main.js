@@ -1,5 +1,6 @@
 // main.js
 
+
 const MENU = 'MENU';
 const PLAYING = 'PLAYING';
 const RECORDING = 'RECORDING';
@@ -36,43 +37,60 @@ const eqSet = (xs, ys) =>
   xs.size === ys.size &&
   [...xs].every((x) => ys.has(x));
 
-function getBlockDirUnnormal(directionsArr) {
+function directionNum(directionsArr) {
   const directions = new Set(directionsArr);
-  // sort directions
   if (eqSet(directions, new Set([UP]))) {
-    console.log("up");
-    return [-1, 0];
+    return 0;
   }
   if (eqSet(directions, new Set([UP, RIGHT]))) {
-    return [-1, 1];
+    return 1;
   }
   if (eqSet(directions, new Set([RIGHT]))) {
-    return [0, 1];
-  }
-  if (eqSet(directions, new Set([DOWN]))) {
-    return [-1, 0];
+    return 2;
   }
   if (eqSet(directions, new Set([DOWN, RIGHT]))) {
-    return [-1, -1];
+    return 3;
   }
-  if (eqSet(directions, new Set([LEFT]))) {
-    return [0, 1];
-  }
-  if (eqSet(directions, new Set([UP, LEFT]))) {
-    return [-1, -1];
+  if (eqSet(directions, new Set([DOWN]))) {
+    return 4;
   }
   if (eqSet(directions, new Set([DOWN, LEFT]))) {
-    return [-1, 1];
+    return 5;
   }
-
-  return [0, 1];
+  if (eqSet(directions, new Set([LEFT]))) {
+    return 6;
+  }
+  if (eqSet(directions, new Set([UP, LEFT]))) {
+    return 7;
+  }
+  return 8;
 }
+
+
+
+const directionNumToDir = {
+  0: [-1, 0],
+  1: [-1, 1],
+  2: [0, 1],
+  3: [-1, -1],
+  4: [-1, 0],
+  5: [-1, 1],
+  6: [0, 1],
+  7: [-1, -1],
+  8: [0, 1],
+}
+// normalize the direction vectors
+for (const key in directionNumToDir) {
+  const dir = directionNumToDir[key];
+  const length = Math.sqrt(dir[0] * dir[0] + dir[1] * dir[1]);
+  directionNumToDir[key] = [dir[0] / length, dir[1] / length];
+}
+
+
 function blockDir(directions) {
-  const vec = getBlockDirUnnormal(directions);
-  const mag = Math.sqrt(vec[0] * vec[0] + vec[1] * vec[1]);
-  return [vec[0] / mag, vec[1] / mag];
+  const directionNumer = directionNum(directions);
+  return directionNumToDir[directionNumer];
 }
-
 
 // positions relative to center of screen
 const blockDirectionPositions = {
@@ -85,38 +103,39 @@ const blockDirectionPositions = {
 }
 
 
+const initialSwordState = {
+  pos: [0.5, 0.5],
+  dir: [0, 1],
+  anim: {
+    // none, attacking, or parrying
+    state: NONE,
+    startTime: 0,
+    endTime: 0,
+    startPos: [0, 0],
+    endPos: [0, 0],
+    startAngle: 0,
+    endAngle: 0,
+  },
+  // readyAt encodes end lag for blocking or attacking
+  // only after this time in the video can another input be made
+  readyAt: 0,
+  // inputs are buffered so that they are not missed and punishes for spam
+  bufferedInput: null,
+};
+
 // make a global state dictionary to store the game state
 const state = {
   level: {
     // the id of the current video being played or recorded
     video: null,
     // a list of attack structs for the current video
-    // each attack struct has a time and direction
+    // each attack struct has a frame and direction : { frame: number_frames, direction: direction_num }
+    // frames are relative to 15 frames per second
+    // see directionNum for the direction_num values
     attackData: [],
   },
   gameMode: MENU,
-  // sword coordinates and direction
-  // coordinates are 0.0 to 1.0 with 0.0 being the bottom left and 1.0 being the top right
-  // moving the sword requires a interpolation of the direction and position to the target
-  sword: {
-    pos: [0.5, 0.5],
-    dir: [0, 1],
-    anim: {
-      // none, attacking, or parrying
-      state: NONE,
-      startTime: 0,
-      endTime: 0,
-      startPos: [0, 0],
-      endPos: [0, 0],
-      startAngle: 0,
-      endAngle: 0,
-    },
-    // readyAt encodes end lag for blocking or attacking
-    // only after this time in the video can another input be made
-    readyAt: 0,
-    // inputs are buffered so that they are not missed and punishes for spam
-    bufferedInput: null,
-  },
+  sword: initialSwordState,
   // each alert has a message element and a time to live
   alerts: [],
 };
@@ -135,7 +154,7 @@ const keyJustPressed = {};
 
 
 const PARRY_WINDOW = 0.2;
-const PARRY_END_LAG = 0.1;
+const PARRY_END_LAG = 0.2;
 
 // load sword.png
 const swordImage = new Image();
@@ -383,7 +402,7 @@ function initializeGamePage() {
   // Add event listener to export button
   exportButton.addEventListener('click', () => {
     // export the level
-    exportLevel();
+    exportLevel(state.level);
   });
 
 
@@ -392,7 +411,6 @@ function initializeGamePage() {
     if (!keyPressed[event.key]) {
       keyPressed[event.key] = true;
       keyJustPressed[event.key] = true;
-      console.log("key pressed ", event.key);
     }
   });
   document.addEventListener('keyup', (event) => {
@@ -417,18 +435,100 @@ function fadingAlert(message) {
   state.alerts.push({ message: alertText, ttl: 3000 });
 }
 
+function compressAttackData(attackData) {
+  // attack data is a list of attack structs
+  // we flatten this data into two strings, one for time and one for direction
+
+  // for time, we encode the information as a number of frames after the last attack
+  // this allows us to only use 8 bits per attack, with a maximum of (2^8)*15, about 3.75 seconds between attacks
+
+  var timeStr = '';
+  for (const attack of attackData) {
+    if (attack.frame > 0xFFFF) {
+      fadingAlert('Failed to compress attack data! Something has gone wrong, or your video is longer that 18 minutes.');
+      console.error('Attack time too large to compress. Frame num: ', attack.frame);
+      console.error('max frame num: ', 0xFFFF);
+      return;
+    }
+    timeStr += String.fromCharCode(attack.frame & 0xFFFF);
+  }
+  
+
+  var dirStr = '';
+  var i = 0;
+  while (i < attackData.length) {
+    var dirNum = 0;
+    for (var j = 0; j < 4; j++) {
+      if (i >= attackData.length) {
+        break;
+      }
+      dirNum |= (attackData[i].direction << (2 * j));
+      i++;
+    }
+    dirStr += String.fromCharCode(dirNum);
+  }
+  
+  return [timeStr, dirStr];
+}
+
+function uncompressAttackData(compressedData) {
+  var times = [];
+  var dirs = [];
+  for (const char of compressedData[0]) {
+    times.push(char.charCodeAt(0));
+  }
+  for (const char of compressedData[1]) {
+    var dirNum = char.charCodeAt(0);
+    for (var j = 0; j < 4; j++) {
+      dirs.push(dirNum & 0b11);
+      dirNum >>= 2;
+    }
+  }
+
+  var attackData = [];
+  if (times.length !== dirs.length) {
+    fadingAlert('Failed to uncompress attack data! Something has gone wrong, got different number of times and directions.');
+    console.error('Attack data compressed incorrectly');
+    return;
+  }
+  for (var i = 0; i < times.length; i++) {
+    attackData.push({ frame: times[i], direction: dirs[i] });
+  }
+  return attackData;
+}
+
+function linkToLevel(level) {
+  const compressedAttackData = compressAttackData(level.attackData);
+  console.log(compressedAttackData);
+
+  const link = `http://localhost:8000/?v=0&vid=${level.video}&t=${encodeURIComponent(compressedAttackData[0])}&d=${encodeURIComponent(compressedAttackData[1])}`;
+
+  // check that the link is small enough
+  if (link.length > 2000) {
+    return undefined;
+  }
+  return link;
+}
+
 
 
 // Function to export the level data to a link
 // link in dev mode is local host
-function exportLevel() {
-  const link = `http://localhost:8000/?data=${encodeURIComponent(JSON.stringify(state.level))}`;
+function exportLevel(level) {
+  const link = linkToLevel(level);
+
+  // check that the link is small enough
+  if (link === undefined) {
+    fadingAlert('Level data too large to export to a link, sorry ):');
+  } else {
   // copy the link to the clipboard
   navigator.clipboard.writeText(link).then(() => {
-    // TODO show a success message
-  }).catch((error) => {
-    console.error('Failed to copy: ', error);
-  });
+      fadingAlert('Level data copied to clipboard.');
+    }).catch((error) => {
+      fadingAlert('Failed to copy level data to clipboard.');
+      console.error('Failed to copy: ', error);
+    });
+  }
 }
 
 
@@ -557,7 +657,6 @@ function mainLoop(event) {
         directions.push(keyToDirection[key]);
       }
     }
-    console.log(directions);
     const targetDir = blockDir(directions);
 
     var positions = [];
@@ -704,6 +803,9 @@ function setGameMode(mode) {
     elements.player.pauseVideo();
   }
 
+  // reset the sword state
+  state.sword = initialSwordState;
+
   // if the new mode is menu, show the menu
   if  (mode === MENU) {
     elements.gameHUD.style.display = 'none';
@@ -777,3 +879,26 @@ function extractVideoID(url) {
 initializeGamePage();
 
 console.log("Game script loaded and game page initialized.");
+
+
+function tests() {
+  // check that we can encode 1000 attacks to a link
+  const level = {
+    video: 'test',
+    attackData: [],
+  };
+
+  for (let i = 0; i < 200; i++) {
+    // there are 9 directions
+    level.attackData.push({ frame: i*15, direction: i % 9 });
+  }
+
+  const link = linkToLevel(level);
+  if (link === undefined) {
+    alert('Failed to encode 500 attacks to a link');
+    console.error('Failed to encode 500 attacks to a link');
+  }
+  console.log('500 attack sequence link: ', link);
+}
+
+tests();
