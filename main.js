@@ -302,13 +302,10 @@ function initializeGamePage() {
 
   // add a scaled sword image to elements once swordImage is loaded
   swordImage.onload = () => {
-    let new_canvas = document.createElement('canvas');
     let scale_factor = (0.15 * canvas.width) / swordImage.width;
-    new_canvas.width = scale_factor * swordImage.width;
-    new_canvas.height = scale_factor * swordImage.height;
-    let new_ctx = new_canvas.getContext('2d');
-    new_ctx.drawImage(swordImage, 0, 0, new_canvas.width, new_canvas.height);
-    elements.swordImage = new_canvas;
+    elements.swordImage = scaleImage(swordImage, scale_factor);
+    let outlineScaleFactor = (0.16 * canvas.width) / swordImage.width;
+    elements.swordOutlineImage = scaleImage(swordImage, outlineScaleFactor);
   }
   
 
@@ -406,6 +403,15 @@ function onYouTubeIframeAPIReady() {
           onReady: mainLoop,
       },
   });
+}
+
+function scaleImage(image, scale) {
+  const newCanvas = document.createElement('canvas');
+  newCanvas.width = image.width * scale;
+  newCanvas.height = image.height * scale;
+  const ctx = newCanvas.getContext('2d');
+  ctx.drawImage(image, 0, 0, newCanvas.width, newCanvas.height);
+  return newCanvas;
 }
 
 // Main loop of the game
@@ -523,33 +529,24 @@ function mainLoop(event) {
 function drawCanvas() {
   // draw swordImage to the canvas at it's current position
   // center it on the xpos and ypos
-  const ctx = elements.canvas.getContext('2d');
   const topLeftX = elements.canvas.width * state.sword.pos[0] - elements.swordImage.width / 2;
   // invert sword pos since it starts from the bottom of the screen
   const swordYPos = 1 - state.sword.pos[1];
   const topLeftY = elements.canvas.height * swordYPos - elements.swordImage.height / 2;
+  drawCenteredRotated(elements.swordOutlineImage, topLeftX, topLeftY, Math.atan2(state.sword.dir[0], state.sword.dir[1]));
+}
+
+function drawCenteredRotated(image, xpos, ypos, angle) {
+  const ctx = elements.canvas.getContext('2d');
   ctx.save();
-  ctx.translate(topLeftX + elements.swordImage.width / 2, topLeftY + elements.swordImage.height / 2);
-  ctx.rotate(Math.atan2(state.sword.dir[0], state.sword.dir[1]));
-  ctx.drawImage(elements.swordImage, -elements.swordImage.width / 2, -elements.swordImage.height / 2);
+  ctx.translate(xpos + image.width / 2, ypos + image.height / 2);
+  ctx.rotate(angle);
+  ctx.drawImage(image, -image.width / 2, -image.height / 2);
   ctx.restore();
 }
 
 
 function setGameMode(mode) {
-  // if the current mode is menu, hide the menu
-  if (state.gameMode === MENU) {
-    elements.floatingMenu.style.display = 'none';
-  }
-  // if the current mode is playing, hide the game hud
-  if (state.gameMode === PLAYING) {
-    elements.gameHUD.style.display = 'none';
-  }
-  // if the current mode is recording, hide the game hud
-  if (state.gameMode === RECORDING) {
-    elements.gameHUD.style.display = 'none';
-  }
-
   // if the video is valid, load it
   if (state.level.video) {
     elements.player.loadVideoById(state.level.video);
@@ -557,7 +554,8 @@ function setGameMode(mode) {
   }
 
   // if the new mode is menu, show the menu
-  if (mode === MENU) {
+  if  (mode === MENU) {
+    elements.gameHUD.style.display = 'none';
     elements.floatingMenu.style.display = 'flex';
     // pause the video
     elements.player.pauseVideo();
@@ -566,10 +564,8 @@ function setGameMode(mode) {
       elements.exportButton.style.display = 'block';
       elements.playButton.style.display = 'block';
 
-      // set the play button's text to "Play {title of youtube video}"
-      const currentVideoName = elements.player.getVideoData().title;
-      elements.playButton.textContent = `Play "${currentVideoName}"`;
-      elements.exportButton.textContent = `Export "${currentVideoName}"`;
+      elements.playButton.textContent = `Play`;
+      elements.exportButton.textContent = `Export`;
     } else {
       elements.exportButton.style.display = 'none';
       elements.playButton.style.display = 'none';
@@ -577,11 +573,17 @@ function setGameMode(mode) {
   }
   // if the new mode is playing, show the game hud
   if (mode === PLAYING) {
+    // hide the floating menu
+    elements.floatingMenu.style.display = 'none';
+
     elements.gameHUD.style.display = 'flex';
     elements.player.playVideo();
   }
   // if the new mode is recording, show the game hud
   if (mode === RECORDING) {
+    // hide the floating menu
+    elements.floatingMenu.style.display = 'none';
+
     // delete the current recorded attacks
     state.level.attackData = [];
     elements.gameHUD.style.display = 'flex';
