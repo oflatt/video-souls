@@ -305,7 +305,8 @@ function initializeGamePage() {
     let scale_factor = (0.15 * canvas.width) / swordImage.width;
     elements.swordImage = scaleImage(swordImage, scale_factor);
     let outlineScaleFactor = (0.16 * canvas.width) / swordImage.width;
-    elements.swordOutlineImage = scaleImage(swordImage, outlineScaleFactor);
+    let untinted = scaleImage(swordImage, outlineScaleFactor);
+    elements.swordOutlineImage = tintImage(untinted, [1.0, 0.2, 0.2]);
   }
   
 
@@ -411,6 +412,26 @@ function scaleImage(image, scale) {
   newCanvas.height = image.height * scale;
   const ctx = newCanvas.getContext('2d');
   ctx.drawImage(image, 0, 0, newCanvas.width, newCanvas.height);
+  return newCanvas;
+}
+
+// given an image/canvas and a color multiplier, multiply each rgb value
+// in the image by the color multiplier element-wise
+// color multiplier is an array of 3 values
+function tintImage(image, color_multiplier) {
+  const newCanvas = document.createElement('canvas');
+  newCanvas.width = image.width;
+  newCanvas.height = image.height;
+  const ctx = newCanvas.getContext('2d');
+  ctx.drawImage(image, 0, 0, newCanvas.width, newCanvas.height);
+  const imageData = ctx.getImageData(0, 0, newCanvas.width, newCanvas.height);
+  const data = imageData.data;
+  for (let i = 0; i < data.length; i += 4) {
+    data[i] *= color_multiplier[0];
+    data[i + 1] *= color_multiplier[1];
+    data[i + 2] *= color_multiplier[2];
+  }
+  ctx.putImageData(imageData, 0, 0);
   return newCanvas;
 }
 
@@ -533,12 +554,19 @@ function drawCanvas() {
   // invert sword pos since it starts from the bottom of the screen
   const swordYPos = 1 - state.sword.pos[1];
   const topLeftY = elements.canvas.height * swordYPos - elements.swordImage.height / 2;
-  drawCenteredRotated(elements.swordOutlineImage, topLeftX, topLeftY, Math.atan2(state.sword.dir[0], state.sword.dir[1]));
+  const swortOutlineX = topLeftX - (elements.swordOutlineImage.width - elements.swordImage.width) / 2;
+  const swordOutlineY = topLeftY - (elements.swordOutlineImage.height - elements.swordImage.height) / 2;
+  const currentTime = elements.player.getCurrentTime();
+  const swordOutlineStrength = Math.max(state.sword.readyAt - currentTime, 0.0) / BLOCK_END_LAG;
+
+  drawCenteredRotated(elements.swordOutlineImage, swortOutlineX, swordOutlineY, Math.atan2(state.sword.dir[0], state.sword.dir[1]), swordOutlineStrength);
+  drawCenteredRotated(elements.swordImage, topLeftX, topLeftY, Math.atan2(state.sword.dir[0], state.sword.dir[1]), 1.0);
 }
 
-function drawCenteredRotated(image, xpos, ypos, angle) {
+function drawCenteredRotated(image, xpos, ypos, angle, alpha) {
   const ctx = elements.canvas.getContext('2d');
   ctx.save();
+  ctx.globalAlpha = alpha;
   ctx.translate(xpos + image.width / 2, ypos + image.height / 2);
   ctx.rotate(angle);
   ctx.drawImage(image, -image.width / 2, -image.height / 2);
