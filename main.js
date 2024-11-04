@@ -36,7 +36,7 @@ const blockDirectionVectors = {
   // same for right
   RIGHT: [0, 1],
   CENTER: [0, 1],
-  Rest: [0.5, 0.86602540378],
+  REST: [0.5, 0.86602540378],
 }
 
 const blockDirectionPositions = {
@@ -45,6 +45,7 @@ const blockDirectionPositions = {
   LEFT: [0.3, 0.5],
   RIGHT: [0.7, 0.5],
   CENTER: [0.5, 0.5],
+  REST: [0.5, 0.5],
 }
 
 
@@ -69,6 +70,8 @@ const state = {
     // readyAt encodes end lag for blocking or attacking
     // only after this time in the video can another input be made
     readyAt: 0,
+    // inputs are buffered so that they are not missed and punishes for spam
+    bufferedInput: null,
   },
   // each alert has a message element and a time to live
   alerts: [],
@@ -308,7 +311,6 @@ function initializeGamePage() {
     let untinted = scaleImage(swordImage, outlineScaleFactor);
     elements.swordOutlineImage = tintImage(untinted, [1.0, 0.2, 0.2]);
   }
-  
 
   // Add event listener to record button
   recordButton.addEventListener('click', () => {
@@ -463,27 +465,39 @@ function mainLoop(event) {
     }
   }
 
-  if ((state.gameMode == PLAYING || state.gameMode == RECORDING) && timeInSeconds >= state.sword.readyAt) {
+  if ((state.gameMode == PLAYING || state.gameMode == RECORDING)) {
     // for each direction in keyToDirection, check if the key is just pressed
     // if it is, set the sword block direction to the corresponding direction
     // this starts it moving towards that position
     for (const key in keyToDirection) {
+      // if a key was just pressed, buffer it
       if (keyJustPressed[key]) {
-        state.sword.state = BLOCKING;
-        state.sword.blockDir = keyToDirection[key];
-        state.sword.readyAt = timeInSeconds + BLOCK_END_LAG;
+        if (state.sword.bufferedInput === null) {
+          state.sword.bufferedInput = key;
+        }
       }
     }
-  }
 
-  // if the sword is blocking and the readyAt time has passed
-  if (state.sword.state === BLOCKING && timeInSeconds >= state.sword.readyAt) {
-    // set the sword state to resting
-    state.sword.state = REST;
+    // ready for new buffered action
+    if (timeInSeconds >= state.sword.readyAt && state.sword.bufferedInput !== null) {
+      // do the buffered input
+      state.sword.state = BLOCKING;
+      state.sword.blockDir = keyToDirection[state.sword.bufferedInput];
+      state.sword.readyAt = timeInSeconds + BLOCK_END_LAG;
+      state.sword.bufferedInput = null;
+    }
+
+    // otherwise if the sword is blocking and the ready time has passed, set the sword to rest
+    if (state.sword.state === BLOCKING && timeInSeconds >= state.sword.readyAt) {
+      // set the sword state to resting
+      state.sword.state = BLOCKING;
+      state.sword.blockDir = REST;
+    }
   }
 
   // if the sword is blocking, move it towards the block direction and position
   if (state.sword.state === BLOCKING) {
+    const state1 = state;
     const targetDir = blockDirectionVectors[state.sword.blockDir];
     const targetPos = blockDirectionPositions[state.sword.blockDir];
 
