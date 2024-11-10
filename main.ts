@@ -31,7 +31,9 @@ const parryKey = 'j';
 
 
 type BattleState = {
+  // positions are relative to bottom-left of screen, 0.0 to 1.0
   pos: [number, number],
+  // direction vectors are x, y normalized
   dir: [number, number],
   anim: {
     state: AttackAnimation,
@@ -90,7 +92,9 @@ const ATTACK_WARNING_ADVANCE = 0.2;
 
 function initialBattleState(): BattleState {
   return {
+    // positions are relative to bottom-left of screen
     pos: [0.5, 0.5],
+    // direction vectors are x, y normalized
     dir: [0, 1],
     anim: {
       state: AttackAnimation.NONE,
@@ -130,9 +134,10 @@ class Graphics {
     // add a scaled sword image to elements once swordImage is loaded
     swordImage.addEventListener('load', () => {
       let scale_factor = (0.15 * canvas.width) / swordImage.width;
-      this.swordSprites.default = scaleImage(swordImage, scale_factor);
-      let outlineScaleFactor = (0.16 * canvas.width) / swordImage.width;
-      let untinted = scaleImage(swordImage, outlineScaleFactor);
+      this.swordSprites.default = scaleImage(swordImage, scale_factor, scale_factor);
+      let outlineScaleFactorW = (0.25 * canvas.width) / swordImage.width;
+      let outlineScaleFactorH = (0.18 * canvas.width) / swordImage.width;
+      let untinted = scaleImage(swordImage, outlineScaleFactorW, outlineScaleFactorH);
       this.swordSprites.redOutline = tintImage(untinted, [1.0, 0.2, 0.2]);
       this.swordSprites.greenOutline = tintImage(untinted, [0.2, 1.0, 0.2]);
     });
@@ -291,10 +296,8 @@ class VideoSouls {
       const attack = attacks[0];
       // if the player is not parrying, take damage
       if (this.battle.anim.state === AttackAnimation.PARRYING && currentDir() == attack.direction) {
-        console.log("parried");
         this.successParry();
       } else {
-        console.log("attacked");
         this.battle.health -= 0.1;
   
         // start a stagger animation
@@ -511,12 +514,12 @@ class VideoSouls {
   
     var swordPos = this.battle.pos;
     var swordDir = this.battle.dir;
+    console.log(swordPos, swordDir);
     var redSwordOutlineStrength = 0.0;
     var greenSwordOutlineStrength = 0.0;
   
     // first, determine swordPos and swordDir from animation
     if (this.battle.anim.state !== AttackAnimation.NONE) {
-      console.log("animating sword");
       const animProgressUncapped = (currentTime - this.battle.anim.startTime) / (this.battle.anim.endTime - this.battle.anim.startTime);
       const animProgress = Math.max(Math.min(1.0, animProgressUncapped), 0.0);
       swordPos = [
@@ -533,30 +536,35 @@ class VideoSouls {
       if (this.battle.anim.state === AttackAnimation.PARRYING && animProgress < parryWindowProportion) {
         redSwordOutlineStrength = 1.0 - (animProgress / parryWindowProportion);
       }
-      // fading green outline if we just parried successfully
-      if (currentTime - this.battle.anim.lastParryTime < SUCCESS_PARRY_ANIM_FADE) {
-        greenSwordOutlineStrength = 1.0 - ((currentTime - this.battle.anim.lastParryTime) / SUCCESS_PARRY_ANIM_FADE);
-      }
+    }
+
+    // fading green outline if we just parried successfully
+    if (currentTime - this.battle.anim.lastParryTime < SUCCESS_PARRY_ANIM_FADE) {
+      greenSwordOutlineStrength = 1.0 - ((currentTime - this.battle.anim.lastParryTime) / SUCCESS_PARRY_ANIM_FADE);
     }
 
     // draw swordImage to the canvas at it's current position
     // center it on the xpos and ypos
-    const topLeftX = this.elements.canvas.width * swordPos[0] - this.graphics.swordSprites.default.width / 2;
-    // invert sword pos since it starts from the bottom of the screen
-    const swordYPos = 1 - swordPos[1];
-    const topLeftY = this.elements.canvas.height * swordYPos - this.graphics.swordSprites.default.height / 2;
-    const swortOutlineX = topLeftX - (this.graphics.swordSprites.redOutline.width - this.graphics.swordSprites.default.width) / 2;
-    const swordOutlineY = topLeftY - (this.graphics.swordSprites.redOutline.height - this.graphics.swordSprites.default.height) / 2;
+    const topLeftX = this.elements.canvas.width * swordPos[0];
+    const topLeftY = this.elements.canvas.height * swordPos[1];
+    var swordOutlineX = topLeftX;
+    var swordOutlineY = topLeftY; 
+    // offset the swordOutlineX and swordOutlineY slightly in the direction of the sword to make the hilts align better
+    swordOutlineX += swordDir[0] * this.graphics.swordSprites.default.width * 0.03;
+    swordOutlineY += swordDir[1] * this.graphics.swordSprites.default.width * 0.03;
   
-    this.drawCenteredRotated(this.graphics.swordSprites.redOutline, swortOutlineX, swordOutlineY, Math.atan2(swordDir[0], swordDir[1]), redSwordOutlineStrength);
+    this.drawCenteredRotated(this.graphics.swordSprites.redOutline, swordOutlineX, swordOutlineY, Math.atan2(swordDir[0], swordDir[1]), redSwordOutlineStrength);
+    this.drawCenteredRotated(this.graphics.swordSprites.greenOutline, swordOutlineX, swordOutlineY, Math.atan2(swordDir[0], swordDir[1]), greenSwordOutlineStrength);
     this.drawCenteredRotated(this.graphics.swordSprites.default, topLeftX, topLeftY, Math.atan2(swordDir[0], swordDir[1]), 1.0);
   }
   
   private drawCenteredRotated(image: HTMLImageElement | HTMLCanvasElement, xpos: number, ypos: number, angle: number, alpha: number) {
+    // invert ypos since it starts from the bottom of the screen
+    ypos = this.elements.canvas.height - ypos;
     const ctx = this.elements.canvas.getContext('2d')!;
     ctx.save();
     ctx.globalAlpha = alpha;
-    ctx.translate(xpos + image.width / 2, ypos + image.height / 2);
+    ctx.translate(xpos, ypos);
     ctx.rotate(angle);
     ctx.drawImage(image, -image.width / 2, -image.height / 2);
     ctx.restore();
@@ -668,10 +676,10 @@ function currentDirVector() {
 
 // Image manipulations
 
-function scaleImage(image: HTMLImageElement | HTMLCanvasElement, scale: number) {
+function scaleImage(image: HTMLImageElement | HTMLCanvasElement, scaleW: number, scaleH: number) {
   const newCanvas = document.createElement('canvas');
-  newCanvas.width = image.width * scale;
-  newCanvas.height = image.height * scale;
+  newCanvas.width = image.width * scaleW;
+  newCanvas.height = image.height * scaleH;
   const ctx = newCanvas.getContext('2d')!;
   ctx.drawImage(image, 0, 0, newCanvas.width, newCanvas.height);
   return newCanvas;

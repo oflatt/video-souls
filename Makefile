@@ -5,13 +5,11 @@
 PORT=8000
 
 # Define the target to start the server
-serve: compile
+serve:
 	tsc --watch &
 	python -m http.server $(PORT)
 
 
-# compile with tsc
-compile:
+install:
 	npm install
-	tsc
 
