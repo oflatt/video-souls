@@ -6,6 +6,7 @@ PORT=8000
 
 # Define the target to start the server
 serve: compile
+	tsc --watch &
 	python -m http.server $(PORT)
 
 

@@ -81,6 +81,7 @@ const keyJustPressed = new Set<string>();
 
 const PARRY_WINDOW = 0.2;
 const PARRY_END_LAG = 0.2;
+const SUCCESS_PARRY_ANIM_FADE = 0.2;
 
 const STAGGER_TIME = 0.4;
 
@@ -110,17 +111,41 @@ function initialBattleState(): BattleState {
 }
 
 
+class Graphics {
+  swordSprites: {
+    default: HTMLImageElement | HTMLCanvasElement,
+    redOutline: HTMLImageElement | HTMLCanvasElement,
+    greenOutline: HTMLImageElement | HTMLCanvasElement,
+  };
+
+  constructor(canvas: HTMLCanvasElement) {
+    // Load sword sprites
+    this.swordSprites = {
+      default: new Image(),
+      redOutline: new Image(),
+      greenOutline: new Image(),
+    };
+    const swordImage = new Image();
+    swordImage.src = 'sword.png';
+    // add a scaled sword image to elements once swordImage is loaded
+    swordImage.addEventListener('load', () => {
+      let scale_factor = (0.15 * canvas.width) / swordImage.width;
+      this.swordSprites.default = scaleImage(swordImage, scale_factor);
+      let outlineScaleFactor = (0.16 * canvas.width) / swordImage.width;
+      let untinted = scaleImage(swordImage, outlineScaleFactor);
+      this.swordSprites.redOutline = tintImage(untinted, [1.0, 0.2, 0.2]);
+      this.swordSprites.greenOutline = tintImage(untinted, [0.2, 1.0, 0.2]);
+    });
+  }
+}
+
 class VideoSouls {
   elements;
   level: LevelData;
   gameMode: GameMode;
   battle: BattleState;
   alerts: AlertData[];
-  swordSprites: {
-    default: HTMLImageElement | HTMLCanvasElement,
-    redOutline: HTMLImageElement | HTMLCanvasElement,
-    greenOutline: HTMLImageElement | HTMLCanvasElement,
-  };
+  graphics: Graphics;
 
   constructor(player: YT.Player) {
     this.elements = {
@@ -150,24 +175,7 @@ class VideoSouls {
     this.alerts = [];
 
     this.initializeEventListeners();
-
-    // Load sword sprites
-    this.swordSprites = {
-      default: new Image(),
-      redOutline: new Image(),
-      greenOutline: new Image(),
-    };
-    const swordImage = new Image();
-    swordImage.src = 'sword.png';
-    // add a scaled sword image to elements once swordImage is loaded
-    swordImage.addEventListener('load', () => {
-      let scale_factor = (0.15 * this.elements.canvas.width) / swordImage.width;
-      this.swordSprites.default = scaleImage(swordImage, scale_factor);
-      let outlineScaleFactor = (0.16 * this.elements.canvas.width) / swordImage.width;
-      let untinted = scaleImage(swordImage, outlineScaleFactor);
-      this.swordSprites.redOutline = tintImage(untinted, [1.0, 0.2, 0.2]);
-      this.swordSprites.greenOutline = tintImage(untinted, [0.2, 1.0, 0.2]);
-    });
+    this.graphics = new Graphics(this.elements.canvas);
   }
 
   private initializeEventListeners() {
@@ -503,7 +511,8 @@ class VideoSouls {
   
     var swordPos = this.battle.pos;
     var swordDir = this.battle.dir;
-    var swordOutlineStrength = 0.0;
+    var redSwordOutlineStrength = 0.0;
+    var greenSwordOutlineStrength = 0.0;
   
     // first, determine swordPos and swordDir from animation
     if (this.battle.anim.state !== AttackAnimation.NONE) {
@@ -522,22 +531,25 @@ class VideoSouls {
       // sword outline is only visible during the parry window
       const parryWindowProportion = PARRY_WINDOW / (PARRY_WINDOW + PARRY_END_LAG);
       if (this.battle.anim.state === AttackAnimation.PARRYING && animProgress < parryWindowProportion) {
-        swordOutlineStrength = animProgress / parryWindowProportion;
-        swordOutlineStrength = 1.0 - swordOutlineStrength;
+        redSwordOutlineStrength = 1.0 - (animProgress / parryWindowProportion);
+      }
+      // fading green outline if we just parried successfully
+      if (currentTime - this.battle.anim.lastParryTime < SUCCESS_PARRY_ANIM_FADE) {
+        greenSwordOutlineStrength = 1.0 - ((currentTime - this.battle.anim.lastParryTime) / SUCCESS_PARRY_ANIM_FADE);
       }
     }
 
     // draw swordImage to the canvas at it's current position
     // center it on the xpos and ypos
-    const topLeftX = this.elements.canvas.width * swordPos[0] - this.swordSprites.default.width / 2;
+    const topLeftX = this.elements.canvas.width * swordPos[0] - this.graphics.swordSprites.default.width / 2;
     // invert sword pos since it starts from the bottom of the screen
     const swordYPos = 1 - swordPos[1];
-    const topLeftY = this.elements.canvas.height * swordYPos - this.swordSprites.default.height / 2;
-    const swortOutlineX = topLeftX - (this.swordSprites.redOutline.width - this.swordSprites.default.width) / 2;
-    const swordOutlineY = topLeftY - (this.swordSprites.redOutline.height - this.swordSprites.default.height) / 2;
+    const topLeftY = this.elements.canvas.height * swordYPos - this.graphics.swordSprites.default.height / 2;
+    const swortOutlineX = topLeftX - (this.graphics.swordSprites.redOutline.width - this.graphics.swordSprites.default.width) / 2;
+    const swordOutlineY = topLeftY - (this.graphics.swordSprites.redOutline.height - this.graphics.swordSprites.default.height) / 2;
   
-    this.drawCenteredRotated(this.swordSprites.redOutline, swortOutlineX, swordOutlineY, Math.atan2(swordDir[0], swordDir[1]), swordOutlineStrength);
-    this.drawCenteredRotated(this.swordSprites.default, topLeftX, topLeftY, Math.atan2(swordDir[0], swordDir[1]), 1.0);
+    this.drawCenteredRotated(this.graphics.swordSprites.redOutline, swortOutlineX, swordOutlineY, Math.atan2(swordDir[0], swordDir[1]), redSwordOutlineStrength);
+    this.drawCenteredRotated(this.graphics.swordSprites.default, topLeftX, topLeftY, Math.atan2(swordDir[0], swordDir[1]), 1.0);
   }
   
   private drawCenteredRotated(image: HTMLImageElement | HTMLCanvasElement, xpos: number, ypos: number, angle: number, alpha: number) {
