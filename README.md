@@ -20,4 +20,4 @@ Welcome to the repo for video souls. For local development, simply serve the sta
   - Different attack speeds/damage tradeoff
   - Custom weapons, upload png or use link to png
 - Video tutorial for video souls
-- 
+- Use JS to create UI elements
