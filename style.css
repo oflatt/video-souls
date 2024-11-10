@@ -89,41 +89,4 @@ button {
     border-radius: 8px;
     z-index: 1000;
     opacity: 100%;
-    transition: opacity 3s ease-in;
 }
-
-/* UI based on game mode */
-
-/* f  (mode === GameMode.MENU) {
-    elements.gameHUD.style.display = 'none';
-    elements.floatingMenu.style.display = 'flex';
-    // pause the video
-    elements.player.pauseVideo();
-    // show the export and play buttons if there is any recorded data
-    if (state.level.attackData.length > 0) {
-      elements.exportButton.style.display = 'block';
-      elements.playButton.style.display = 'block';
-
-      elements.playButton.textContent = `Play`;
-      elements.exportButton.textContent = `Export`;
-    } else {
-      elements.exportButton.style.display = 'none';
-      elements.playButton.style.display = 'none';
-    }
-  }
-  // if the new mode is playing, show the game hud
-  if (mode === PLAYING || mode === RECORDING) {
-    // hide the floating menu
-    elements.floatingMenu.style.display = 'none';
-
-    var playbackRate = 1.0;
-    if (mode === RECORDING) {
-      // delete the current recorded attacks
-      state.level.attackData = [];
-      // set the playback rate to the recording speed
-      playbackRate = Number(elements.recordSpeedInput.value);
-    }
-    elements.player.setPlaybackRate(playbackRate);
-
-    elements.gameHUD.style.display = 'flex';
-    elements.player.playVideo(); */
