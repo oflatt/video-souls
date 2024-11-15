@@ -121,6 +121,7 @@
     box-sizing: border-box;
     background-color: var(--warning-color);
     border-radius: 25%;
+    cursor: ew-resize;
 }
 
 .attack-marker .marker-handle .damage-line {
@@ -142,6 +143,7 @@
     box-sizing: border-box;
     background-color: var(--damage-color);
     border-radius: 25%;
+    cursor: ew-resize;
 }
 .attack-marker:not(.selected) .marker-handle .warning-line,
 .attack-marker:not(.selected) .marker-handle .damage-line {
@@ -149,7 +151,7 @@
 }
 
 .attack-marker.selected {
-    --height: 70px;
+    --height: 70px !important;
     --marker-color: hsl(130, 70%, 35%);
     --highlight-color: hsl(130, 55%, 50%);
 }

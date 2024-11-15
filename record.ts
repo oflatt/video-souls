@@ -12,12 +12,14 @@ class LevelEditor extends Level {
   frameToAttack: Map<number, AttackData>;
   elements: Map<AttackData, HTMLElement>;
   selectedAttack: AttackData | null;
+  selectionMode: "warning" | "delay" | null;
 
   constructor(videoID: string) {
     super(videoID);
     this.frameToAttack = new Map<number, AttackData>();
     this.elements = new Map<AttackData, HTMLElement>();
     this.selectedAttack = null;
+    this.selectionMode = null;
   }
 
   createAttackAt(timestamp: DOMHighResTimeStamp) {
@@ -26,31 +28,58 @@ class LevelEditor extends Level {
     if (existingAttack != null) {
       this.deleteAttack(existingAttack);
     }
-    this.addAttack({
+    let newAttack = {
       time: timestamp,
       direction: DirectionInputManager.getDirection(),
       warningTime: LevelEditor.defaults.warningTime,
       damageDelay: LevelEditor.defaults.damageDelay,
       attackDamage: LevelEditor.defaults.attackDamage
-    });
+    };
+    this.addAttack(newAttack);
+    this.selectAttack(newAttack);
   }
 
-  removeAttackAt(timestamp: DOMHighResTimeStamp) {
+  selectAttackAt(timestamp: DOMHighResTimeStamp) {
     let existingAttack = this.frameToAttack.get(this.frameIndex(timestamp));
     if (existingAttack != null) {
-      this.deleteAttack(existingAttack);
+      this.selectAttack(existingAttack);
+    }
+  }
+
+  removeSelectedAttack() {
+    if (this.selectedAttack != null) {
+      this.deleteAttack(this.selectedAttack);
+    }
+  }
+
+  seekForward(seconds: number) {
+    if (this.selectionMode == "delay") {
+      // TODO
+    } else if (this.selectionMode == "warning") {
+      // TODO
+    } else {
+      playerSeekForward(seconds);
     }
   }
 
   private addAttack(attack: AttackData) {
+    // Set up attack marker element
     const parentElement = document.querySelector<HTMLElement>("#playback-bar")!;
     const templateElement = document.querySelector<HTMLElement>(".attack-marker.template")!;
     let attackElement = <HTMLElement>templateElement.cloneNode(true); // Returns Node type by default
     attackElement.classList.remove("template");
-    // TODO: set element parameters
     attackElement.style.left = `${timeToPx(attack.time)}px`;
     attackElement.style.setProperty('--height', `${25 + 15 * Math.random()}px`);
+    attackElement.style.setProperty('--warning-offset', `${timeToPx(attack.warningTime)}px`);
+    attackElement.style.setProperty('--damage-offset', `${timeToPx(attack.damageDelay)}px`);
+    attackElement.querySelector(".marker-handle")!.addEventListener("click", event => {
+      if (this.selectedAttack != attack) {
+        event.stopPropagation();
+        this.selectAttack(attack);
+      }
+    });
     this.elements.set(attack, attackElement);
+    // Insert attack chronologically
     let index = this.attacks.findIndex(a => attack.time < a.time);
     if (index == -1) {
       parentElement.insertBefore(attackElement, null);
@@ -76,10 +105,12 @@ class LevelEditor extends Level {
   }
 
   private selectAttack(attack: AttackData | null) {
+    this.selectedAttack = null;
     for (let element of this.elements.values()) {
       element.classList.remove("selected");
     }
     if (attack != null) {
+      this.selectedAttack = attack;
       this.elements.get(attack)!.classList.add("selected");
       player.seekTo(attack.time, true);
     }
@@ -140,28 +171,28 @@ var onYouTubeIframeAPIReady = function() {
             }
             break;
           case "ArrowLeft":
-            seekForward(-1);
+            levelEditor.seekForward(-1);
             break;
           case "ArrowRight":
-            seekForward(1);
+            levelEditor.seekForward(1);
             break;
           case ",":
-            seekForward(-0.05);
+            levelEditor.seekForward(-0.05);
             break;
           case ".":
-            seekForward(0.05);
+            levelEditor.seekForward(0.05);
             break;
           case "j":
-            seekForward(-10);
+            levelEditor.seekForward(-10);
             break;
           case "l":
-            seekForward(10);
+            levelEditor.seekForward(10);
             break;
           case "Enter":
             levelEditor.createAttackAt(player.getCurrentTime());
             break;
           case "x":
-            levelEditor.removeAttackAt(player.getCurrentTime());
+            levelEditor.removeSelectedAttack();
             break;
           default:
             DirectionInputManager.processKeydown(event);
@@ -175,18 +206,13 @@ var onYouTubeIframeAPIReady = function() {
         DirectionInputManager.processKeyup(event);
       });
 
-      setInterval(() => {
-        if (player.getPlayerState() == YT.PlayerState.PLAYING) {
-          updatePlaybackPoint();
-        }
-      }, 50);
+      setInterval(updatePlaybackPoint, 50);
 
       playbackBar.addEventListener("mousedown", event => {
         if (event.button == 0) {
           let bbox = playbackBar.getBoundingClientRect();
           let fraction = (event.clientX - bbox.left) / bbox.width;
           player.seekTo(fraction * player.getDuration(), true);
-          updatePlaybackPoint();
         }
       });
     });
@@ -203,8 +229,10 @@ function updatePlaybackPoint() {
   // playbackPoint.scrollIntoView();
 }
 
-function seekForward(seconds: number) {
-  player.seekTo(Math.min(Math.max(player.getCurrentTime() + seconds, 0), player.getDuration() - 0.05 * seconds), true);
+function playerSeekForward(seconds: number) {
+  let targetTime = Math.min(Math.max(player.getCurrentTime() + seconds, 0), player.getDuration() - 0.05 * seconds);
+  player.seekTo(targetTime, true);
+  levelEditor.selectAttackAt(targetTime);
   updatePlaybackPoint();
 }
 
