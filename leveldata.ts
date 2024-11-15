@@ -5,8 +5,8 @@ type AttackData = {
   time: DOMHighResTimeStamp,
   direction: AttackDirection,
   // Potential parameters
-  warningTime?: number,
-  damageDelay?: number,
+  warningTime: number,
+  damageDelay: number,
   attackDamage?: number
 };
 

@@ -550,7 +550,7 @@ class VideoSouls {
     if (this.gameMode == GameMode.RECORDING) {
       // check if the parry key is pressed, and add to the attack data if so
       if (keyJustPressed.has(parryKey)) {
-        this.level.attacks.push({ time: currentTime, direction: currentTargetDir() });
+        this.level.attacks.push({ time: currentTime, direction: currentTargetDir(), warningTime: 1, damageDelay: 0.1 });
       }
     }
 
