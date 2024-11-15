@@ -11,10 +11,6 @@ enum InputDirection {
   DOWN = 0b1000
 }
 
-enum AttackDirection {
-  UP, UP_RIGHT, RIGHT, DOWN_RIGHT, DOWN, DOWN_LEFT, LEFT, UP_LEFT, CENTER
-}
-
 enum AttackAnimation {
   NONE, PARRYING, ATTACKING, STAGGERING
 }
@@ -53,15 +49,6 @@ type BattleState = {
   healthBoss: number,
   // the last time we checked for attacks
   prevTime: number
-};
-type AttackData = {
-  time: number,
-  direction: AttackDirection
-};
-type LevelData = {
-  video: string | null,
-  attackData: AttackData[],
-  version: number
 };
 type AlertData = {
   message: HTMLElement,
@@ -141,8 +128,8 @@ class VideoSouls {
     } as const;
 
     this.level = {
-      video: null,
-      attackData: [],
+      videoID: "",
+      attacks: [],
       version: 1,
     };
     this.gameMode = GameMode.MENU;
@@ -205,7 +192,7 @@ class VideoSouls {
     // Debug
     const currentTime = this.elements.player.getCurrentTime();
     const timeInMilliseconds = Math.floor(currentTime * 1000);
-    this.elements.currentTimeDebug.textContent = `Time: ${timeInMilliseconds} ms data: ${this.level.attackData.length}`;
+    this.elements.currentTimeDebug.textContent = `Time: ${timeInMilliseconds} ms data: ${this.level.attacks.length}`;
     
     this.updateState();
 
@@ -263,7 +250,7 @@ class VideoSouls {
   // gets the attack direction, if any, for this time period
   // starttime exclusive, endtime inclusive
   getAttacksInInterval(startTime: number, endTime: number) {
-    return this.level.attackData.filter(attack => attack.time > startTime && attack.time <= endTime);
+    return this.level.attacks.filter(attack => attack.time > startTime && attack.time <= endTime);
   }
 
   successParry() {
@@ -323,7 +310,7 @@ class VideoSouls {
     if (this.gameMode == GameMode.RECORDING) {
       // check if the parry key is pressed, and add to the attack data if so
       if (keyJustPressed.has(parryKey)) {
-        this.level.attackData.push({ time: currentTime, direction: currentDir() });
+        this.level.attacks.push({ time: currentTime, direction: currentDir() });
       }
     }
   
@@ -400,8 +387,8 @@ class VideoSouls {
 
   setGameMode(mode: GameMode) {
     // if the video is valid, load it
-    if (this.level.video !== null) {
-      this.elements.player.loadVideoById(this.level.video);
+    if (this.level.videoID) {
+      this.elements.player.loadVideoById(this.level.videoID);
       this.elements.player.pauseVideo();
     }
   
@@ -415,7 +402,7 @@ class VideoSouls {
       // pause the video
       this.elements.player.pauseVideo();
       // show the export and play buttons if there is any recorded data
-      if (this.level.attackData.length > 0) {
+      if (this.level.attacks.length > 0) {
         this.elements.exportButton.style.display = 'block';
         this.elements.playButton.style.display = 'block';
       } else {
@@ -431,7 +418,7 @@ class VideoSouls {
       var playbackRate = 1.0;
       if (mode === GameMode.RECORDING) {
         // delete the current recorded attacks
-        this.level.attackData = [];
+        this.level.attacks = [];
         // set the playback rate to the recording speed
         playbackRate = Number(this.elements.recordSpeedInput.value);
       }
@@ -444,8 +431,8 @@ class VideoSouls {
     this.gameMode = mode;
   }
   
-  setCurrentVideo(videoId: string) {
-    this.level.video = videoId;
+  setCurrentVideo(videoID: string) {
+    this.level.videoID = videoID;
   }
 
   // Function to play a YouTube video by extracting the video ID from the URL
@@ -553,7 +540,7 @@ class VideoSouls {
 
 
 // YouTube API will call this function when API is ready
-function onYouTubeIframeAPIReady() {
+var onYouTubeIframeAPIReady = function() {
   const player = new YT.Player('video-player', {
     height: '100%',
     width: '100%',

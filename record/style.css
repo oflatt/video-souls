@@ -1,0 +1,185 @@
+:root, body, #game-container {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+/* Recording and playback */
+
+#recording-controls {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 166px;
+    background-color: #1a1f28dd;
+    border-top: lightgray 2px solid;
+    backdrop-filter: blur(2px);
+    overflow-x: scroll;
+}
+
+#playback-bar {
+    position: absolute;
+    bottom: 20px;
+    left: 60px;
+    height: 30px;
+    width: 80%;
+    cursor: pointer;
+}
+
+#playback-bar-inner {
+    position: absolute;
+    bottom: 20px;
+    left: 0;
+    width: 100%;
+    height: 8px;
+    box-sizing: border-box;
+    /* background-color: hsl(333, 70%, 35%); */
+    background-image: linear-gradient(to right, hsl(313, 70%, 35%) 0%, hsl(353, 70%, 35%) 100%);
+    /* border: lightgray 1px solid; */
+    border-radius: 5px;
+}
+
+#playback-bar #playback-point {
+    position: absolute;
+    top: -1px;
+    left: 0;
+    width: 16px;
+    height: 30px;
+    transform: translateX(-50%);
+    background-color: hsl(333, 90%, 45%);
+    box-shadow: black 0 1px 4px;
+    /* border: lightgray 1px solid; */
+    border-radius: 8px / 15px 15px 8px 8px;
+    z-index: 10;
+}
+
+/* Attack marker */
+.attack-marker.template {
+    display: none !important;
+}
+
+.attack-marker {
+    position: absolute;
+    bottom: 20px;
+    /* Variables */
+    --height: 35px;
+    --marker-color: hsl(210, 70%, 40%);
+    --highlight-color: hsl(210, 55%, 60%);
+    --warning-color: hsl(45, 75%, 50%);
+    --damage-color: hsl(5, 75%, 60%);
+    /* Parameters */
+    --warning-offset: 20px;
+    --damage-offset: 10px;
+}
+
+.attack-marker .marker-line {
+    position: absolute;
+    bottom: 0;
+    left: -1px;
+    width: 2px;
+    height: var(--height);
+    background-color: var(--marker-color);
+    cursor: default;
+}
+
+.attack-marker .marker-handle {
+    position: absolute;
+    top: -8px;
+    left: -7px;
+    width: 16px;
+    height: 16px;
+    box-sizing: border-box;
+    background-image: radial-gradient(circle at center, var(--highlight-color) 0%, var(--marker-color) 100%);
+    border: transparent 2px solid;
+    border-radius: 50%;
+    cursor: pointer;
+}
+.attack-marker:not(.selected) .marker-handle:hover {
+    border-color: lightgray;
+}
+
+.attack-marker .marker-handle .warning-line {
+    position: absolute;
+    bottom: 50%;
+    left: 50%;
+    transform: translateX(-100%) translateY(50%);
+    width: var(--warning-offset);
+    height: 2px;
+    background-color: var(--warning-color);
+    z-index: -10;
+}
+.attack-marker .marker-handle .warning-handle {
+    position: absolute;
+    top: -4px;
+    left: -5px;
+    width: 10px;
+    height: 10px;
+    box-sizing: border-box;
+    background-color: var(--warning-color);
+    border-radius: 25%;
+}
+
+.attack-marker .marker-handle .damage-line {
+    position: absolute;
+    bottom: 50%;
+    right: 50%;
+    transform: translateX(100%) translateY(50%);
+    width: var(--damage-offset);
+    height: 2px;
+    background-color: var(--damage-color);
+    z-index: -10;
+}
+.attack-marker .marker-handle .damage-handle {
+    position: absolute;
+    top: -4px;
+    right: -5px;
+    width: 10px;
+    height: 10px;
+    box-sizing: border-box;
+    background-color: var(--damage-color);
+    border-radius: 25%;
+}
+.attack-marker:not(.selected) .marker-handle .warning-line,
+.attack-marker:not(.selected) .marker-handle .damage-line {
+    display: none;
+}
+
+.attack-marker.selected {
+    --height: 70px;
+    --marker-color: hsl(130, 70%, 35%);
+    --highlight-color: hsl(130, 55%, 50%);
+}
+
+/* Controls info */
+
+#controls-info {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 10em;
+    padding: 1em;
+    background-color: #10141b;
+    border-left: lightgray 2px solid;
+    border-bottom: lightgray 2px solid;
+    color: #efefef;
+}
+
+#controls-info .controls-entry {
+    margin: 0.4em 0;
+    text-align: right;
+}
+
+#controls-info .controls-entry > kbd {
+    float: left;
+}
+
+#controls-info kbd > kbd {
+    border: #efefef 1px solid;
+    border-radius: 0.3em;
+    padding: 0.1em 0.4em;
+    background-image: linear-gradient(to bottom, rgba(128, 128, 128, 30%) 0%, rgba(128, 128, 128, 40%) 30%, rgba(128, 128, 128, 10%) 100%);
+}

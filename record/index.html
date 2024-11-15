@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Video Souls - Record</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="game-container" style="pointer-events: none;">
+      <div id="video-player"></div>
+    </div>
+    <div id="recording-controls">
+      <div id="playback-bar">
+        <div id="playback-bar-inner"></div>
+        <div id="playback-point"></div>
+        <!-- Example attack marker -->
+        <div class="attack-marker template">
+          <div class="marker-line">
+            <div class="marker-handle">
+              <div class="warning-line">
+                <div class="warning-handle"></div>
+              </div>
+              <div class="damage-line">
+                <div class="damage-handle"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="controls-info">
+      <div class="controls-entry">
+        <kbd><kbd>&ShortLeftArrow;</kbd> <kbd>&ShortRightArrow;</kbd></kbd> 1 second
+      </div>
+      <div class="controls-entry">
+        <kbd><kbd>J</kbd> <kbd>L</kbd></kbd> 10 seconds
+      </div>
+      <div class="controls-entry">
+        <kbd><kbd>,</kbd> <kbd>.</kbd></kbd> 1/20 second
+      </div>
+      <div class="controls-entry">
+        <kbd><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></kbd> Aim
+      </div>
+      <div class="controls-entry">
+        <kbd><kbd>Enter</kbd></kbd> Place marker
+      </div>
+    </div>
+    <dialog id="video-id-dialog" popover="manual" style="position: absolute; margin: 20em auto">
+      <form id="video-id-form" method="dialog">
+        <input id="video-id-input" type="text" placeholder="https://www.youtube.com/watch?v="
+          pattern="(?:(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/))?([^&?/\s]{11})" />
+        <button>Record</button>
+      </form>
+    </dialog>
+
+    <script src="/js/directioninputs.js"></script>
+    <script src="/js/leveldata.js"></script>
+    <script src="/js/record.js"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
+  </body>
+</html>
