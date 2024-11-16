@@ -121,6 +121,7 @@ class Graphics {
     yellowOutline: HTMLImageElement | HTMLCanvasElement,
     greenOutline: HTMLImageElement | HTMLCanvasElement,
   };
+  arrowSprite: HTMLCanvasElement;
 
   constructor(canvas: HTMLCanvasElement) {
     // Load sword sprites
@@ -131,6 +132,7 @@ class Graphics {
     };
     const swordImage = new Image();
     swordImage.src = 'sword.png';
+
     // add a scaled sword image to elements once swordImage is loaded
     swordImage.addEventListener('load', () => {
       let scale_factor = (0.15 * canvas.width) / swordImage.width;
@@ -138,6 +140,21 @@ class Graphics {
       let untinted = makeGlow(this.swordSprites.default, 0.1);
       this.swordSprites.yellowOutline = tintImage(untinted, [1.0, 1.0, 0.2]);
       this.swordSprites.greenOutline = tintImage(untinted, [0.2, 1.0, 0.2]);
+    });
+
+    const arrowImage = new Image();
+    arrowImage.src = 'arrow.png';
+    this.arrowSprite = document.createElement('canvas');
+    arrowImage.addEventListener('load', () => {
+      let scale_factor = (0.05 * canvas.width) / arrowImage.width;
+      const scaled = scaleImage(arrowImage, scale_factor, scale_factor);
+      const glow = makeGlow(scaled, 0.1);
+      // draw scaled onto glow
+      const ctx = glow.getContext('2d')!;
+      const drawX = (glow.width - scaled.width) / 2;
+      const drawY = (glow.height - scaled.height) / 2;
+      ctx.drawImage(scaled, drawX, drawY);
+      this.arrowSprite = glow;
     });
   }
 }
@@ -154,13 +171,13 @@ function makeGlow(img: HTMLCanvasElement, range: number): HTMLCanvasElement {
   const imageData = ctx1.getImageData(0, 0, canvas1.width, canvas1.height);
   const data = imageData.data;
   for (let i = 0; i < data.length; i += 4) {
-    const brightness = (data[i] + data[i + 1] + data[i + 2]) / 3;
-    if (brightness > 0) {
+    if (data[i+3] > 0) {
       data[i] = 255;
       data[i + 1] = 255;
       data[i + 2] = 255;
     }
   }
+  ctx1.putImageData(imageData, 0, 0);
 
   const canvas = document.createElement('canvas');
   canvas.width = img.width*1.5;
@@ -525,11 +542,10 @@ class VideoSouls {
   
     const animAttacks = this.getAttacksInInterval(currentTime - ATTACK_WARNING_ADVANCE, currentTime);
     for (const attack of animAttacks) {
-      // draw a white circle at the attack
       const attackPos = [...blockDirectionPositions.get(attack.direction)!];
       // make attack pos a bit futher from the center
-      attackPos[0] = attackPos[0] * 1.2;
-      attackPos[1] = attackPos[1] * 1.2;
+      attackPos[0] = attackPos[0] * 1.5;
+      attackPos[1] = attackPos[1] * 1.5;
   
       // offset the attack position to center of screen
       attackPos[0] += 0.5;
@@ -542,10 +558,13 @@ class VideoSouls {
       const attackY = this.elements.canvas.height * (1 - attackPos[1]);
       ctx.save();
       ctx.globalAlpha = opacity;
-      ctx.beginPath();
-      ctx.arc(attackX, attackY, 10, 0, 2 * Math.PI);
-      ctx.fillStyle = 'white';
-      ctx.fill();
+
+      // draw the arrow sprite
+      ctx.translate(attackX, attackY);
+      // rotate by the angle of the attack
+      ctx.rotate(attack.direction * Math.PI / 4);
+      ctx.drawImage(this.graphics.arrowSprite, -this.graphics.arrowSprite.width / 2, -this.graphics.arrowSprite.height / 2);
+
       ctx.restore();
     }
   }
