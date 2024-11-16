@@ -118,7 +118,7 @@ function initialBattleState(): BattleState {
 class Graphics {
   swordSprites: {
     default: HTMLImageElement | HTMLCanvasElement,
-    redOutline: HTMLImageElement | HTMLCanvasElement,
+    yellowOutline: HTMLImageElement | HTMLCanvasElement,
     greenOutline: HTMLImageElement | HTMLCanvasElement,
   };
 
@@ -126,7 +126,7 @@ class Graphics {
     // Load sword sprites
     this.swordSprites = {
       default: new Image(),
-      redOutline: new Image(),
+      yellowOutline: new Image(),
       greenOutline: new Image(),
     };
     const swordImage = new Image();
@@ -135,13 +135,57 @@ class Graphics {
     swordImage.addEventListener('load', () => {
       let scale_factor = (0.15 * canvas.width) / swordImage.width;
       this.swordSprites.default = scaleImage(swordImage, scale_factor, scale_factor);
-      let outlineScaleFactorW = (0.25 * canvas.width) / swordImage.width;
-      let outlineScaleFactorH = (0.18 * canvas.width) / swordImage.width;
-      let untinted = scaleImage(swordImage, outlineScaleFactorW, outlineScaleFactorH);
-      this.swordSprites.redOutline = tintImage(untinted, [1.0, 0.2, 0.2]);
+      let untinted = makeGlow(this.swordSprites.default, 0.1);
+      this.swordSprites.yellowOutline = tintImage(untinted, [1.0, 1.0, 0.2]);
       this.swordSprites.greenOutline = tintImage(untinted, [0.2, 1.0, 0.2]);
     });
   }
+}
+
+// Make a white glow around the image or canvas.
+// The glow is created by doing a blur on the image
+function makeGlow(img: HTMLCanvasElement, range: number): HTMLCanvasElement {
+  // first, make a version of the image with is black and white
+  const canvas1 = document.createElement('canvas');
+  canvas1.width = img.width;
+  canvas1.height = img.height;
+  const ctx1 = canvas1.getContext('2d')!;
+  ctx1.drawImage(img, 0.0, 0.0);
+  const imageData = ctx1.getImageData(0, 0, canvas1.width, canvas1.height);
+  const data = imageData.data;
+  for (let i = 0; i < data.length; i += 4) {
+    const brightness = (data[i] + data[i + 1] + data[i + 2]) / 3;
+    if (brightness > 0) {
+      data[i] = 255;
+      data[i + 1] = 255;
+      data[i + 2] = 255;
+    }
+  }
+
+  const canvas = document.createElement('canvas');
+  canvas.width = img.width*1.5;
+  canvas.height = img.height*1.5;
+  const ctx = canvas.getContext('2d')!;
+  const blur_num_pxs = Math.floor(canvas.width * range);
+  ctx.filter = `blur(${blur_num_pxs}px) brightness(100%)`;
+  const drawX = (canvas.width - img.width) / 2;
+  const drawY = (canvas.height - img.height) / 2;
+  ctx.drawImage(canvas1, drawX, drawY);
+
+  // get the image data and make alpha channel less transparent
+  const imageData2 = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data2 = imageData2.data;
+  for (let i = 0; i < data2.length; i += 4) {
+    data2[i + 3] = Math.min(255, Math.pow(data2[i + 3], 1.5));
+  }
+  ctx.putImageData(imageData2, 0, 0);
+
+  // also make a short bright outline around the image
+  ctx.filter = 'blur(4px) brightness(1000%)';
+  ctx.drawImage(canvas1, drawX, drawY);
+
+
+  return canvas;
 }
 
 class VideoSouls {
@@ -534,13 +578,13 @@ class VideoSouls {
       // sword outline is only visible during the parry window
       const parryWindowProportion = PARRY_WINDOW / (PARRY_WINDOW + PARRY_END_LAG);
       if (this.battle.anim.state === AttackAnimation.PARRYING && animProgress < parryWindowProportion) {
-        redSwordOutlineStrength = 1.0 - (animProgress / parryWindowProportion);
+        redSwordOutlineStrength = Math.sqrt(1.0 - (animProgress / parryWindowProportion));
       }
     }
 
     // fading green outline if we just parried successfully
     if (currentTime - this.battle.anim.lastParryTime < SUCCESS_PARRY_ANIM_FADE) {
-      greenSwordOutlineStrength = 1.0 - ((currentTime - this.battle.anim.lastParryTime) / SUCCESS_PARRY_ANIM_FADE);
+      greenSwordOutlineStrength = Math.sqrt(1.0 - ((currentTime - this.battle.anim.lastParryTime) / SUCCESS_PARRY_ANIM_FADE));
     }
 
     // draw swordImage to the canvas at it's current position
@@ -549,11 +593,8 @@ class VideoSouls {
     const topLeftY = this.elements.canvas.height * swordPos[1];
     var swordOutlineX = topLeftX;
     var swordOutlineY = topLeftY; 
-    // offset the swordOutlineX and swordOutlineY slightly in the direction of the sword to make the hilts align better
-    swordOutlineX += swordDir[0] * this.graphics.swordSprites.default.width * 0.03;
-    swordOutlineY += swordDir[1] * this.graphics.swordSprites.default.width * 0.03;
   
-    this.drawCenteredRotated(this.graphics.swordSprites.redOutline, swordOutlineX, swordOutlineY, Math.atan2(swordDir[0], swordDir[1]), redSwordOutlineStrength);
+    this.drawCenteredRotated(this.graphics.swordSprites.yellowOutline, swordOutlineX, swordOutlineY, Math.atan2(swordDir[0], swordDir[1]), redSwordOutlineStrength);
     this.drawCenteredRotated(this.graphics.swordSprites.greenOutline, swordOutlineX, swordOutlineY, Math.atan2(swordDir[0], swordDir[1]), greenSwordOutlineStrength);
     this.drawCenteredRotated(this.graphics.swordSprites.default, topLeftX, topLeftY, Math.atan2(swordDir[0], swordDir[1]), 1.0);
   }
