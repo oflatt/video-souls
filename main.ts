@@ -56,20 +56,24 @@ type BattleState = {
   // the last time we checked for attacks
   prevTime: number
 };
+
 type AttackData = {
   time: number,
   direction: AttackDirection
 };
+
 type LevelData = {
   video: string | null,
   attackData: AttackData[],
   version: number
 };
+
 type AlertData = {
   message: HTMLElement,
   startTime: number,
   lifetime: number
 };
+
 type StateData = {
   level: LevelData,
   gameMode: GameMode,
@@ -87,7 +91,7 @@ const SUCCESS_PARRY_ANIM_FADE = 0.2;
 
 const STAGGER_TIME = 0.4;
 
-const ATTACK_WARNING_ADVANCE = 0.2;
+const ATTACK_WARNING_ADVANCE = 0.5;
 
 
 function initialBattleState(): BattleState {
@@ -114,6 +118,31 @@ function initialBattleState(): BattleState {
   };
 }
 
+class AudioPlayer {
+  // warning sound for incoming attacks
+  warnings: HTMLAudioElement[] = [];
+  enemyHit: HTMLAudioElement;
+  playerAttack: HTMLAudioElement;
+  playerHit: HTMLAudioElement;
+  parrySound: HTMLAudioElement;
+
+
+  constructor() {
+    for (let i = 1; i <= 3; i++) {
+      const audio = new Audio(`audio/warning${i}.wav`);
+      this.warnings.push(audio);
+    }
+    this.enemyHit = new Audio('audio/enemyHit.wav');
+    this.playerAttack = new Audio('audio/playerAttack.wav');
+    this.playerHit = new Audio('audio/playerHit.wav');
+    this.parrySound = new Audio('audio/parry.wav');
+  }
+
+  playWarningSound() {
+    const sound = this.warnings[Math.floor(Math.random() * this.warnings.length)];
+    sound.play();
+  }
+}
 
 class Graphics {
   swordSprites: {
@@ -148,12 +177,13 @@ class Graphics {
     arrowImage.addEventListener('load', () => {
       let scale_factor = (0.05 * canvas.width) / arrowImage.width;
       const scaled = scaleImage(arrowImage, scale_factor, scale_factor);
-      const glow = makeGlow(scaled, 0.1);
-      // draw scaled onto glow
-      const ctx = glow.getContext('2d')!;
-      const drawX = (glow.width - scaled.width) / 2;
-      const drawY = (glow.height - scaled.height) / 2;
-      ctx.drawImage(scaled, drawX, drawY);
+      const glowBefore = makeGlow(scaled, 0.1);
+      const glow = tintImage(glowBefore, [1.0, 0.5, 0.5]);
+      
+      // draw scaled onto glowBig
+      const ctx2 = glow.getContext('2d')!;
+      ctx2.drawImage(scaled, (glow.width - scaled.width) / 2, (glow.height - scaled.height) / 2);
+
       this.arrowSprite = glow;
     });
   }
@@ -212,8 +242,11 @@ class VideoSouls {
   battle: BattleState;
   alerts: AlertData[];
   graphics: Graphics;
+  audio: AudioPlayer;
 
   constructor(player: YT.Player) {
+    this.audio = new AudioPlayer();
+
     this.elements = {
       player: player,
 
@@ -341,6 +374,7 @@ class VideoSouls {
   }
 
   successParry() {
+    this.audio.parrySound.play();
     const currentTime = this.elements.player.getCurrentTime();
     // successful parry
     this.battle.anim.lastParryTime = currentTime;
@@ -359,6 +393,7 @@ class VideoSouls {
       if (this.battle.anim.state === AttackAnimation.PARRYING && currentDir() == attack.direction) {
         this.successParry();
       } else {
+        this.audio.playerHit.play();
         this.battle.health -= 0.1;
   
         // start a stagger animation
@@ -538,9 +573,11 @@ class VideoSouls {
     // check for attack warning sound
     const soundAttack = this.getAttacksInInterval(this.battle.prevTime + ATTACK_WARNING_ADVANCE, currentTime + ATTACK_WARNING_ADVANCE);
   
-    // TODO play warning sound
+    if (soundAttack.length > 0) {
+      this.audio.playWarningSound();
+    }
   
-    const animAttacks = this.getAttacksInInterval(currentTime - ATTACK_WARNING_ADVANCE, currentTime);
+    const animAttacks = this.getAttacksInInterval(currentTime, currentTime + ATTACK_WARNING_ADVANCE);
     for (const attack of animAttacks) {
       const attackPos = [...blockDirectionPositions.get(attack.direction)!];
       // make attack pos a bit futher from the center
