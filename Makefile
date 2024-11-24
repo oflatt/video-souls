@@ -5,9 +5,8 @@
 PORT=8000
 
 # Define the target to start the server
-serve:
-	tsc --watch &
-	python -m http.server $(PORT)
+build:
+	tsc
 
 
 install:
