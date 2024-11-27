@@ -828,8 +828,8 @@ function animateBossName(
   const width = canvas.width;
   const height = canvas.height;
 
-  // Set up text properties
-  ctx.font = '40px Arial';
+  // Set up text properties with a gothic, dramatic font
+  ctx.font = '50px "Cormorant Unicase", serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
@@ -875,13 +875,16 @@ function animateBossName(
 
   // Transition to red drop shadow or outline immediately after animation ends
   if (timeElapsed >= animationDuration) {
-    const transitionFactor = Math.min((timeElapsed - animationDuration) / flashDuration, 1); // Normalize for flash duration
+    const transitionFactor = Math.min(
+      (timeElapsed - animationDuration) / flashDuration,
+      1
+    ); // Normalize for flash duration
     const redIntensity = 255;
     ctx.fillStyle = `rgba(255, 255, 255, 1)`;
     ctx.shadowColor = `rgba(${redIntensity}, 0, 0, 1)`;
-    ctx.shadowBlur = 3;
-    ctx.shadowOffsetX = 1 + 2 * transitionFactor; // Gradually increase offset
-    ctx.shadowOffsetY = 1 + 2 * transitionFactor;
+    ctx.shadowBlur = 15;
+    ctx.shadowOffsetX = 5 + 4 * transitionFactor; // Gradually increase offset
+    ctx.shadowOffsetY = 5 + 4 * transitionFactor;
   } else {
     ctx.fillStyle = 'rgba(255, 255, 255, 1)';
     ctx.shadowColor = 'transparent';
@@ -905,7 +908,8 @@ function animateBossName(
   const step = Math.max(waveLength / 100, 1); // Adjust step size based on wave length
   for (let x = startX; x < endX; x += step) {
     // Calculate the sine wave for each x
-    const sineY = waveAmplitude * Math.sin(waveFrequency * (x - startX) / waveLength * Math.PI * 2);
+    const sineY =
+      waveAmplitude * Math.sin(((x - startX) / waveLength) * waveFrequency * Math.PI * 2);
     ctx.lineTo(x, textY + 30 + sineY);
   }
 
