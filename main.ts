@@ -262,6 +262,7 @@ class VideoSouls {
       recordButton: document.querySelector<HTMLButtonElement>("#record-button")!,
       playButton: document.querySelector<HTMLButtonElement>("#play-button")!,
       exportButton: document.querySelector<HTMLButtonElement>("#export-button")!,
+      level1Button: document.querySelector<HTMLButtonElement>("#lv1-button")!,
     } as const;
 
     this.level = {
@@ -296,6 +297,11 @@ class VideoSouls {
     this.elements.exportButton.addEventListener('click', () => {
       this.exportLevel();
     });
+
+    this.elements.level1Button.addEventListener('click', () => {
+      const videoUrl = 'https://www.youtube.com/watch?v=xi6fSPv7M18';
+      this.recordVideo(videoUrl);
+    });
   
     document.addEventListener('keydown', event => {
       if (!keyPressed.has(event.key)) {
@@ -318,7 +324,11 @@ class VideoSouls {
 
     const ctx = this.elements.canvas.getContext('2d')!;
     ctx.clearRect(0, 0, this.elements.canvas.width, this.elements.canvas.height);
-    this.drawCanvas();
+
+    // draw canvas if we are in playing or recording
+    if (this.gameMode === GameMode.PLAYING || this.gameMode === GameMode.RECORDING) {
+      this.drawCanvas();
+    }
 
     this.fadeOutAlerts();
 
@@ -614,7 +624,6 @@ class VideoSouls {
   
     var swordPos = this.battle.pos;
     var swordDir = this.battle.dir;
-    console.log(swordPos, swordDir);
     var redSwordOutlineStrength = 0.0;
     var greenSwordOutlineStrength = 0.0;
   
@@ -653,6 +662,10 @@ class VideoSouls {
     this.drawCenteredRotated(this.graphics.swordSprites.yellowOutline, swordOutlineX, swordOutlineY, Math.atan2(swordDir[0], swordDir[1]), redSwordOutlineStrength);
     this.drawCenteredRotated(this.graphics.swordSprites.greenOutline, swordOutlineX, swordOutlineY, Math.atan2(swordDir[0], swordDir[1]), greenSwordOutlineStrength);
     this.drawCenteredRotated(this.graphics.swordSprites.default, topLeftX, topLeftY, Math.atan2(swordDir[0], swordDir[1]), 1.0);
+
+    // draw the boss name
+    const youtubeVideoName = this.elements.player.getIframe().title;
+    animateBossName(youtubeVideoName, this.elements.canvas, currentTime, 0.05);
   }
   
   private drawCenteredRotated(image: HTMLImageElement | HTMLCanvasElement, xpos: number, ypos: number, angle: number, alpha: number) {
@@ -800,4 +813,108 @@ function tintImage(image: HTMLImageElement | HTMLCanvasElement, color_multiplier
   }
   ctx.putImageData(imageData, 0, 0);
   return newCanvas;
+}
+
+function animateBossName(
+  name: string,
+  canvas: HTMLCanvasElement,
+  timeElapsed: number,
+  yPosition: number // Y position as a fraction of the canvas height (0 = top, 1 = bottom)
+) {
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  ctx.save();
+
+  const width = canvas.width;
+  const height = canvas.height;
+
+  // Set up text properties
+  ctx.font = '40px Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  // Parameters for the animation
+  const waveAmplitude = 10; // Amplitude of the sine wave under the text
+  const waveFrequency = 1.5; // Fewer oscillations (lower frequency)
+  const maxWaveLengthMultiplier = 1.2; // 20% wider than the text width
+  const animationDuration = 1; // Duration in seconds to animate the wave
+  const flashDuration = 0.5; // Duration of transition to red drop shadow
+  const redTextDuration = 0.5; // Duration the red text stays on screen
+  const fadeOutDuration = 0.5; // Duration of fade-out
+
+  const totalDuration =
+    animationDuration + flashDuration + redTextDuration + fadeOutDuration;
+
+  // Stop rendering after the entire animation
+  if (timeElapsed > totalDuration) return;
+
+  // Calculate the width of the text
+  const textWidth = ctx.measureText(name).width;
+
+  // Calculate maximum wave length based on text width
+  const maxWaveLength = textWidth * maxWaveLengthMultiplier;
+
+  // Adjust wave length with an exponential easing function
+  const t = Math.min(timeElapsed / animationDuration, 1); // Cap at 1
+  const waveLength = maxWaveLength * (1 - Math.pow(2, -10 * t)); // Exponential ease-out
+
+  // Calculate the Y position of the text and wave based on the parameter
+  const textY = height * yPosition;
+
+  // Handle fade-out phase
+  let alpha = 1;
+  if (timeElapsed > animationDuration + flashDuration + redTextDuration) {
+    const fadeOutFactor =
+      (timeElapsed - (animationDuration + flashDuration + redTextDuration)) /
+      fadeOutDuration;
+    alpha = 1 - Math.min(fadeOutFactor, 1); // Gradually reduce alpha
+  }
+
+  // Set global alpha for fade-out
+  ctx.globalAlpha = alpha;
+
+  // Transition to red drop shadow or outline immediately after animation ends
+  if (timeElapsed >= animationDuration) {
+    const transitionFactor = Math.min((timeElapsed - animationDuration) / flashDuration, 1); // Normalize for flash duration
+    const redIntensity = 255;
+    ctx.fillStyle = `rgba(255, 255, 255, 1)`;
+    ctx.shadowColor = `rgba(${redIntensity}, 0, 0, 1)`;
+    ctx.shadowBlur = 3;
+    ctx.shadowOffsetX = 1 + 2 * transitionFactor; // Gradually increase offset
+    ctx.shadowOffsetY = 1 + 2 * transitionFactor;
+  } else {
+    ctx.fillStyle = 'rgba(255, 255, 255, 1)';
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
+  }
+
+  // Draw the text
+  ctx.fillText(name, width / 2, textY);
+
+  // Clear the shadow for the wave
+  ctx.shadowColor = 'transparent';
+
+  // Draw the animated wave expanding from the center, keeping it visible until the fade-out ends
+  ctx.beginPath();
+  const startX = (width - waveLength) / 2;
+  const endX = startX + waveLength;
+
+  // Create a smoother wave by adjusting the X increment
+  const step = Math.max(waveLength / 100, 1); // Adjust step size based on wave length
+  for (let x = startX; x < endX; x += step) {
+    // Calculate the sine wave for each x
+    const sineY = waveAmplitude * Math.sin(waveFrequency * (x - startX) / waveLength * Math.PI * 2);
+    ctx.lineTo(x, textY + 30 + sineY);
+  }
+
+  // Finalize the line path
+  ctx.lineTo(endX, textY + 30); // End point of the curve
+  ctx.strokeStyle = `rgba(255, 255, 255, 0.7)`;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Restore canvas state
+  ctx.restore();
 }
