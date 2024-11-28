@@ -16,7 +16,7 @@ enum AttackDirection {
 }
 
 enum AttackAnimation {
-  NONE, PARRYING, ATTACKING, STAGGERING
+  NONE, PARRYING, ATTACK_STARTING, ATTACKING, STAGGERING
 }
 
 
@@ -32,24 +32,24 @@ const attackKey = 'j';
 
 
 type BattleState = {
-  // positions are relative to bottom-left of screen, 0.0 to 1.0
-  pos: [number, number],
-  // direction vectors are x, y normalized
-  dir: [number, number],
   anim: {
     state: AttackAnimation,
     startTime: number,
     endTime: number,
     startPos: [number, number],
     endPos: [number, number],
+    // directions in radians on the unit circle, blade of the sword points in this direction
     startAngle: number,
     endAngle: number,
     // last parry time adds a green glow after a successful parry
-    lastParryTime: number
+    lastParryTime: number,
+    startYScale: number,
+    endYScale: number,
+    startXScale: number,
+    endXScale: number,
   },
-  // readyAt encodes end lag for blocking or attacking
-  // only after this time in the video can another input be made
-  readyAt: number,
+  hitCombo: number, // number of successful 
+  hitComboTime: number, // last time the combo was extended
   // inputs are buffered so that they are not missed and punishes for spam
   bufferedInput: string | null,
   playerHealth: number,
@@ -93,8 +93,11 @@ const keyJustPressed = new Set<string>();
 const PARRY_WINDOW = 0.2;
 const PARRY_END_LAG = 0.2;
 const SUCCESS_PARRY_ANIM_FADE = 0.2;
-const ATTACK_STARTUP = 0.5;
-const ATTACK_END_LAG = 0.2;
+
+const ATTACK_COMBO_STARTUP_TIMES = [0.2, 0.2, 0.3, 0.2, 0.4];
+const ATTACK_COMBO_DAMAGE_MULT = [1.0, 1.1, 1.3, 1.0, 1.8];
+const ATTACK_END_LAG = 0.15;
+const COMBO_EXTEND_TIME = 3.0; // number of seconds before combo lapses
 
 const STAGGER_TIME = 0.4;
 
@@ -103,21 +106,20 @@ const ATTACK_WARNING_ADVANCE = 0.5;
 
 function initialBattleState(): BattleState {
   return {
-    // positions are relative to bottom-left of screen
-    pos: [0.5, 0.5],
-    // direction vectors are x, y normalized
-    dir: [0, 1],
     anim: {
       state: AttackAnimation.NONE,
       startTime: 0,
       endTime: 0,
-      startPos: [0, 0],
-      endPos: [0, 0],
+      startPos: [0.5, 0.5],
+      endPos: [0.5, 0.5],
       startAngle: 0,
       endAngle: 0,
       lastParryTime: -100,
+      startYScale: 1.0,
+      endYScale: 1.0,
+      startXScale: 1.0,
+      endXScale: 1.0,
     },
-    readyAt: 0,
     bufferedInput: null,
     playerHealth: 1.0,
     lastPlayerHealth: 1.0,
@@ -126,6 +128,8 @@ function initialBattleState(): BattleState {
     lastHealthBoss: 1.0,
     lastBossHit: -100000000,
     prevTime: 0,
+    hitCombo: 0,
+    hitComboTime: -10000000,
   };
 }
 
@@ -399,9 +403,21 @@ class VideoSouls {
     const currentTime = this.elements.player.getCurrentTime();
     // successful parry
     this.battle.anim.lastParryTime = currentTime;
-    // cancel the lag on the parry now that it was successful
-    this.battle.readyAt = currentTime - 1;
     this.battle.anim.state = AttackAnimation.NONE;
+  }
+
+  currentClosestDir() {
+    // first, find the sword position closest to the current sword pos
+    var closestDir = 1;
+    var closestDist = 100000000;
+    for (let i = 0; i < 8; i++) {
+      const dist = Math.hypot(this.battle.anim.endPos[0] - (0.5 + blockDirectionPositions.get(i)![0]), this.battle.anim.endPos[1] - (0.5 + blockDirectionPositions.get(i)![1]));
+      if (dist < closestDist) {
+        closestDist = dist;
+        closestDir = i;
+      }
+    }
+    return closestDir;
   }
 
   handleBossAttacks() {
@@ -411,7 +427,7 @@ class VideoSouls {
       // get the first attack (only one attack per frame allowed)
       const attack = attacks[0];
       // if the player is not parrying, take damage
-      if (this.battle.anim.state === AttackAnimation.PARRYING && currentDir() == attack.direction) {
+      if (this.battle.anim.state === AttackAnimation.PARRYING && currentTargetDir() == attack.direction) {
         this.successParry();
       } else {
         this.audio.playerHit.play();
@@ -419,19 +435,21 @@ class VideoSouls {
         this.battle.playerHealth -= 0.1;
         this.battle.lastPlayerHit = currentTime;
 
+        // reset hit combo
+        this.battle.hitCombo = 0;
   
         // start a stagger animation
         this.battle.anim.state = AttackAnimation.STAGGERING;
         this.battle.anim.startTime = currentTime;
         this.battle.anim.endTime = currentTime + STAGGER_TIME;
-        this.battle.anim.startPos = [...this.battle.pos];
+        this.battle.anim.startPos = [...this.battle.anim.endPos];
         // move the sword to the attacked position plus small random offset
         this.battle.anim.endPos = [
           attackedPosition[0] + (Math.random() - 0.5) * 0.1,
           attackedPosition[1] + (Math.random() - 0.5) * 0.1,
         ];
         // change the angle randomly too
-        this.battle.anim.startAngle = Math.atan2(this.battle.dir[0], this.battle.dir[1]);
+        this.battle.anim.startAngle = this.battle.anim.endAngle;
         this.battle.anim.endAngle = attackedAngle;
       }
     }
@@ -439,15 +457,70 @@ class VideoSouls {
 
   doAttack() {
     const currentTime = this.elements.player.getCurrentTime();
+
     this.battle.anim.state = AttackAnimation.ATTACKING;
     this.battle.anim.startTime = currentTime;
-    this.battle.anim.endTime = currentTime + ATTACK_STARTUP + ATTACK_END_LAG;
-    this.battle.anim.startPos = [attackStartPosition[0] + (Math.random() - 0.5)*0.1, attackStartPosition[1] + (Math.random() - 0.5)*0.1];
-    this.battle.anim.endPos = [attackEndPosition[0]+ (Math.random() - 0.5)*0.1, attackEndPosition[1]+ (Math.random() - 0.5)*0.1];
-    // start facing top right plus some random small offset
-    this.battle.anim.startAngle = Math.PI / 4 + (Math.random() - 0.5) * 0.2;
-    // end facing top right, but it'll get squished to reverse
-    this.battle.anim.endAngle = Math.PI / 4 + (Math.random() - 0.5) * 0.2;
+    this.battle.anim.endTime = currentTime + ATTACK_END_LAG;
+
+    const closestDir = this.currentClosestDir();
+    // set the start position to current sword position
+    const attackStartPosition: [number, number] = [...this.battle.anim.endPos];
+    this.battle.anim.startPos = [attackStartPosition[0], attackStartPosition[1]];
+    const attackEndPosition = blockDirectionPositions.get((closestDir + 4) % 8)!;
+    this.battle.anim.endPos = [0.5 + attackEndPosition[0], 0.5 + attackEndPosition[1]];
+    this.battle.anim.endPos[0] += (Math.random() - 0.5) * 0.1;
+    this.battle.anim.endPos[1] += (Math.random() - 0.5) * 0.1;
+
+    const currentDir = this.battle.anim.endAngle
+    this.battle.anim.startAngle = currentDir;
+    this.battle.anim.endAngle = currentDir;
+    this.battle.anim.startYScale = 1.0;
+    this.battle.anim.endYScale = -1.0;
+    this.battle.anim.startXScale = 1.0;
+    this.battle.anim.endXScale = 1.0;
+
+    // play attack hit enemy sound
+    this.audio.enemyHit.play();
+  }
+
+  startAttack() {
+    const currentTime = this.elements.player.getCurrentTime();
+    var currentCombo = 0;
+    // check if the combo is reset
+    if (currentTime - this.battle.hitComboTime > COMBO_EXTEND_TIME) {
+      this.battle.hitCombo = 1;
+    } else  {
+      currentCombo = this.battle.hitCombo;
+      this.battle.hitCombo += 1;
+    }
+    this.battle.hitComboTime = currentTime;
+    console.log(currentCombo);
+
+    this.battle.anim.state = AttackAnimation.ATTACK_STARTING;
+    this.battle.anim.startTime = currentTime;
+    this.battle.anim.endTime = currentTime + ATTACK_COMBO_STARTUP_TIMES[currentCombo % ATTACK_COMBO_STARTUP_TIMES.length];
+
+    const closestDir = this.currentClosestDir();
+    // set the start position to current pos
+    this.battle.anim.startPos = [...this.battle.anim.endPos];
+    // make the end further away from the center in the same direction
+    const attackEndPosition = blockDirectionPositions.get(closestDir)!;
+    this.battle.anim.endPos = [0.5 + attackEndPosition[0]*1.2, 0.5 + attackEndPosition[1]*1.2];
+    this.battle.anim.endPos[0] += (Math.random() - 0.5) * 0.1;
+    this.battle.anim.endPos[1] += (Math.random() - 0.5) * 0.1;
+
+    const attackDir = normalize(blockDirectionPositions.get(closestDir)!);
+    const targetDir = Math.atan2(attackDir[1], attackDir[0]);
+    const currentDir = this.battle.anim.endAngle;
+    this.battle.anim.startAngle = currentDir;
+    this.battle.anim.endAngle = targetDir;
+    this.battle.anim.startYScale = 1.0;
+    this.battle.anim.endYScale = 0.8;
+    this.battle.anim.startXScale = 1.0;
+    this.battle.anim.endXScale = 1.0;
+
+    // play attack swish sound
+    this.audio.playerAttack.play();
   }
 
   doParry() {
@@ -455,10 +528,14 @@ class VideoSouls {
     this.battle.anim.state = AttackAnimation.PARRYING;
     this.battle.anim.startTime = currentTime;
     this.battle.anim.endTime = currentTime + PARRY_WINDOW + PARRY_END_LAG;
-    this.battle.anim.startPos = [...this.battle.pos];
-    this.battle.anim.endPos = [...this.battle.pos];
-    this.battle.anim.startAngle = Math.atan2(this.battle.dir[0], this.battle.dir[1]);
+    this.battle.anim.startPos = [...this.battle.anim.endPos];
+    this.battle.anim.endPos = [...this.battle.anim.endPos];
+    this.battle.anim.startAngle = this.battle.anim.endAngle;
     this.battle.anim.endAngle = this.battle.anim.startAngle - (Math.PI / 10);
+    this.battle.anim.startYScale = 1.0;
+    this.battle.anim.endYScale = 1.0;
+    this.battle.anim.startXScale = 1.0;
+    this.battle.anim.endXScale = 1.0;
   }
 
   updateState() {
@@ -467,40 +544,44 @@ class VideoSouls {
     if (this.gameMode == GameMode.RECORDING) {
       // check if the parry key is pressed, and add to the attack data if so
       if (keyJustPressed.has(parryKey)) {
-        this.level.attackData.push({ time: currentTime, direction: currentDir() });
+        this.level.attackData.push({ time: currentTime, direction: currentTargetDir() });
       }
     }
 
-    // for playing, check for buffering an attack
-    if (this.gameMode == GameMode.PLAYING) {
+  
+    if ((this.gameMode == GameMode.PLAYING || this.gameMode == GameMode.RECORDING)) {
       if (keyJustPressed.has(attackKey) && this.battle.bufferedInput === null) {
         // buffer attack
         this.battle.bufferedInput = attackKey;
       }
-    }
-  
-    if ((this.gameMode == GameMode.PLAYING || this.gameMode == GameMode.RECORDING)) {
+
       // check if parry button pressed
       if (keyJustPressed.has(parryKey) && this.battle.bufferedInput === null) {
         // buffer the parry
         this.battle.bufferedInput = parryKey;
       }
 
+      // check if we finished an animation
+      if (this.battle.anim.state !== AttackAnimation.NONE && currentTime >= this.battle.anim.endTime) {
+
+        // if the animation is attack starting, do the attack
+        if (this.battle.anim.state === AttackAnimation.ATTACK_STARTING) {
+          this.doAttack();
+        } else {
+          this.battle.anim.state = AttackAnimation.NONE;
+        }
+      }
+
       // ready for new buffered action
-      if (currentTime >= this.battle.readyAt && this.battle.bufferedInput !== null) {
+      if (this.battle.bufferedInput !== null && this.battle.anim.state === AttackAnimation.NONE) {
         if (this.battle.bufferedInput === parryKey) {
           // in recording, do a successful parry
           this.doParry();
           this.battle.bufferedInput = null;
         } else if (this.battle.bufferedInput === attackKey) {
-          this.doAttack();
+          this.startAttack();
           this.battle.bufferedInput = null;
         }
-      }
-  
-      // check if we finished an animation
-      if (this.battle.anim.state !== AttackAnimation.NONE && currentTime >= this.battle.anim.endTime) {
-        this.battle.anim.state = AttackAnimation.NONE;
       }
   
       // check if we were attacked
@@ -509,35 +590,36 @@ class VideoSouls {
   
     // if the sword is not in an animation, move towards user input dir
     if (this.battle.anim.state === AttackAnimation.NONE) {
-      const targetDir = currentDirVector();
+      const targetAngle = currentTargetAngleRadians();
   
       // clone the target position so we don't mutate it!
-      var targetPos = [...blockDirectionPositions.get(currentDir())!];
+      var targetPos = [...blockDirectionPositions.get(currentTargetDir())!];
   
       // offset the target position to center of screen
       targetPos[0] += 0.5;
       targetPos[1] += 0.5;
   
       // if the position is some epsilon close to the target position, set the position to the target position
-      if (Math.abs(this.battle.pos[0] - targetPos[0]) < 0.01 && Math.abs(this.battle.pos[1] - targetPos[1]) < 0.01) {
-        this.battle.pos[0] = targetPos[0];
-        this.battle.pos[1] = targetPos[1];
+      if (Math.abs(this.battle.anim.endPos[0] - targetPos[0]) < 0.01 && Math.abs(this.battle.anim.endPos[1] - targetPos[1]) < 0.01) {
+        this.battle.anim.endPos[0] = targetPos[0];
+        this.battle.anim.endPos[1] = targetPos[1];
       } else {
         // otherwise, move the sword towards the target position
-        this.battle.pos[0] += (targetPos[0] - this.battle.pos[0]) / 20;
-        this.battle.pos[1] += (targetPos[1] - this.battle.pos[1]) / 20;
+        this.battle.anim.endPos[0] += (targetPos[0] - this.battle.anim.endPos[0]) / 20;
+        this.battle.anim.endPos[1] += (targetPos[1] - this.battle.anim.endPos[1]) / 20;
       }
   
       // if the direction is some epsilon close to the target direction, set the direction to the target direction
-      if (Math.abs(this.battle.dir[0] - targetDir[0]) < 0.01 && Math.abs(this.battle.dir[1] - targetDir[1]) < 0.01) {
-        this.battle.dir[0] = targetDir[0];
-        this.battle.dir[1] = targetDir[1];
+      if (Math.abs(this.battle.anim.endAngle - targetAngle) < 0.01) {
+        this.battle.anim.endAngle = targetAngle;
       } else {
-        // otherwise, move the sword towards the target direction by rotating it
-        const angle = Math.atan2(this.battle.dir[0], this.battle.dir[1]);
-        const targetAngle = Math.atan2(targetDir[0], targetDir[1]);
-        const newAngle = angle + (targetAngle - angle) / 20;
-        this.battle.dir = [Math.sin(newAngle), Math.cos(newAngle)];
+        // find the shortest path to the target angle
+        var newAngle = this.battle.anim.endAngle + (targetAngle - this.battle.anim.endAngle) / 20;
+        if (Math.abs(targetAngle - this.battle.anim.endAngle) > Math.PI) {
+          newAngle = this.battle.anim.endAngle + (targetAngle - this.battle.anim.endAngle + Math.PI * 2) / 20;
+        }
+
+        this.battle.anim.endAngle = newAngle;
       }
     }
   
@@ -660,11 +742,12 @@ class VideoSouls {
   
     this.drawAttackWarning();
   
-    var swordPos = this.battle.pos;
-    var swordDir = this.battle.dir;
+    var swordPos = this.battle.anim.endPos;
+    var swordAngle = this.battle.anim.endAngle;
     var redSwordOutlineStrength = 0.0;
     var greenSwordOutlineStrength = 0.0;
-    var squish = 1.0;
+    var xscale = 1.0;
+    var yscale = 1.0;
   
     // first, determine swordPos and swordDir from animation
     if (this.battle.anim.state !== AttackAnimation.NONE) {
@@ -677,8 +760,17 @@ class VideoSouls {
   
       const fastExponentialAnimProgress = Math.sqrt(Math.sqrt(animProgress));
       const slowExponentialAnimProgress = Math.pow(animProgress, 0.8);
-      const currentAngle = this.battle.anim.startAngle + (this.battle.anim.endAngle - this.battle.anim.startAngle) * fastExponentialAnimProgress;
-      swordDir = [Math.sin(currentAngle), Math.cos(currentAngle)];
+      var targetAngle = this.battle.anim.endAngle;
+      // if target angle is more than 180 degrees away, subtract 360 degrees so we rotate the other way
+      if (targetAngle - this.battle.anim.startAngle > Math.PI) {
+        targetAngle -= Math.PI * 2;
+      }
+      // if the target angle is less than -180 degrees away, add 360 degrees so we rotate the other way
+      if (targetAngle - this.battle.anim.startAngle < -Math.PI) {
+        targetAngle += Math.PI * 2;
+      }
+      var currentAngle = this.battle.anim.startAngle + (targetAngle - this.battle.anim.startAngle) * fastExponentialAnimProgress;
+      swordAngle = currentAngle;
   
       // sword outline is only visible during the parry window
       const parryWindowProportion = PARRY_WINDOW / (PARRY_WINDOW + PARRY_END_LAG);
@@ -686,10 +778,9 @@ class VideoSouls {
         redSwordOutlineStrength = Math.sqrt(1.0 - (animProgress / parryWindowProportion));
       }
 
-      // if we are attacking, squish the sword by the amount of time we have been attacking
-      if (this.battle.anim.state === AttackAnimation.ATTACKING) {
-        squish = 1.0 - 2.0 * slowExponentialAnimProgress
-      }
+      // interpolate squish using slowExponentialAnimProgress
+      xscale = this.battle.anim.startYScale + (this.battle.anim.endXScale - this.battle.anim.startXScale) * slowExponentialAnimProgress;
+      yscale = this.battle.anim.startYScale + (this.battle.anim.endYScale - this.battle.anim.startYScale) * slowExponentialAnimProgress;
     }
 
     // fading green outline if we just parried successfully
@@ -704,9 +795,9 @@ class VideoSouls {
     var swordOutlineX = topLeftX;
     var swordOutlineY = topLeftY; 
   
-    this.drawCenteredRotated(this.graphics.swordSprites.yellowOutline, swordOutlineX, swordOutlineY, Math.atan2(swordDir[0], swordDir[1]), redSwordOutlineStrength, squish);
-    this.drawCenteredRotated(this.graphics.swordSprites.greenOutline, swordOutlineX, swordOutlineY, Math.atan2(swordDir[0], swordDir[1]), greenSwordOutlineStrength, squish);
-    this.drawCenteredRotated(this.graphics.swordSprites.default, topLeftX, topLeftY, Math.atan2(swordDir[0], swordDir[1]), 1.0, squish);
+    this.drawCenteredRotated(this.graphics.swordSprites.yellowOutline, swordOutlineX, swordOutlineY, swordAngle - Math.PI / 2, redSwordOutlineStrength, xscale, yscale);
+    this.drawCenteredRotated(this.graphics.swordSprites.greenOutline, swordOutlineX, swordOutlineY, swordAngle- Math.PI / 2, greenSwordOutlineStrength, xscale, yscale);
+    this.drawCenteredRotated(this.graphics.swordSprites.default, topLeftX, topLeftY, swordAngle- Math.PI / 2, 1.0, xscale, yscale);
 
     // draw the boss name
     const youtubeVideoName = this.elements.player.getIframe().title;
@@ -718,15 +809,16 @@ class VideoSouls {
     drawHealthBar(this.elements.canvas, 0.9, { r: 0, g: 255, b: 0 }, this.battle.playerHealth, this.battle.lastPlayerHit, this.battle.lastPlayerHealth, currentTime);
   }
   
-  private drawCenteredRotated(image: HTMLImageElement | HTMLCanvasElement, xpos: number, ypos: number, angle: number, alpha: number, squish: number) {
+  // rotates by angle counter clockwise, and squishes by squish
+  private drawCenteredRotated(image: HTMLImageElement | HTMLCanvasElement, xpos: number, ypos: number, angle: number, alpha: number, xscale: number, yscale: number) {
     // invert ypos since it starts from the bottom of the screen
     ypos = this.elements.canvas.height - ypos;
     const ctx = this.elements.canvas.getContext('2d')!;
     ctx.save();
     ctx.globalAlpha = alpha;
     ctx.translate(xpos, ypos);
-    ctx.rotate(angle);
-    ctx.scale(1.0, squish);
+    ctx.rotate(-angle);
+    ctx.scale(xscale, yscale);
     ctx.drawImage(image, -image.width / 2, -image.height / 2);
     ctx.restore();
   }
@@ -790,16 +882,16 @@ function netDirection(directionsArr: InputDirection[]) {
   ].indexOf(combinedDirection);
 }
   
-const directionNumToDir = new Map<number, [number, number]>([
-  [0, [-1, 0]],
-  [1, [-1, 1]],
-  [2, [0, 1]],
-  [3, [-1, -1]],
-  [4, [-1, 0]],
-  [5, [-1, 1]],
-  [6, [0, 1]],
-  [7, [-1, -1]],
-  [8, [0, 1]],
+const directionNumToAngle = new Map<number, number>([
+  [0, 4 * Math.PI / 4],
+  [1, 3 * Math.PI / 4],
+  [2, 2 * Math.PI / 4],
+  [3, 1 * Math.PI / 4],
+  [4, 4 * Math.PI / 4],
+  [5, 3 * Math.PI / 4],
+  [6, 2 * Math.PI / 4],
+  [7, 5 * Math.PI / 4],
+  [8, 2 * Math.PI / 4],
 ]);
 
 
@@ -823,7 +915,13 @@ const attackEndPosition = [0.35, 0.2];
 const attackedPosition = [0.7, 0.4];
 const attackedAngle = Math.PI / 2;
 
-function currentDir() {
+
+function currentTargetAngleRadians() {
+  return directionNumToAngle.get(currentTargetDir())!;
+}
+
+
+function currentTargetDir() {
   // find the target direction based on combination of keys pressed
   var directions: InputDirection[] = [];
   keyToDirection.forEach((dir, key) => {
@@ -832,10 +930,6 @@ function currentDir() {
     }
   })
   return netDirection(directions);
-}
-
-function currentDirVector() {
-  return directionNumToDir.get(currentDir())!;
 }
 
 // Image manipulations
@@ -1046,4 +1140,11 @@ function drawHealthBar(
   ctx.strokeStyle = 'black';
   ctx.lineWidth = 2;
   ctx.strokeRect(xOffset + shakeOffsetX, yPos, barWidth, barHeight);
+}
+
+
+function normalize(vec: [number, number]) {
+  const [x, y] = vec;
+  const length = Math.sqrt(x * x + y * y);
+  return [x / length, y / length];
 }
