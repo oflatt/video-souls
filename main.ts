@@ -584,8 +584,10 @@ class VideoSouls {
         }
       }
   
-      // check if we were attacked
-      this.handleBossAttacks();
+      // check if we were attacked in playing mode
+      if (this.gameMode === GameMode.PLAYING) {
+        this.handleBossAttacks();
+      }
     }
   
     // if the sword is not in an animation, move towards user input dir
