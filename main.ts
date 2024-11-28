@@ -27,7 +27,8 @@ const keyToDirection = new Map<string, InputDirection>([
   ['d', InputDirection.RIGHT],
 ]);
 
-const parryKey = 'j';
+const parryKey = 'k';
+const attackKey = 'j';
 
 
 type BattleState = {
@@ -92,6 +93,8 @@ const keyJustPressed = new Set<string>();
 const PARRY_WINDOW = 0.2;
 const PARRY_END_LAG = 0.2;
 const SUCCESS_PARRY_ANIM_FADE = 0.2;
+const ATTACK_STARTUP = 0.5;
+const ATTACK_END_LAG = 0.2;
 
 const STAGGER_TIME = 0.4;
 
@@ -434,6 +437,19 @@ class VideoSouls {
     }
   }
 
+  doAttack() {
+    const currentTime = this.elements.player.getCurrentTime();
+    this.battle.anim.state = AttackAnimation.ATTACKING;
+    this.battle.anim.startTime = currentTime;
+    this.battle.anim.endTime = currentTime + ATTACK_STARTUP + ATTACK_END_LAG;
+    this.battle.anim.startPos = [attackStartPosition[0] + (Math.random() - 0.5)*0.1, attackStartPosition[1] + (Math.random() - 0.5)*0.1];
+    this.battle.anim.endPos = [attackEndPosition[0]+ (Math.random() - 0.5)*0.1, attackEndPosition[1]+ (Math.random() - 0.5)*0.1];
+    // start facing top right plus some random small offset
+    this.battle.anim.startAngle = Math.PI / 4 + (Math.random() - 0.5) * 0.2;
+    // end facing top right, but it'll get squished to reverse
+    this.battle.anim.endAngle = Math.PI / 4 + (Math.random() - 0.5) * 0.2;
+  }
+
   doParry() {
     const currentTime = this.elements.player.getCurrentTime();
     this.battle.anim.state = AttackAnimation.PARRYING;
@@ -454,6 +470,14 @@ class VideoSouls {
         this.level.attackData.push({ time: currentTime, direction: currentDir() });
       }
     }
+
+    // for playing, check for buffering an attack
+    if (this.gameMode == GameMode.PLAYING) {
+      if (keyJustPressed.has(attackKey) && this.battle.bufferedInput === null) {
+        // buffer attack
+        this.battle.bufferedInput = attackKey;
+      }
+    }
   
     if ((this.gameMode == GameMode.PLAYING || this.gameMode == GameMode.RECORDING)) {
       // check if parry button pressed
@@ -467,6 +491,9 @@ class VideoSouls {
         if (this.battle.bufferedInput === parryKey) {
           // in recording, do a successful parry
           this.doParry();
+          this.battle.bufferedInput = null;
+        } else if (this.battle.bufferedInput === attackKey) {
+          this.doAttack();
           this.battle.bufferedInput = null;
         }
       }
@@ -637,6 +664,7 @@ class VideoSouls {
     var swordDir = this.battle.dir;
     var redSwordOutlineStrength = 0.0;
     var greenSwordOutlineStrength = 0.0;
+    var squish = 1.0;
   
     // first, determine swordPos and swordDir from animation
     if (this.battle.anim.state !== AttackAnimation.NONE) {
@@ -648,6 +676,7 @@ class VideoSouls {
       ];
   
       const fastExponentialAnimProgress = Math.sqrt(Math.sqrt(animProgress));
+      const slowExponentialAnimProgress = Math.pow(animProgress, 0.8);
       const currentAngle = this.battle.anim.startAngle + (this.battle.anim.endAngle - this.battle.anim.startAngle) * fastExponentialAnimProgress;
       swordDir = [Math.sin(currentAngle), Math.cos(currentAngle)];
   
@@ -655,6 +684,11 @@ class VideoSouls {
       const parryWindowProportion = PARRY_WINDOW / (PARRY_WINDOW + PARRY_END_LAG);
       if (this.battle.anim.state === AttackAnimation.PARRYING && animProgress < parryWindowProportion) {
         redSwordOutlineStrength = Math.sqrt(1.0 - (animProgress / parryWindowProportion));
+      }
+
+      // if we are attacking, squish the sword by the amount of time we have been attacking
+      if (this.battle.anim.state === AttackAnimation.ATTACKING) {
+        squish = 1.0 - 2.0 * slowExponentialAnimProgress
       }
     }
 
@@ -670,9 +704,9 @@ class VideoSouls {
     var swordOutlineX = topLeftX;
     var swordOutlineY = topLeftY; 
   
-    this.drawCenteredRotated(this.graphics.swordSprites.yellowOutline, swordOutlineX, swordOutlineY, Math.atan2(swordDir[0], swordDir[1]), redSwordOutlineStrength);
-    this.drawCenteredRotated(this.graphics.swordSprites.greenOutline, swordOutlineX, swordOutlineY, Math.atan2(swordDir[0], swordDir[1]), greenSwordOutlineStrength);
-    this.drawCenteredRotated(this.graphics.swordSprites.default, topLeftX, topLeftY, Math.atan2(swordDir[0], swordDir[1]), 1.0);
+    this.drawCenteredRotated(this.graphics.swordSprites.yellowOutline, swordOutlineX, swordOutlineY, Math.atan2(swordDir[0], swordDir[1]), redSwordOutlineStrength, squish);
+    this.drawCenteredRotated(this.graphics.swordSprites.greenOutline, swordOutlineX, swordOutlineY, Math.atan2(swordDir[0], swordDir[1]), greenSwordOutlineStrength, squish);
+    this.drawCenteredRotated(this.graphics.swordSprites.default, topLeftX, topLeftY, Math.atan2(swordDir[0], swordDir[1]), 1.0, squish);
 
     // draw the boss name
     const youtubeVideoName = this.elements.player.getIframe().title;
@@ -684,7 +718,7 @@ class VideoSouls {
     drawHealthBar(this.elements.canvas, 0.9, { r: 0, g: 255, b: 0 }, this.battle.playerHealth, this.battle.lastPlayerHit, this.battle.lastPlayerHealth, currentTime);
   }
   
-  private drawCenteredRotated(image: HTMLImageElement | HTMLCanvasElement, xpos: number, ypos: number, angle: number, alpha: number) {
+  private drawCenteredRotated(image: HTMLImageElement | HTMLCanvasElement, xpos: number, ypos: number, angle: number, alpha: number, squish: number) {
     // invert ypos since it starts from the bottom of the screen
     ypos = this.elements.canvas.height - ypos;
     const ctx = this.elements.canvas.getContext('2d')!;
@@ -692,6 +726,7 @@ class VideoSouls {
     ctx.globalAlpha = alpha;
     ctx.translate(xpos, ypos);
     ctx.rotate(angle);
+    ctx.scale(1.0, squish);
     ctx.drawImage(image, -image.width / 2, -image.height / 2);
     ctx.restore();
   }
@@ -780,6 +815,9 @@ const blockDirectionPositions = new Map<number, [number, number]>([
   [7, [-0.2, 0.2]],
   [8, [0.0, 0.0]],
 ]);
+
+const attackStartPosition = [0.65, 0.7];
+const attackEndPosition = [0.35, 0.2];
 
 // position relative to bottom left of screen
 const attackedPosition = [0.7, 0.4];
