@@ -51,8 +51,12 @@ type BattleState = {
   readyAt: number,
   // inputs are buffered so that they are not missed and punishes for spam
   bufferedInput: string | null,
-  health: number,
+  playerHealth: number,
+  lastPlayerHealth: number,
+  lastPlayerHit: number, // the time the player was last hit
   healthBoss: number,
+  lastHealthBoss: number,
+  lastBossHit: number, // the time the boss was last hit
   // the last time we checked for attacks
   prevTime: number
 };
@@ -112,8 +116,12 @@ function initialBattleState(): BattleState {
     },
     readyAt: 0,
     bufferedInput: null,
-    health: 1.0,
+    playerHealth: 1.0,
+    lastPlayerHealth: 1.0,
+    lastPlayerHit: -100000000,
     healthBoss: 1.0,
+    lastHealthBoss: 1.0,
+    lastBossHit: -100000000,
     prevTime: 0,
   };
 }
@@ -404,7 +412,10 @@ class VideoSouls {
         this.successParry();
       } else {
         this.audio.playerHit.play();
-        this.battle.health -= 0.1;
+        this.battle.lastPlayerHealth = this.battle.playerHealth;
+        this.battle.playerHealth -= 0.1;
+        this.battle.lastPlayerHit = currentTime;
+
   
         // start a stagger animation
         this.battle.anim.state = AttackAnimation.STAGGERING;
@@ -665,7 +676,12 @@ class VideoSouls {
 
     // draw the boss name
     const youtubeVideoName = this.elements.player.getIframe().title;
-    animateBossName(youtubeVideoName, this.elements.canvas, currentTime, 0.05);
+    animateBossName(youtubeVideoName, this.elements.canvas, currentTime, 0.15);
+
+    // draw the boss health at the top
+    //drawHealthBar(this.elements.canvas, 0.1, "red", this.battle.healthBoss, this.battle.lastBossHit, this.battle.lastHealthBoss);
+    // draw the player health at the bottom
+    drawHealthBar(this.elements.canvas, 0.9, { r: 0, g: 255, b: 0 }, this.battle.playerHealth, this.battle.lastPlayerHit, this.battle.lastPlayerHealth, currentTime);
   }
   
   private drawCenteredRotated(image: HTMLImageElement | HTMLCanvasElement, xpos: number, ypos: number, angle: number, alpha: number) {
@@ -921,4 +937,75 @@ function animateBossName(
 
   // Restore canvas state
   ctx.restore();
+}
+
+interface Color {
+  r: number;
+  g: number;
+  b: number;
+  a?: number; // Optional alpha value, defaults to 1 if not provided
+}
+
+function colorToString(color: Color): string {
+  const { r, g, b, a = 1 } = color;
+  return `rgba(${r}, ${g}, ${b}, ${a})`;
+}
+
+function adjustColorOpacity(color: Color, opacity: number): Color {
+  return { ...color, a: opacity };
+}
+
+function drawHealthBar(
+  canvas: HTMLCanvasElement, 
+  yPosition: number, // value from 0 to 1, relative to canvas height
+  color: Color, 
+  currentHealth: number, // value from 0 to 1
+  lastHealthChangeTime: number, // in seconds
+  lastHealth: number, // value from 0 to 1
+  currentTime: number // in seconds
+) {
+  const ctx = canvas.getContext('2d')!;
+  const barWidth = canvas.width * 0.8;
+  const barHeight = 20;
+  const xOffset = (canvas.width - barWidth) / 2;
+  const shakeDuration = 0.2; // seconds
+  const shakeMagnitude = 10; // pixels (increased for more dramatic effect)
+
+  // Calculate the actual y position based on the canvas height
+  const yPos = yPosition * canvas.height;
+
+  // Determine how much health was lost
+  const lostHealth = lastHealth - currentHealth;
+
+  // Time since the health change
+  const timeSinceChange = currentTime - lastHealthChangeTime;
+
+  // Shake effect for the entire bar after getting hit
+  let shakeOffsetX = 0;
+  if (timeSinceChange < shakeDuration) {
+    shakeOffsetX = Math.sin((timeSinceChange / shakeDuration) * Math.PI) * shakeMagnitude;
+  }
+
+  // Draw lost health bar (darker bar, tinted with the same color)
+  if (lostHealth > 0) {
+    const delay = 0.5; // seconds delay before starting the lost health animation
+    let animatedLastHealth = lastHealth;
+    if (timeSinceChange > delay) {
+      const decrementAmount = (timeSinceChange - delay) / 5; // Slow decrease over time (5 seconds)
+      animatedLastHealth = Math.max(currentHealth, lastHealth - decrementAmount);
+    }
+    const lostHealthWidth = barWidth * animatedLastHealth;
+    ctx.fillStyle = colorToString(adjustColorOpacity(color, 0.7)); // Darker tint of the original color
+    ctx.fillRect(xOffset + shakeOffsetX, yPos, lostHealthWidth, barHeight);
+  }
+
+  // Draw current health bar
+  const currentHealthWidth = barWidth * currentHealth;
+  ctx.fillStyle = colorToString(color);
+  ctx.fillRect(xOffset + shakeOffsetX, yPos, currentHealthWidth, barHeight);
+
+  // Draw border
+  ctx.strokeStyle = 'black';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(xOffset + shakeOffsetX, yPos, barWidth, barHeight);
 }
