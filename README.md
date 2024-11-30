@@ -7,15 +7,12 @@ Welcome to the repo for video souls. For local development, simply serve the sta
 
 # TODO
 
-- Attacking animations
 - Health bars
   - Getting hit makes screen flash transparent red
-- Parry animation
-  - Flash green
-  - Move back
-- Parry sound
-- Parry warning sound and visual
 - Official levels
+- Level editor
+- Support for encoding attacks
+- Auto special effects preprocessing on videos
 - Different weapons
   - Different attack speeds/damage tradeoff
   - Custom weapons, upload png or use link to png

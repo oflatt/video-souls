@@ -55,8 +55,8 @@ type BattleState = {
   playerHealth: number,
   lastPlayerHealth: number,
   lastPlayerHit: number, // the time the player was last hit
-  healthBoss: number,
-  lastHealthBoss: number,
+  bossHealth: number,
+  lastBossHealth: number,
   lastBossHit: number, // the time the boss was last hit
   // the last time we checked for attacks
   prevTime: number
@@ -124,8 +124,8 @@ function initialBattleState(): BattleState {
     playerHealth: 1.0,
     lastPlayerHealth: 1.0,
     lastPlayerHit: -100000000,
-    healthBoss: 1.0,
-    lastHealthBoss: 1.0,
+    bossHealth: 1.0,
+    lastBossHealth: 1.0,
     lastBossHit: -100000000,
     prevTime: 0,
     hitCombo: 0,
@@ -457,6 +457,10 @@ class VideoSouls {
 
   doAttack() {
     const currentTime = this.elements.player.getCurrentTime();
+
+    this.battle.lastBossHealth = this.battle.bossHealth;
+    this.battle.bossHealth -= 0.1 * ATTACK_COMBO_DAMAGE_MULT[this.battle.hitCombo % ATTACK_COMBO_DAMAGE_MULT.length];
+    this.battle.lastBossHit = currentTime;
 
     this.battle.anim.state = AttackAnimation.ATTACKING;
     this.battle.anim.startTime = currentTime;
@@ -806,7 +810,7 @@ class VideoSouls {
     animateBossName(youtubeVideoName, this.elements.canvas, currentTime, 0.15);
 
     // draw the boss health at the top
-    //drawHealthBar(this.elements.canvas, 0.1, "red", this.battle.healthBoss, this.battle.lastBossHit, this.battle.lastHealthBoss);
+    drawHealthBar(this.elements.canvas, 0.05, { r: 255, g: 0, b: 0 }, this.battle.bossHealth, this.battle.lastBossHit, this.battle.lastBossHealth, currentTime);
     // draw the player health at the bottom
     drawHealthBar(this.elements.canvas, 0.9, { r: 0, g: 255, b: 0 }, this.battle.playerHealth, this.battle.lastPlayerHit, this.battle.lastPlayerHealth, currentTime);
   }
@@ -1129,7 +1133,7 @@ function drawHealthBar(
       animatedLastHealth = Math.max(currentHealth, lastHealth - decrementAmount);
     }
     const lostHealthWidth = barWidth * animatedLastHealth;
-    ctx.fillStyle = colorToString(adjustColorOpacity(color, 0.7)); // Darker tint of the original color
+    ctx.fillStyle = colorToString(adjustColorOpacity(color, 0.5)); // Darker tint of the original color
     ctx.fillRect(xOffset + shakeOffsetX, yPos, lostHealthWidth, barHeight);
   }
 
