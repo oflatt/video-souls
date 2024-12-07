@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+import imutils
 
 
 WINDOW_NAME = "video"
@@ -24,31 +25,56 @@ class Video:
 def process_frame(frame: np.ndarray) -> np.ndarray:
     return cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-def diff_frames(prev_frame, next_frame):
-  blurred = cv2.GaussianBlur(next_frame / 255., (21, 21), 0)
+def diff_frames(prev_frame, next_frame, threshold, add_boxes=False):
+  gray = cv2.cvtColor(next_frame, cv2.COLOR_BGR2GRAY)
+  blurred = cv2.GaussianBlur(gray, (21, 21), 0)
   if prev_frame is None:
     prev_frame = blurred
-  diff = np.linalg.norm(blurred - prev_frame, axis=-1)
+  # print dimensions of blurred and prev_frame
+  diff = cv2.absdiff(blurred, prev_frame)
   JUMP_THRESHOLD = 0.2
-  jump_cut = diff.mean() > JUMP_THRESHOLD
-  if jump_cut:
-      prev_frame = 0.05 * prev_frame + 1.0 * blurred
-      diff = np.linalg.norm(blurred - prev_frame, axis=-1)
-  diff = cv2.threshold(diff, 0.2, 1, cv2.THRESH_BINARY)[1]
-  cv2.dilate(diff, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (21, 21), (10, 10)), dst=diff)
-  np.subtract(diff, diff.mean(), out=diff)
-  np.clip(diff, 0, 1, out=diff)
-  # Get centroid
-  # median_point = (diff * np.mgrid[:diff.shape[0], :diff.shape[1]]).sum(axis=(1, 2)) / max(diff.sum(), 1e-3)
-  # median_point = (int(median_point[1]), int(median_point[0]))
-  median_point = [
-      np.searchsorted(np.cumsum(diff.sum(axis=0)) / max(diff.sum(), 1e-3), 0.5),
-      np.searchsorted(np.cumsum(diff.sum(axis=1)) / max(diff.sum(), 1e-3), 0.5)
-  ]
-  new_prev = 0.95 * prev_frame + 0.05 * blurred
-  output = next_frame / 255. * diff[:, :, np.newaxis]
-  cv2.circle(output, median_point, 5, (0, 0, 1), -1)
-  return (output, new_prev)
+  #jump_cut = diff.mean() > JUMP_THRESHOLD
+  #if jump_cut:
+  #    prev_frame = 0.05 * prev_frame + 1.0 * blurred
+  #    print(blurred.shape)
+  #    print(prev_frame.shape)
+  #   diff = cv2.absdiff(blurred, prev_frame)
+  
+  thresh = cv2.threshold(diff, threshold, 255, cv2.THRESH_BINARY)[1]
+  cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+  cnts = imutils.grab_contours(cnts)
+
+  frame = cv2.cvtColor(thresh, cv2.COLOR_GRAY2RGB)
+  if add_boxes:
+    for c in cnts:
+      if cv2.contourArea(c) < 500:
+        continue
+      (x, y, w, h) = cv2.boundingRect(c)
+      cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+
+  
+  return (frame, prev_frame)
+
+
+# now that we have done some motion detection, look for fast moving
+# objects that are likely attacks
+def detect_attacks(prev_frame, next_frame):
+  gray = cv2.cvtColor(next_frame, cv2.COLOR_BGR2GRAY)
+  if prev_frame is None:
+    prev_frame = gray
+  else:
+    prev_frame = cv2.cvtColor(prev_frame, cv2.COLOR_BGR2GRAY)
+  
+  diff = cv2.absdiff(prev_frame, gray)
+  # blur the diff to look for large changes
+  diff = cv2.GaussianBlur(diff, (5, 5), 0)
+  # threshold the diff
+  _, thresh = cv2.threshold(diff, 20, 255, cv2.THRESH_BINARY)
+
+  # back to rgb image
+  frame = cv2.cvtColor(thresh, cv2.COLOR_GRAY2RGB)
+  return frame
+  
 
 
 test_small = True
@@ -70,21 +96,21 @@ def do_video(path):
       # get current size of frame
       width = int(video.cap.get(3))
       height = int(video.cap.get(4))
-      print(width, height)
       if test_small:
         next_frame = cv2.resize(next_frame, (320, 180))
 
-      (diffed, new_prev) = diff_frames(prev_frame, next_frame)
-      prev_frame = new_prev
-      
-      prev_motion_frame = diffed
+      (diffed, new_prev) = diff_frames(prev_frame, next_frame, 30)
 
+      
+      
 
       # now make the output the original size again
-      to_show = diffed
+      to_show = detect_attacks(prev_motion_frame, diffed)
       if test_small:
-        to_show = cv2.resize(diffed, (int(width/2), int(height/2)))
+        to_show = cv2.resize(to_show, (int(width/2), int(height/2)))
 
+      prev_frame = new_prev
+      prev_motion_frame = diffed
       # output[:, :20, 1] = jump_cut
       cv2.imshow(WINDOW_NAME, to_show)
       if cv2.waitKey(1) == ord("q"):
