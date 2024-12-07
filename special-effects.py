@@ -54,7 +54,7 @@ def diff_frames(prev_frame, next_frame, threshold, add_boxes=False, blur=True):
       (x, y, w, h) = cv2.boundingRect(c)
       cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
 
-  
+  prev_frame = (blurred * 0.8 + gray * 0.2).astype(np.uint8)
   return (frame, prev_frame)
 
 
@@ -85,27 +85,28 @@ def combine_motion_frames(frames):
     return None
   
   # make older frames more transparent, linear decay
-  frame = frames[len(frames) - 1] * 0.5
+  frame = frames[len(frames) - 1] * 0.8
   current_index = len(frames) - 2
   rest_brightness = 0.5
   while current_index >= 0:
     frame += frames[current_index] * rest_brightness
-    rest_brightness *= 0.5
+    rest_brightness *= 0.2
     current_index -= 1
+  
+  # use astype to go back to integers
+  frame = frame.astype(np.uint8)
 
   return frame
 
 
-def draw_aura(last_n_frames, original_frame):
+def draw_aura(aura, original_frame):
   # copy the original frame
   frame = original_frame.copy()
 
-  aura = last_n_frames[len(last_n_frames) - 1]
   # threshold the aura
-  _, aura = cv2.threshold(aura, 20, 255, cv2.THRESH_BINARY)
-
-  # aura mask
+  #_, aura = cv2.threshold(aura, 20, 255, cv2.THRESH_BINARY)
   mask = cv2.cvtColor(aura, cv2.COLOR_BGR2GRAY) > 0
+  mask = cv2.cvtColor(aura, cv2.COLOR_BGR2GRAY)[:, :, np.newaxis] / 255.
 
   # make all the white parts red
   aura[:, :, 0] = 0
@@ -114,12 +115,9 @@ def draw_aura(last_n_frames, original_frame):
   # scale aura to size of frame
   aura = cv2.resize(aura, (frame.shape[1], frame.shape[0]))
 
-  # apply aura with the mask to frame
-  # using np indexing
-  frame[mask] = aura[mask]
+  frame = (frame * (1 - mask) + aura * mask).astype(np.uint8)
 
   return frame
-
 
 test_small = True
 
@@ -131,16 +129,8 @@ def do_video(path):
 
   prev_diffed = None
   last_diffed = None
+  prev_diffed2 = None
   for next_frame in video:
-      # flow = cv2.calcOpticalFlowFarneback(
-      #     process_frame(video.prev),
-      #     process_frame(next_frame),
-      #     flow=None, pyr_scale=0.5, levels=3, winsize=15,
-      #     iterations=3, poly_n=5, poly_sigma=1.1, flags=0
-      # )
-      # flow_bgr = np.stack([flow[:, :, 0], np.zeros_like(flow[:, :, 0]), flow[:, :, 1]], axis=2)
-      # cv2.imshow(WINDOW_NAME, flow_bgr)
-      # get current size of frame
       width = next_frame.shape[1]
       height = next_frame.shape[0]
 
@@ -151,24 +141,28 @@ def do_video(path):
 
       (diffed, new_prev) = diff_frames(prev_diffed, scaled_down, 20)
 
-
       # now make the output the original size again
-      outlines = detect_attacks(last_diffed, diffed, 230)
-      last_n_motion_frames.append(outlines)
+      diffed2 = detect_attacks(last_diffed, diffed, 100)
+      diffed3 = detect_attacks(prev_diffed2, diffed2, 100)
+      last_n_motion_frames.append(diffed3)
       if len(last_n_motion_frames) > N:
         last_n_motion_frames.pop(0)
 
-      to_show = combine_motion_frames(last_n_motion_frames)
+      combined_motion = combine_motion_frames(last_n_motion_frames)
+
+      to_show = draw_aura(combined_motion, next_frame)
       if test_small:
         to_show = cv2.resize(to_show, (int(width/2), int(height/2)))
 
       prev_diffed = new_prev
 
-
       last_diffed = diffed
+      prev_diffed2 = diffed2
+
+
       # output[:, :20, 1] = jump_cut
       cv2.imshow(WINDOW_NAME, to_show)
-      if cv2.waitKey(10) == ord("q"):
+      if cv2.waitKey(2) == ord("q"):
           break
 
   cv2.destroyAllWindows()
