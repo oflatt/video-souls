@@ -24,14 +24,40 @@ class Video:
 def process_frame(frame: np.ndarray) -> np.ndarray:
     return cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
+def diff_frames(prev_frame, next_frame):
+  blurred = cv2.GaussianBlur(next_frame / 255., (21, 21), 0)
+  if prev_frame is None:
+    prev_frame = blurred
+  diff = np.linalg.norm(blurred - prev_frame, axis=-1)
+  JUMP_THRESHOLD = 0.2
+  jump_cut = diff.mean() > JUMP_THRESHOLD
+  if jump_cut:
+      prev_frame = 0.05 * prev_frame + 1.0 * blurred
+      diff = np.linalg.norm(blurred - prev_frame, axis=-1)
+  diff = cv2.threshold(diff, 0.2, 1, cv2.THRESH_BINARY)[1]
+  cv2.dilate(diff, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (21, 21), (10, 10)), dst=diff)
+  np.subtract(diff, diff.mean(), out=diff)
+  np.clip(diff, 0, 1, out=diff)
+  # Get centroid
+  # median_point = (diff * np.mgrid[:diff.shape[0], :diff.shape[1]]).sum(axis=(1, 2)) / max(diff.sum(), 1e-3)
+  # median_point = (int(median_point[1]), int(median_point[0]))
+  median_point = [
+      np.searchsorted(np.cumsum(diff.sum(axis=0)) / max(diff.sum(), 1e-3), 0.5),
+      np.searchsorted(np.cumsum(diff.sum(axis=1)) / max(diff.sum(), 1e-3), 0.5)
+  ]
+  new_prev = 0.95 * prev_frame + 0.05 * blurred
+  output = next_frame / 255. * diff[:, :, np.newaxis]
+  cv2.circle(output, median_point, 5, (0, 0, 1), -1)
+  return (output, new_prev)
+
 
 test_small = True
 
 def do_video(path):
   video = Video(path)
-  JUMP_THRESHOLD = 0.2
 
   prev_frame = None
+  prev_motion_frame = None
   for next_frame in video:
       # flow = cv2.calcOpticalFlowFarneback(
       #     process_frame(video.prev),
@@ -47,34 +73,20 @@ def do_video(path):
       print(width, height)
       if test_small:
         next_frame = cv2.resize(next_frame, (320, 180))
-      blurred = cv2.GaussianBlur(next_frame / 255., (41, 21), 0)
-      if prev_frame is None:
-          prev_frame = blurred
-      diff = np.linalg.norm(blurred - prev_frame, axis=-1)
-      jump_cut = diff.mean() > JUMP_THRESHOLD
-      if jump_cut:
-          prev_frame = 0.05 * prev_frame + 0.95 * blurred
-          diff = np.linalg.norm(blurred - prev_frame, axis=-1)
-      cv2.dilate(diff, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (21, 21), (10, 10)), dst=diff)
-      np.subtract(diff, diff.mean(), out=diff)
-      np.clip(diff, 0, 1, out=diff)
-      # Get centroid
-      # median_point = (diff * np.mgrid[:diff.shape[0], :diff.shape[1]]).sum(axis=(1, 2)) / max(diff.sum(), 1e-3)
-      # median_point = (int(median_point[1]), int(median_point[0]))
-      median_point = [
-          np.searchsorted(np.cumsum(diff.sum(axis=0)) / max(diff.sum(), 1e-3), 0.5),
-          np.searchsorted(np.cumsum(diff.sum(axis=1)) / max(diff.sum(), 1e-3), 0.5)
-      ]
-      prev_frame = 0.95 * prev_frame + 0.05 * blurred
-      output = next_frame / 255. * diff[:, :, np.newaxis]
-      cv2.circle(output, median_point, 5, (0, 0, 1), -1)
+
+      (diffed, new_prev) = diff_frames(prev_frame, next_frame)
+      prev_frame = new_prev
+      
+      prev_motion_frame = diffed
+
 
       # now make the output the original size again
+      to_show = diffed
       if test_small:
-        output = cv2.resize(output, (int(width/2), int(height/2)))
+        to_show = cv2.resize(diffed, (int(width/2), int(height/2)))
 
       # output[:, :20, 1] = jump_cut
-      cv2.imshow(WINDOW_NAME, output)
+      cv2.imshow(WINDOW_NAME, to_show)
       if cv2.waitKey(1) == ord("q"):
           break
 
