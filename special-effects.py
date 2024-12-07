@@ -69,7 +69,8 @@ def detect_attacks(prev_frame, next_frame):
   # blur the diff to look for large changes
   diff = cv2.GaussianBlur(diff, (5, 5), 0)
   # threshold the diff
-  _, thresh = cv2.threshold(diff, 20, 255, cv2.THRESH_BINARY)
+  # threshold 20 works well for outlining people
+  _, thresh = cv2.threshold(diff, 240, 255, cv2.THRESH_BINARY)
 
   # back to rgb image
   frame = cv2.cvtColor(thresh, cv2.COLOR_GRAY2RGB)
