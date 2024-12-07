@@ -185,3 +185,29 @@
     padding: 0.1em 0.4em;
     background-image: linear-gradient(to bottom, rgba(128, 128, 128, 30%) 0%, rgba(128, 128, 128, 40%) 30%, rgba(128, 128, 128, 10%) 100%);
 }
+
+/* Direction inputs */
+#direction-inputs {
+    position: absolute;
+    left: 50%;
+    top: 40%;
+    width: 0;
+    height: 0;
+}
+
+#direction-inputs .direction-input {
+    position: absolute;
+    clip-path: path('M 99.22 12.50 A 100 100 0 0 1 78.99 61.32 L 36.37 18.69 A 40.89 40.89 0 0 0 38.93 12.50 Z') border-box;
+    width: 100px;
+    height: 100px;
+    background-color: rgba(20%, 20%, 30%, 70%);
+    border: lightgray 2px solid;
+
+    transform-origin: top left;
+    rotate: 0deg;
+    transition: rotate 1s;
+}
+
+#direction-inputs .direction-input:hover {
+    rotate: -180deg;
+}
