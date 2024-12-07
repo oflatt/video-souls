@@ -10,6 +10,9 @@
     <div id="game-container" style="pointer-events: none;">
       <div id="video-player"></div>
     </div>
+    <div id="direction-inputs">
+      <div class="direction-input direction-up"></div>
+    </div>
     <div id="recording-controls">
       <div id="playback-bar">
         <div id="playback-bar-inner"></div>
@@ -52,7 +55,7 @@
     <dialog id="video-id-dialog" popover="manual" style="position: absolute; margin: 20em auto">
       <form id="video-id-form" method="dialog">
         <input id="video-id-input" type="text" placeholder="https://www.youtube.com/watch?v="
-          pattern="(?:(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/))?([^&?/\s]{11})" />
+          pattern="(?:(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?\&]v=)|youtu\.be\/))?([^\&?\/\s]{11})" />
         <button>Record</button>
       </form>
     </dialog>
