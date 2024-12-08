@@ -275,6 +275,8 @@ class VideoSouls {
       videoUrlInput: document.querySelector<HTMLInputElement>("#video-url")!,
       recordSpeedInput: document.querySelector<HTMLInputElement>("#record-speed")!,
 
+      retryButton: document.querySelector<HTMLButtonElement>("#retry-button")!,
+      backButton: document.querySelector<HTMLButtonElement>("#back-button")!,
       recordButton: document.querySelector<HTMLButtonElement>("#record-button")!,
       playButton: document.querySelector<HTMLButtonElement>("#play-button")!,
       exportButton: document.querySelector<HTMLButtonElement>("#export-button")!,
@@ -306,6 +308,15 @@ class VideoSouls {
           this.fadingAlert('Please enter a valid YouTube URL.', 30, "20px");
         }
     });
+
+    this.elements.retryButton.addEventListener('click', () => {
+      this.setGameMode(GameMode.PLAYING);
+    });
+
+    this.elements.backButton.addEventListener('click', () => {
+      this.setGameMode(GameMode.MENU);
+    });
+
     this.elements.playButton.addEventListener('click', () => {
       this.setGameMode(GameMode.PLAYING);
     });
