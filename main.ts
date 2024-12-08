@@ -268,6 +268,7 @@ class VideoSouls {
       canvas: document.querySelector<HTMLCanvasElement>("#game-canvas")!,
 
       gameHUD: document.querySelector<HTMLInputElement>("#game-hud")!,
+      battleEndHUD: document.querySelector<HTMLInputElement>("#battle-end-hud")!,
       floatingMenu: document.querySelector<HTMLInputElement>("#floating-menu")!,
       currentTimeDebug: document.querySelector<HTMLDivElement>("#current-time")!,
 
@@ -643,12 +644,12 @@ class VideoSouls {
     // check if the player died
     if (this.battle.playerHealth <= 0) {
       this.setGameMode(GameMode.BATTLE_END);
-      this.fadingAlert('You Died', 90, "40%", "red", "Cormorant Unicase");
+      this.fadingAlert('You Died', 90, "30%", "red", "Cormorant Unicase");
     }
 
     if (this.battle.bossHealth <= 0) {
       this.setGameMode(GameMode.BATTLE_END);
-      this.fadingAlert('You Won', 90, "40%", "green", "Cormorant Unicase");
+      this.fadingAlert('You Won', 90, "30%", "green", "Cormorant Unicase");
     }
 
     // check for when the video ends, loop it
@@ -665,13 +666,30 @@ class VideoSouls {
   
     // reset the sword state
     this.battle = initialBattleState();
-  
+   
+    // if the new mode is battle end, show the battle end hud
+    if (mode === GameMode.BATTLE_END) {
+      this.elements.battleEndHUD.style.display = 'flex';
+    } else {
+      this.elements.battleEndHUD.style.display = 'none';
+    }
+
+    // if the new mode is game, show the game hud
+    if (mode === GameMode.PLAYING || mode === GameMode.RECORDING) {
+      this.elements.gameHUD.style.display = 'flex';
+    } else {
+      this.elements.gameHUD.style.display = 'none';
+    }
+
+    // if the new mode is menu, show the menu
+    if (mode === GameMode.MENU) {
+      this.elements.floatingMenu.style.display = 'flex';
+    } else {
+      this.elements.floatingMenu.style.display = 'none';
+    }
+
     // if the new mode is menu, show the menu
     if  (mode === GameMode.MENU) {
-      this.elements.gameHUD.style.display = 'none';
-      this.elements.floatingMenu.style.display = 'flex';
-      // pause the video
-      this.elements.player.pauseVideo();
       // show the export and play buttons if there is any recorded data
       if (this.level.attackData.length > 0) {
         this.elements.exportButton.style.display = 'block';
@@ -681,14 +699,13 @@ class VideoSouls {
         this.elements.playButton.style.display = 'none';
       }
     }
-    // if the new mode is playing, show the game hud
+
+    // load the video for playing or recording modes
     if (mode === GameMode.PLAYING || mode === GameMode.RECORDING) {
       if (this.level.video != null) {
         this.elements.player.loadVideoById(this.level.video);
       }
       this.elements.player.pauseVideo();
-      // hide the floating menu
-      this.elements.floatingMenu.style.display = 'none';
   
       var playbackRate = 1.0;
       if (mode === GameMode.RECORDING) {
@@ -699,7 +716,6 @@ class VideoSouls {
       }
       this.elements.player.setPlaybackRate(playbackRate);
   
-      this.elements.gameHUD.style.display = 'flex';
       this.elements.player.playVideo();
     }
   
