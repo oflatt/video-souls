@@ -208,9 +208,18 @@ def combine_motion_frames(frames):
 
 
 def draw_lines(lines, frame):
-  for lines_in_a_frame in lines:
+
+  current_index = len(lines) - 1
+  starting_transparency = 0.8
+  dropoff = 0.8
+  while current_index >= 0:
+    if len(lines) - current_index > 5:
+      break
+    lines_in_a_frame = lines[current_index]
     for line in lines_in_a_frame:
       cv2.line(frame, (int(line[0][0]), int(line[0][1])), (int(line[1][0]), int(line[1][1])), (0, 255, 0), 1)
+    current_index -= 1
+
   return frame
 
 # given an aura,
