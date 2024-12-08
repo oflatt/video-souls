@@ -3,6 +3,7 @@ import cv2
 import imutils
 import math
 import random
+import itertools
 
 
 WINDOW_NAME = "video"
@@ -31,7 +32,7 @@ def diff_frames(prev_frame, next_frame, threshold, add_boxes=False, blur=True):
   gray = cv2.cvtColor(next_frame, cv2.COLOR_BGR2GRAY)
   blurred = gray
   if blur:
-     blurred = cv2.GaussianBlur(gray, (41, 41), 0)
+     blurred = cv2.GaussianBlur(gray, (31, 31), 0)
   if prev_frame is None:
     prev_frame = blurred
   # print dimensions of blurred and prev_frame
@@ -98,96 +99,73 @@ def find_boxes(frame):
     return box[2] * box[3]
   
   # filter boxes that are too small in area and ones that are too big
-  boxes = [box for box in boxes if area(box) > 500 and area(box) < 5000]
+  boxes = [box for box in boxes if area(box) > 50 and area(box) < 1000000]
   return boxes
 
-# find boxes that are nearby
-def box_pairs(boxes1, boxes2):
-  pairs = []
-  for box1 in boxes1:
-    for box2 in boxes2:
-      # distance between centers of boxes
-      center1 = (box1[0] + box1[2] / 2, box1[1] + box1[3] / 2)
-      center2 = (box2[0] + box2[2] / 2, box2[1] + box2[3] / 2)
-      distance = np.linalg.norm(np.array(center1) - np.array(center2))
-      # if the boxes are close enough
-      if distance < 70:
-        pairs.append((box1, box2))
-  return pairs
+# check if some points are roughly colinear by measuring the angle to the vector between the first and last point
+def are_points_colinear(points, tolerance=0.2):
+  vector = np.array(points[-1]) - np.array(points[0])
 
-def are_points_colinear(p1, p2, p3, tolerance=0.1):
-    """
-    Check if three points are roughly collinear based on angle, not distance.
+  max_angle = 0
+  for i in range(len(points)):
+    for j in range(i + 1, len(points)):
+      if i == j:
+        continue
+      if points[i] is None or points[j] is None:
+        continue
+      v = np.array(points[j]) - np.array(points[i])
+      angle_v_vector = np.arccos(np.dot(v, vector) / (np.linalg.norm(v) * np.linalg.norm(vector)))
+      v2 = np.array(points[i]) - np.array(points[j])
+      angle_v2_vector = np.arccos(np.dot(v2, vector) / (np.linalg.norm(v2) * np.linalg.norm(vector)))
+      min_angle = min(angle_v_vector, angle_v2_vector)
+      if min_angle > max_angle:
+        max_angle = min_angle
 
-    Parameters:
-        p1, p2, p3: Tuples representing points in the format (x, y).
-        tolerance: The acceptable tolerance for determining collinearity (in radians).
 
-    Returns:
-        True if the points are roughly collinear, False otherwise.
-    """
-    x1, y1 = p1
-    x2, y2 = p2
-    x3, y3 = p3
 
-    # Compute vectors p1->p2 and p1->p3
-    v1 = (x2 - x1, y2 - y1)
-    v2 = (x3 - x1, y3 - y1)
+  return max_angle < tolerance
 
-    # Calculate the dot product and magnitudes of the vectors
-    dot_product = v1[0] * v2[0] + v1[1] * v2[1]
-    magnitude_v1 = math.sqrt(v1[0]**2 + v1[1]**2)
-    magnitude_v2 = math.sqrt(v2[0]**2 + v2[1]**2)
+def find_lines(list_of_set_of_boxes):
+  # convert all boxes to points
+  points = []
+  for boxes in list_of_set_of_boxes:
+    boxes_points = []
+    for box in boxes:
+      x, y, w, h = box
+      boxes_points.append((x + w / 2, y + h / 2))
+    points.append(boxes_points)
 
-    # Avoid division by zero for degenerate cases
-    if magnitude_v1 == 0 or magnitude_v2 == 0:
-        return True  # All points are coincident or one segment is degenerate
+  # now compute the cartesian product of points from each frame
+  point_combinations = itertools.product(*points)
 
-    # Calculate the cosine of the angle between the vectors
-    cos_angle = dot_product / (magnitude_v1 * magnitude_v2)
-
-    # Ensure the cosine value is within valid range [-1, 1] due to numerical errors
-    cos_angle = max(-1, min(1, cos_angle))
-
-    # Calculate the angle in radians
-    angle = math.acos(cos_angle)
-
-    # Check if the angle is close to 0 or pi (collinear)
-    return abs(angle) < tolerance or abs(angle - math.pi) < tolerance
-
-def find_lines(boxes1, boxes2, boxes3):
-  points1 = [(box[0] + box[2] / 2, box[1] + box[3] / 2) for box in boxes1]
-  points2 = [(box[0] + box[2] / 2, box[1] + box[3] / 2) for box in boxes2]
-  points3 = [(box[0] + box[2] / 2, box[1] + box[3] / 2) for box in boxes3]
-
-  # find roughly colinear points
   lines = []
-  for point1 in points1:
-    for point2 in points2:
-      for point3 in points3:
-        if are_points_colinear(point1, point2, point3):
-          lines.append((point1, point3))        
+
+  for point_combination in point_combinations:
+    if are_points_colinear(point_combination):
+      lines.append((point_combination[0], point_combination[-1]))
+
 
   return lines
 
 def make_lines_from_motion_frames(last_n_motion_frames):
-  if len(last_n_motion_frames) < 5:
+  if len(last_n_motion_frames) < 6:
     # empty picture with same size as last frame
     return last_n_motion_frames[-1]
   
-  current = last_n_motion_frames[-1].copy()
-  prev = last_n_motion_frames[-2].copy()
-  prev2 = last_n_motion_frames[-3].copy()
-  boxes1 = find_boxes(current)
-  boxes2 = find_boxes(prev)
-  boxes3 = find_boxes(prev2)
+  # find boxes for last 3
+  boxes_for_last_frames = [find_boxes(frame) for frame in last_n_motion_frames[-3:]]
 
-  lines_found = find_lines(boxes1, boxes2, boxes3)
+  lines_found = find_lines(boxes_for_last_frames)
+
+  # pick a max of 3 lines
+  if len(lines_found) > 3:
+    lines_found = lines_found[:3]
+  
   res = lines_found.copy()
 
   # now make lots of other lines parallel to those found, but with different lengths and distances away
   for line in lines_found:
-    random_num_lines = random.randint(3, 6)
+    random_num_lines = random.randint(1, 2)
     for i in range(random_num_lines):
       # make a new line that is parallel to the original
       # but with a random length and distance away
