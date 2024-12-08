@@ -2,6 +2,7 @@ import numpy as np
 import cv2
 import imutils
 import math
+import random
 
 
 WINDOW_NAME = "video"
@@ -165,7 +166,7 @@ def find_lines(boxes1, boxes2, boxes3):
     for point2 in points2:
       for point3 in points3:
         if are_points_colinear(point1, point2, point3):
-          lines.append((point1, point2, point3))        
+          lines.append((point1, point3))        
 
   return lines
 
@@ -181,7 +182,32 @@ def make_lines_from_motion_frames(last_n_motion_frames):
   boxes2 = find_boxes(prev)
   boxes3 = find_boxes(prev2)
 
-  return find_lines(boxes1, boxes2, boxes3)
+  lines_found = find_lines(boxes1, boxes2, boxes3)
+  res = lines_found.copy()
+
+  # now make lots of other lines parallel to those found, but with different lengths and distances away
+  for line in lines_found:
+    random_num_lines = random.randint(3, 6)
+    for i in range(random_num_lines):
+      # make a new line that is parallel to the original
+      # but with a random length and distance away
+      point1, point2 = line
+      x1, y1 = point1
+      x2, y2 = point2
+      
+      v = (x2 - x1, y2 - y1)
+      perp_v = (-v[1], v[0])
+
+      normalized_v = (v[0] / np.linalg.norm(v), v[1] / np.linalg.norm(v))
+      normalized_perp_v = (perp_v[0] / np.linalg.norm(perp_v), perp_v[1] / np.linalg.norm(perp_v))
+
+      random_drift = (random.uniform(0.0, 30.0), random.uniform(0.0, 30.0))
+      random_length = random.uniform(0.8, 1.2)
+      new_point1 = (x1 + random_drift[0], y1 + random_drift[1])
+      new_point2 = new_point1[0] + v[0] * random_length, new_point1[1] + v[1] * random_length
+      res.append((new_point1, new_point2))
+
+  return res
 
   
 
@@ -208,18 +234,29 @@ def combine_motion_frames(frames):
 
 
 def draw_lines(lines, frame):
-
   current_index = len(lines) - 1
-  starting_transparency = 0.8
-  dropoff = 0.8
+  starting_transparency = 1.0
+  current_transparency = 1.0
+  dropoff = 0.9
   while current_index >= 0:
-    if len(lines) - current_index > 5:
+    if len(lines) - current_index > 50:
       break
     lines_in_a_frame = lines[current_index]
-    for line in lines_in_a_frame:
-      cv2.line(frame, (int(line[0][0]), int(line[0][1])), (int(line[1][0]), int(line[1][1])), (0, 255, 0), 1)
-    current_index -= 1
+    if len(lines_in_a_frame) == 0:
+      current_index -= 1
+      current_transparency *= dropoff
+      continue
 
+    copy = frame.copy()
+    for line in lines_in_a_frame:
+      cv2.line(copy, (int(line[0][0]), int(line[0][1])), (int(line[1][0]), int(line[1][1])), (0, 255, 0), 1)
+    
+    frame = frame * (1 - current_transparency) + copy * current_transparency
+    current_index -= 1
+    current_transparency *= dropoff
+
+  # now cast to integers
+  frame = frame.astype(np.uint8)
   return frame
 
 # given an aura,
