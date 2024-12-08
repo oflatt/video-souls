@@ -1,7 +1,7 @@
 // main.ts
 
 enum GameMode {
-  MENU, PLAYING, RECORDING
+  MENU, PLAYING, RECORDING, BATTLE_END
 }
 
 enum InputDirection {
@@ -302,7 +302,7 @@ class VideoSouls {
         if (videoUrl) {
           this.recordVideo(videoUrl);
         } else {
-          this.fadingAlert('Please enter a valid YouTube URL.');
+          this.fadingAlert('Please enter a valid YouTube URL.', 30, "20px");
         }
     });
     this.elements.playButton.addEventListener('click', () => {
@@ -354,10 +354,14 @@ class VideoSouls {
     requestAnimationFrame(this.mainLoop.bind(this));
   }
 
-  fadingAlert(message: string) {
+  fadingAlert(message: string, fontSize: number = 40, position: string, color: string = 'white', font: string = 'Arial') {
     // make an alert text element on top of the screen
     const alertText = document.createElement('div');
     alertText.classList.add("fading-alert");
+    alertText.style.fontSize = `${fontSize}px`;
+    alertText.style.top = position;
+    alertText.style.color = color;
+    alertText.style.fontFamily = font;
     alertText.textContent = message;
     document.body.appendChild(alertText);
     this.alerts.push({
@@ -366,6 +370,7 @@ class VideoSouls {
       lifetime: 3000
     });
   }
+
   private fadeOutAlerts() {
     const currentTime = Date.now();
     let remainingAlerts: AlertData[] = [];
@@ -385,9 +390,9 @@ class VideoSouls {
     const json = JSON.stringify(this.level);
     // copy the link to the clipboard
     navigator.clipboard.writeText(json).then(() => {
-      this.fadingAlert('Level data copied to clipboard.');
+      this.fadingAlert('Level data copied to clipboard.', 30, "20px");
     }).catch(error => {
-      this.fadingAlert('Failed to copy level data to clipboard.');
+      this.fadingAlert('Failed to copy level data to clipboard.', 30, "20px");
       console.error('Failed to copy: ', error);
     });
   }
@@ -634,19 +639,29 @@ class VideoSouls {
       // set game mode to menu
       this.setGameMode(GameMode.MENU);
     }
-  
-    // check for when the video ends, go back to menu
-    if (this.gameMode === GameMode.RECORDING && this.elements.player.getPlayerState() === YT.PlayerState.ENDED) {
-      this.setGameMode(GameMode.MENU);
+
+    // check if the player died
+    if (this.battle.playerHealth <= 0) {
+      this.setGameMode(GameMode.BATTLE_END);
+      this.fadingAlert('You Died', 90, "40%", "red", "Cormorant Unicase");
+    }
+
+    if (this.battle.bossHealth <= 0) {
+      this.setGameMode(GameMode.BATTLE_END);
+      this.fadingAlert('You Won', 90, "40%", "green", "Cormorant Unicase");
+    }
+
+    // check for when the video ends, loop it
+    if ((this.gameMode === GameMode.RECORDING || this.gameMode === GameMode.PLAYING) && this.elements.player.getPlayerState() === YT.PlayerState.ENDED) {
+      // loop the video
+      this.elements.player.seekTo(0.0, true);
+      this.elements.player.playVideo();
     }
   }
 
   setGameMode(mode: GameMode) {
     // if the video is valid, load it
-    if (this.level.video !== null) {
-      this.elements.player.loadVideoById(this.level.video);
-      this.elements.player.pauseVideo();
-    }
+    this.elements.player.pauseVideo();
   
     // reset the sword state
     this.battle = initialBattleState();
@@ -668,6 +683,10 @@ class VideoSouls {
     }
     // if the new mode is playing, show the game hud
     if (mode === GameMode.PLAYING || mode === GameMode.RECORDING) {
+      if (this.level.video != null) {
+        this.elements.player.loadVideoById(this.level.video);
+      }
+      this.elements.player.pauseVideo();
       // hide the floating menu
       this.elements.floatingMenu.style.display = 'none';
   
@@ -698,7 +717,7 @@ class VideoSouls {
       this.setCurrentVideo(videoId);
       this.setGameMode(GameMode.RECORDING);
     } else {
-      this.fadingAlert('Invalid YouTube URL');
+      this.fadingAlert('Invalid YouTube URL', 30, "20px");
     }
   }
 
