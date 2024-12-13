@@ -18,3 +18,12 @@ Welcome to the repo for video souls. For local development, simply serve the sta
   - Custom weapons, upload png or use link to png
 - Video tutorial for video souls
 - Use JS to create UI elements
+- Make game play attacks using intervals for where they are in the video
+
+
+# Editor TODOs
+- make bar click-able
+- make click-able button for making attacks
+- ability to edit damage
+- make backspace delete the selected object as well as x
+- add ability to specify intervals for where attacks are
