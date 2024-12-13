@@ -56,7 +56,7 @@ export class Editor {
     if (keyJustPressed.has("ArrowRight")) {
       this.seekForward(10);
     }
-    if (keyJustPressed.has(",")) {
+    if (keyJustPressed.has("m")) {
       this.seekForward(-0.05);
     }
     if (keyJustPressed.has(".")) {
