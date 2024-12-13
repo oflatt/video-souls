@@ -43,7 +43,7 @@ export class Editor {
   }
 
   update(keyJustPressed: Set<string>, currentTargetDir: AttackDirection) {
-    if (keyJustPressed.has(" ") || keyJustPressed.has("k")) {
+    if (keyJustPressed.has(" ")) {
       if (this.player.getPlayerState() == YT.PlayerState.PLAYING) {
         this.player.pauseVideo();
       } else {
@@ -51,10 +51,10 @@ export class Editor {
       }
     }
     if (keyJustPressed.has("ArrowLeft")) {
-      this.seekForward(-1);
+      this.seekForward(-10);
     }
     if (keyJustPressed.has("ArrowRight")) {
-      this.seekForward(1);
+      this.seekForward(10);
     }
     if (keyJustPressed.has(",")) {
       this.seekForward(-0.05);
@@ -63,12 +63,12 @@ export class Editor {
       this.seekForward(0.05);
     }
     if (keyJustPressed.has("j")) {
-      this.seekForward(-10);
+      this.seekForward(-0.5);
     }
     if (keyJustPressed.has("l")) {
-      this.seekForward(10);
+      this.seekForward(0.5);
     }
-    if (keyJustPressed.has("Enter")) {
+    if (keyJustPressed.has("Enter") || keyJustPressed.has("k")) {
       this.createAttackAt(this.player.getCurrentTime(), currentTargetDir);
     }
     if (keyJustPressed.has("x")) {
@@ -91,7 +91,7 @@ export class Editor {
     this.selectAttack(newAttack);
   }
 
-  selectAttackAt(timestamp: DOMHighResTimeStamp) {
+  selectAttackAt(timestamp: number) {
     let existingAttack = this.frameToAttack.get(this.frameIndex(timestamp));
     if (existingAttack != null) {
       this.selectAttack(existingAttack);
@@ -177,9 +177,9 @@ export class Editor {
     }
   }
 
-  frameIndex(timestamp: DOMHighResTimeStamp): number;
+  frameIndex(timestamp: number): number;
   frameIndex(attack: AttackData): number;
-  frameIndex(timeOrAttack: DOMHighResTimeStamp | AttackData) {
+  frameIndex(timeOrAttack: number | AttackData) {
     if (typeof timeOrAttack == "number") {
       return Math.floor(timeOrAttack / FRAME_LENGTH);
     }
