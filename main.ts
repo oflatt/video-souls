@@ -1,7 +1,7 @@
 // main.ts
 
 enum GameMode {
-  MENU, PLAYING, RECORDING, BATTLE_END
+  MENU, PLAYING, PLAYBACK_EDITING, BATTLE_END, EDITING
 }
 
 enum InputDirection {
@@ -9,10 +9,6 @@ enum InputDirection {
   UP = 0b0010,
   RIGHT = 0b0100,
   DOWN = 0b1000
-}
-
-enum AttackDirection {
-  UP, UP_RIGHT, RIGHT, DOWN_RIGHT, DOWN, DOWN_LEFT, LEFT, UP_LEFT, CENTER
 }
 
 enum AttackAnimation {
@@ -62,30 +58,11 @@ type BattleState = {
   prevTime: number
 };
 
-type AttackData = {
-  time: number,
-  direction: AttackDirection
-};
-
-type LevelData = {
-  video: string | null,
-  attackData: AttackData[],
-  version: number
-};
-
 type AlertData = {
   message: HTMLElement,
   startTime: number,
   lifetime: number
 };
-
-type StateData = {
-  level: LevelData,
-  gameMode: GameMode,
-  battle: BattleState,
-  alerts: AlertData[]
-};
-
 
 const keyPressed = new Set<string>();
 const keyJustPressed = new Set<string>();
@@ -252,12 +229,13 @@ function makeGlow(img: HTMLCanvasElement, range: number): HTMLCanvasElement {
 
 class VideoSouls {
   elements;
-  level: LevelData;
   gameMode: GameMode;
   battle: BattleState;
   alerts: AlertData[];
   graphics: Graphics;
   audio: AudioPlayer;
+  // only defined when in editing mode
+  editor: Editor.Editor;
 
   constructor(player: YT.Player) {
     this.audio = new AudioPlayer();
@@ -271,6 +249,8 @@ class VideoSouls {
       battleEndHUD: document.querySelector<HTMLInputElement>("#battle-end-hud")!,
       floatingMenu: document.querySelector<HTMLInputElement>("#floating-menu")!,
       currentTimeDebug: document.querySelector<HTMLDivElement>("#current-time")!,
+      playbackRecordHUD: document.querySelector<HTMLInputElement>("#playback-record-hud")!,
+      recordHUD: document.querySelector<HTMLInputElement>("#record-hud")!,
 
       videoUrlInput: document.querySelector<HTMLInputElement>("#video-url")!,
       recordSpeedInput: document.querySelector<HTMLInputElement>("#record-speed")!,
@@ -281,13 +261,10 @@ class VideoSouls {
       playButton: document.querySelector<HTMLButtonElement>("#play-button")!,
       exportButton: document.querySelector<HTMLButtonElement>("#export-button")!,
       level1Button: document.querySelector<HTMLButtonElement>("#lv1-button")!,
+      toEditorButton: document.querySelector<HTMLButtonElement>("#to-editor-button")!,
     } as const;
 
-    this.level = {
-      video: null,
-      attackData: [],
-      version: 1,
-    };
+    this.editor = new Editor.Editor(player, document.querySelector<HTMLInputElement>("#playback-bar")!, { video: null, attackData: [], version: 1 });
     this.gameMode = GameMode.MENU;
     this.battle = initialBattleState();
     this.alerts = [];
@@ -329,6 +306,10 @@ class VideoSouls {
       const videoUrl = 'https://www.youtube.com/watch?v=xi6fSPv7M18';
       this.recordVideo(videoUrl);
     });
+
+    this.elements.toEditorButton.addEventListener('click', () => {
+      this.setGameMode(GameMode.EDITING);
+    });
   
     document.addEventListener('keydown', event => {
       if (!keyPressed.has(event.key)) {
@@ -345,16 +326,20 @@ class VideoSouls {
     // Debug
     const currentTime = this.elements.player.getCurrentTime();
     const timeInMilliseconds = Math.floor(currentTime * 1000);
-    this.elements.currentTimeDebug.textContent = `Time: ${timeInMilliseconds} ms data: ${this.level.attackData.length}`;
+    this.elements.currentTimeDebug.textContent = `Time: ${timeInMilliseconds} ms data: ${this.editor.level.attackData.length}`;
     
     this.updateState();
 
     const ctx = this.elements.canvas.getContext('2d')!;
     ctx.clearRect(0, 0, this.elements.canvas.width, this.elements.canvas.height);
 
-    // draw canvas if we are in playing or recording
-    if (this.gameMode === GameMode.PLAYING || this.gameMode === GameMode.RECORDING) {
+    // draw canvas if we are in playing
+    if (this.gameMode === GameMode.PLAYING) {
       this.drawCanvas();
+    }
+    // draw the sword if we are in editing or playback editing
+    if (this.gameMode === GameMode.EDITING || this.gameMode === GameMode.PLAYBACK_EDITING) {
+      this.drawSword();
     }
 
     this.fadeOutAlerts();
@@ -399,7 +384,7 @@ class VideoSouls {
   }
 
   exportLevel() {
-    const json = JSON.stringify(this.level);
+    const json = JSON.stringify(this.editor.level);
     // copy the link to the clipboard
     navigator.clipboard.writeText(json).then(() => {
       this.fadingAlert('Level data copied to clipboard.', 30, "20px");
@@ -412,7 +397,7 @@ class VideoSouls {
   // gets the attack direction, if any, for this time period
   // starttime exclusive, endtime inclusive
   getAttacksInInterval(startTime: number, endTime: number) {
-    return this.level.attackData.filter(attack => attack.time > startTime && attack.time <= endTime);
+    return this.editor.level.attackData.filter(attack => attack.time > startTime && attack.time <= endTime);
   }
 
   successParry() {
@@ -515,7 +500,6 @@ class VideoSouls {
       this.battle.hitCombo += 1;
     }
     this.battle.hitComboTime = currentTime;
-    console.log(currentCombo);
 
     this.battle.anim.state = AttackAnimation.ATTACK_STARTING;
     this.battle.anim.startTime = currentTime;
@@ -562,15 +546,20 @@ class VideoSouls {
   updateState() {
     const currentTime = this.elements.player.getCurrentTime();
     // if the game mode is recording, record attacks based on button presses (WASD)
-    if (this.gameMode == GameMode.RECORDING) {
+    if (this.gameMode == GameMode.PLAYBACK_EDITING) {
       // check if the parry key is pressed, and add to the attack data if so
       if (keyJustPressed.has(parryKey)) {
-        this.level.attackData.push({ time: currentTime, direction: currentTargetDir() });
+        this.editor.level.attackData.push({ time: currentTime, direction: currentTargetDir(), damage: 1 });
       }
     }
 
+    // if the game mode is editing, update the editor
+    if (this.gameMode == GameMode.EDITING) {
+      this.editor!.update(keyJustPressed, currentTargetDir());
+    }
+
   
-    if ((this.gameMode == GameMode.PLAYING || this.gameMode == GameMode.RECORDING)) {
+    if ((this.gameMode == GameMode.PLAYING || this.gameMode == GameMode.PLAYBACK_EDITING)) {
       if (keyJustPressed.has(attackKey) && this.battle.bufferedInput === null) {
         // buffer attack
         this.battle.bufferedInput = attackKey;
@@ -664,7 +653,7 @@ class VideoSouls {
     }
 
     // check for when the video ends, loop it
-    if ((this.gameMode === GameMode.RECORDING || this.gameMode === GameMode.PLAYING) && this.elements.player.getPlayerState() === YT.PlayerState.ENDED) {
+    if ((this.gameMode === GameMode.PLAYBACK_EDITING || this.gameMode === GameMode.PLAYING) && this.elements.player.getPlayerState() === YT.PlayerState.ENDED) {
       // loop the video
       this.elements.player.seekTo(0.0, true);
       this.elements.player.playVideo();
@@ -686,7 +675,7 @@ class VideoSouls {
     }
 
     // if the new mode is game, show the game hud
-    if (mode === GameMode.PLAYING || mode === GameMode.RECORDING) {
+    if (mode === GameMode.PLAYING || mode === GameMode.PLAYBACK_EDITING) {
       this.elements.gameHUD.style.display = 'flex';
     } else {
       this.elements.gameHUD.style.display = 'none';
@@ -699,10 +688,29 @@ class VideoSouls {
       this.elements.floatingMenu.style.display = 'none';
     }
 
+    // if the new mode is playback recording, show the playback recording hud
+    if (mode === GameMode.PLAYBACK_EDITING) {
+      this.elements.playbackRecordHUD.style.display = 'flex';
+    } else {
+      this.elements.playbackRecordHUD.style.display = 'none';
+    }
+
+    // if the new mode is record, show the record hud
+    if (mode === GameMode.EDITING) {
+      this.elements.recordHUD.style.display = 'flex';
+    } else {
+      this.elements.recordHUD.style.display = 'none';
+    }
+
+    // in the editing mode, create a new editor
+    if (mode === GameMode.EDITING) {
+      this.editor = new Editor.Editor(this.elements.player, document.querySelector<HTMLInputElement>("#playback-bar")!, this.editor.level);
+    }
+
     // if the new mode is menu, show the menu
     if  (mode === GameMode.MENU) {
       // show the export and play buttons if there is any recorded data
-      if (this.level.attackData.length > 0) {
+      if (this.editor.level.attackData.length > 0) {
         this.elements.exportButton.style.display = 'block';
         this.elements.playButton.style.display = 'block';
       } else {
@@ -712,16 +720,16 @@ class VideoSouls {
     }
 
     // load the video for playing or recording modes
-    if (mode === GameMode.PLAYING || mode === GameMode.RECORDING) {
-      if (this.level.video != null) {
-        this.elements.player.loadVideoById(this.level.video);
+    if (mode === GameMode.PLAYING || mode === GameMode.PLAYBACK_EDITING) {
+      if (this.editor.level.video != null) {
+        this.elements.player.loadVideoById(this.editor.level.video);
       }
       this.elements.player.pauseVideo();
   
       var playbackRate = 1.0;
-      if (mode === GameMode.RECORDING) {
+      if (mode === GameMode.PLAYBACK_EDITING) {
         // delete the current recorded attacks
-        this.level.attackData = [];
+        this.editor.level.attackData = [];
         // set the playback rate to the recording speed
         playbackRate = Number(this.elements.recordSpeedInput.value);
       }
@@ -734,7 +742,7 @@ class VideoSouls {
   }
   
   setCurrentVideo(videoId: string) {
-    this.level.video = videoId;
+    this.editor.level.video = videoId;
   }
 
   // Function to play a YouTube video by extracting the video ID from the URL
@@ -742,7 +750,7 @@ class VideoSouls {
     const videoId = extractVideoID(videoUrl);
     if (videoId != null) {
       this.setCurrentVideo(videoId);
-      this.setGameMode(GameMode.RECORDING);
+      this.setGameMode(GameMode.PLAYBACK_EDITING);
     } else {
       this.fadingAlert('Invalid YouTube URL', 30, "20px");
     }
@@ -788,12 +796,8 @@ class VideoSouls {
     }
   }
 
-  // Draw the sword, health bars, ect to the canvas based on the data in state
-  private drawCanvas() {
+  private drawSword() {
     const currentTime = this.elements.player.getCurrentTime();
-  
-    this.drawAttackWarning();
-  
     var swordPos = this.battle.anim.endPos;
     var swordAngle = this.battle.anim.endAngle;
     var redSwordOutlineStrength = 0.0;
@@ -850,6 +854,15 @@ class VideoSouls {
     this.drawCenteredRotated(this.graphics.swordSprites.yellowOutline, swordOutlineX, swordOutlineY, swordAngle - Math.PI / 2, redSwordOutlineStrength, xscale, yscale);
     this.drawCenteredRotated(this.graphics.swordSprites.greenOutline, swordOutlineX, swordOutlineY, swordAngle- Math.PI / 2, greenSwordOutlineStrength, xscale, yscale);
     this.drawCenteredRotated(this.graphics.swordSprites.default, topLeftX, topLeftY, swordAngle- Math.PI / 2, 1.0, xscale, yscale);
+  }
+
+  // Draw the sword, health bars, ect to the canvas based on the data in state
+  private drawCanvas() {
+    const currentTime = this.elements.player.getCurrentTime();
+  
+    this.drawAttackWarning();
+  
+    this.drawSword();
 
     // draw the boss name
     const youtubeVideoName = this.elements.player.getIframe().title;
@@ -894,8 +907,11 @@ function onYouTubeIframeAPIReady() {
       cc_load_policy: 0, // Hide closed captions
     }
   });
-  const videoSouls = new VideoSouls(player);
-  player.addEventListener("onReady", videoSouls.mainLoop.bind(videoSouls, 1000 / 60));
+  player.addEventListener("onReady", () => {
+    player.setPlaybackQuality("highres");
+    const videoSouls = new VideoSouls(player);
+    videoSouls.mainLoop.bind(videoSouls, 1000 / 60)()
+  });
 }
 
 // Helper function to extract the video ID from a YouTube URL

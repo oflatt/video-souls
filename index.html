@@ -24,6 +24,7 @@
 
     <title>Video Souls</title>
     <link href="style.css" rel="stylesheet" />
+    <link href="editor.css" rel="stylesheet" />
 </head>
 <body>
     <div id="game-container">
@@ -54,9 +55,54 @@
         <button id="back-button">Back</button>
         <button id="retry-button">Retry</button>
     </div>
+    <div id="playback-record-hud">
+        <button id="to-editor-button">To Editor</button>
+    </div>
+    <div id="record-hud">
+        <div id="recording-controls">
+            <div id="playback-bar">
+                <div id="playback-bar-inner"></div>
+                <div id="playback-point"></div>
+                <!-- Example attack marker -->
+                <div class="attack-marker template">
+                <div class="marker-line">
+                    <div class="marker-handle">
+                    <div class="warning-line">
+                        <div class="warning-handle"></div>
+                    </div>
+                    <div class="damage-line">
+                        <div class="damage-handle"></div>
+                    </div>
+                    </div>
+                </div>
+                </div>
+            </div>
+        </div>
+        <div id="controls-info">
+            <div class="controls-entry">
+                <kbd><kbd>&ShortLeftArrow;</kbd> <kbd>&ShortRightArrow;</kbd></kbd> 1 second
+            </div>
+            <div class="controls-entry">
+                <kbd><kbd>J</kbd> <kbd>L</kbd></kbd> 10 seconds
+            </div>
+            <div class="controls-entry">
+                <kbd><kbd>,</kbd> <kbd>.</kbd></kbd> 1/20 second
+            </div>
+            <div class="controls-entry">
+                <kbd><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></kbd> Aim
+            </div>
+            <div class="controls-entry">
+                <kbd><kbd>Enter</kbd></kbd> Place marker
+            </div>
+            <div class="controls-entry">
+                <kbd><kbd>X</kbd></kbd> Delete marker
+            </div>
+        </div>
+    </div>
     <canvas id="game-canvas" style="position: absolute; top: 0; left: 0; pointer-events: none;"></canvas>
 
     <script src="js/main.js"></script>
+    <script src="js/editor.js"></script>
     <script src="https://www.youtube.com/iframe_api"></script>
 </body>
 </html>
