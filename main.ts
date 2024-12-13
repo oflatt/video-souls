@@ -1,7 +1,7 @@
 // main.ts
 
 enum GameMode {
-  MENU, PLAYING, RECORDING, BATTLE_END
+  MENU, PLAYING, PLAYBACK_RECORDING, BATTLE_END, RECORDING
 }
 
 enum InputDirection {
@@ -271,6 +271,8 @@ class VideoSouls {
       battleEndHUD: document.querySelector<HTMLInputElement>("#battle-end-hud")!,
       floatingMenu: document.querySelector<HTMLInputElement>("#floating-menu")!,
       currentTimeDebug: document.querySelector<HTMLDivElement>("#current-time")!,
+      playbackRecordHUD: document.querySelector<HTMLInputElement>("#playback-record-hud")!,
+      recordHUD: document.querySelector<HTMLInputElement>("#record-hud")!,
 
       videoUrlInput: document.querySelector<HTMLInputElement>("#video-url")!,
       recordSpeedInput: document.querySelector<HTMLInputElement>("#record-speed")!,
@@ -281,6 +283,7 @@ class VideoSouls {
       playButton: document.querySelector<HTMLButtonElement>("#play-button")!,
       exportButton: document.querySelector<HTMLButtonElement>("#export-button")!,
       level1Button: document.querySelector<HTMLButtonElement>("#lv1-button")!,
+      toEditorButton: document.querySelector<HTMLButtonElement>("#to-editor-button")!,
     } as const;
 
     this.level = {
@@ -353,7 +356,7 @@ class VideoSouls {
     ctx.clearRect(0, 0, this.elements.canvas.width, this.elements.canvas.height);
 
     // draw canvas if we are in playing or recording
-    if (this.gameMode === GameMode.PLAYING || this.gameMode === GameMode.RECORDING) {
+    if (this.gameMode === GameMode.PLAYING || this.gameMode === GameMode.PLAYBACK_RECORDING || this.gameMode === GameMode.RECORDING) {
       this.drawCanvas();
     }
 
@@ -562,7 +565,7 @@ class VideoSouls {
   updateState() {
     const currentTime = this.elements.player.getCurrentTime();
     // if the game mode is recording, record attacks based on button presses (WASD)
-    if (this.gameMode == GameMode.RECORDING) {
+    if (this.gameMode == GameMode.PLAYBACK_RECORDING) {
       // check if the parry key is pressed, and add to the attack data if so
       if (keyJustPressed.has(parryKey)) {
         this.level.attackData.push({ time: currentTime, direction: currentTargetDir() });
@@ -570,7 +573,7 @@ class VideoSouls {
     }
 
   
-    if ((this.gameMode == GameMode.PLAYING || this.gameMode == GameMode.RECORDING)) {
+    if ((this.gameMode == GameMode.PLAYING || this.gameMode == GameMode.PLAYBACK_RECORDING)) {
       if (keyJustPressed.has(attackKey) && this.battle.bufferedInput === null) {
         // buffer attack
         this.battle.bufferedInput = attackKey;
@@ -664,7 +667,7 @@ class VideoSouls {
     }
 
     // check for when the video ends, loop it
-    if ((this.gameMode === GameMode.RECORDING || this.gameMode === GameMode.PLAYING) && this.elements.player.getPlayerState() === YT.PlayerState.ENDED) {
+    if ((this.gameMode === GameMode.PLAYBACK_RECORDING || this.gameMode === GameMode.PLAYING) && this.elements.player.getPlayerState() === YT.PlayerState.ENDED) {
       // loop the video
       this.elements.player.seekTo(0.0, true);
       this.elements.player.playVideo();
@@ -686,7 +689,7 @@ class VideoSouls {
     }
 
     // if the new mode is game, show the game hud
-    if (mode === GameMode.PLAYING || mode === GameMode.RECORDING) {
+    if (mode === GameMode.PLAYING || mode === GameMode.PLAYBACK_RECORDING) {
       this.elements.gameHUD.style.display = 'flex';
     } else {
       this.elements.gameHUD.style.display = 'none';
@@ -697,6 +700,20 @@ class VideoSouls {
       this.elements.floatingMenu.style.display = 'flex';
     } else {
       this.elements.floatingMenu.style.display = 'none';
+    }
+
+    // if the new mode is playback recording, show the playback recording hud
+    if (mode === GameMode.PLAYBACK_RECORDING) {
+      this.elements.playbackRecordHUD.style.display = 'flex';
+    } else {
+      this.elements.playbackRecordHUD.style.display = 'none';
+    }
+
+    // if the new mode is record, show the record hud
+    if (mode === GameMode.RECORDING) {
+      this.elements.recordHUD.style.display = 'flex';
+    } else {
+      this.elements.recordHUD.style.display = 'none';
     }
 
     // if the new mode is menu, show the menu
@@ -712,14 +729,14 @@ class VideoSouls {
     }
 
     // load the video for playing or recording modes
-    if (mode === GameMode.PLAYING || mode === GameMode.RECORDING) {
+    if (mode === GameMode.PLAYING || mode === GameMode.PLAYBACK_RECORDING) {
       if (this.level.video != null) {
         this.elements.player.loadVideoById(this.level.video);
       }
       this.elements.player.pauseVideo();
   
       var playbackRate = 1.0;
-      if (mode === GameMode.RECORDING) {
+      if (mode === GameMode.PLAYBACK_RECORDING) {
         // delete the current recorded attacks
         this.level.attackData = [];
         // set the playback rate to the recording speed
@@ -742,7 +759,7 @@ class VideoSouls {
     const videoId = extractVideoID(videoUrl);
     if (videoId != null) {
       this.setCurrentVideo(videoId);
-      this.setGameMode(GameMode.RECORDING);
+      this.setGameMode(GameMode.PLAYBACK_RECORDING);
     } else {
       this.fadingAlert('Invalid YouTube URL', 30, "20px");
     }
