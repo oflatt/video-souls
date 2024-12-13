@@ -500,7 +500,6 @@ class VideoSouls {
       this.battle.hitCombo += 1;
     }
     this.battle.hitComboTime = currentTime;
-    console.log(currentCombo);
 
     this.battle.anim.state = AttackAnimation.ATTACK_STARTING;
     this.battle.anim.startTime = currentTime;
@@ -707,7 +706,7 @@ class VideoSouls {
     if (mode === GameMode.EDITING) {
       this.editor = new Editor.Editor(this.elements.player, document.querySelector<HTMLInputElement>("#playback-bar")!, this.editor.level);
     }
-    
+
     // if the new mode is menu, show the menu
     if  (mode === GameMode.MENU) {
       // show the export and play buttons if there is any recorded data
@@ -911,8 +910,8 @@ function onYouTubeIframeAPIReady() {
   player.addEventListener("onReady", () => {
     player.setPlaybackQuality("highres");
     const videoSouls = new VideoSouls(player);
-    return videoSouls.mainLoop.bind(videoSouls, 1000 / 60)
-});
+    videoSouls.mainLoop.bind(videoSouls, 1000 / 60)()
+  });
 }
 
 // Helper function to extract the video ID from a YouTube URL
