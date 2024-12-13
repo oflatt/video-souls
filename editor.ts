@@ -40,6 +40,15 @@ export class Editor {
     let multiplier = Math.max(minLength / nFrames, 1);
     this.playbackBar.style.width = `${nFrames * multiplier}px`;
     this.level = level;
+
+    // now add all existing attacks to UI
+    this.addAttacks();
+  }
+
+  addAttacks() {
+    for (let attack of this.level.attackData) {
+      this.addAttackElement(attack);
+    }
   }
 
   update(keyJustPressed: Set<string>, currentTargetDir: AttackDirection) {
@@ -125,7 +134,7 @@ export class Editor {
     // playbackPoint.scrollIntoView();
   }
 
-  private addAttack(attack: AttackData) {
+  private addAttackElement(attack: AttackData) {
     // Set up attack marker element
     const parentElement = document.querySelector<HTMLElement>("#playback-bar")!;
     const templateElement = document.querySelector<HTMLElement>(".attack-marker.template")!;
@@ -140,16 +149,26 @@ export class Editor {
       }
     });
     this.elements.set(attack, attackElement);
+    
     // Insert attack chronologically
     let index = this.level.attackData.findIndex(a => attack.time < a.time);
     if (index == -1) {
       parentElement.insertBefore(attackElement, null);
-      this.level.attackData.push(attack);
     } else {
       parentElement.insertBefore(attackElement, this.elements.get(this.level.attackData[index])!);
-      this.level.attackData.splice(index, 0, attack);
     }
     this.frameToAttack.set(this.frameIndex(attack), attack);
+  }
+  
+  private addAttack(attack: AttackData) {
+    // Insert attack chronologically
+    let index = this.level.attackData.findIndex(a => attack.time < a.time);
+    if (index == -1) {
+      this.level.attackData.push(attack);
+    } else {
+      this.level.attackData.splice(index, 0, attack);
+    }
+    this.addAttackElement(attack);
   }
 
   private deleteAttack(attack: AttackData) {
