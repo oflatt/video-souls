@@ -25,5 +25,7 @@ Welcome to the repo for video souls. For local development, simply serve the sta
 - make bar click-able
 - make click-able button for making attacks
 - ability to edit damage
+- ability to adjust attacks
 - make backspace delete the selected object as well as x
 - add ability to specify intervals for where attacks are
+- adjusting attack intervals
