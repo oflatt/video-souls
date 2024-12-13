@@ -45,7 +45,7 @@ body {
   border-radius: 8px;
 }
 /* game HUD style */
-#game-hud, #battle-end-hud, #playback-record-hud {
+#game-hud, #battle-end-hud, #playback-record-hud, #record-hud {
   position: absolute;
   top: 0px;
   left: 0px;
@@ -105,3 +105,4 @@ button {
     z-index: 1000;
     opacity: 100%;
 }
+
