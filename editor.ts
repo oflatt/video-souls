@@ -17,6 +17,7 @@ export type LevelData = {
 
 
 const FRAME_LENGTH = 0.05;
+const PLAYBACK_BAR_PADDING = 20;
 
 export class Editor {
   static defaults = {
@@ -60,31 +61,28 @@ export class Editor {
 
   // update all the elements
   draw() {
-    const scroll = this.recordingControls.scrollLeft;
-    const clientWidth = document.querySelector("#record-hud")!.clientWidth - 120;
+    const clientWidth = this.recordingControls.clientWidth - PLAYBACK_BAR_PADDING*2;
 
-    // make the outer container the right size
-    this.recordingControls.style.width = `${clientWidth+20}px`;
-    // make the recordins controls have a series of lines based on the zoom level using repeating linear gradient
-    this.recordingControls.style.backgroundImage = `repeating-linear-gradient(#ccc 0 1px, transparent 1px 100%)`;
-    this.recordingControls.style.backgroundSize = `${this.timeToPx(5, 0)}px 100%`;
+    // TODO make the recordins controls have a series of lines based on the zoom level using repeating linear gradient
+    //this.recordingControls.style.backgroundImage = `repeating-linear-gradient(#ccc 0 1px, transparent 1px 100%)`;
+    //this.recordingControls.style.backgroundSize = `${this.timeToPx(5, 0)}px 100%`;
 
 
     let duration = this.player.getDuration();
-    let possibleW = this.timeToPx(duration, 0.0);
+    let possibleW = this.timeToPx(duration);
     // if we are zoomed out too far, set zoom to a larger number
     if (possibleW < clientWidth && (this.player.getPlayerState() == YT.PlayerState.PLAYING || this.player.getPlayerState() == YT.PlayerState.PAUSED)) {
       this.zoom = 1.0 / (duration / 60.0);
     }
     
-    let finalW = this.timeToPx(duration, 0.0);
+    let finalW = this.timeToPx(duration);
     this.playbackBar.style.width = `${finalW}px`;
 
     // update all of the attack elements positions
     for (let [attack, element] of this.elements) {
       let elementWidth = element.clientWidth;
       // based on the zoom level and clientWidth, position this attack
-      let left = this.timeToPx(attack.time, scroll) + elementWidth / 2;
+      let left = this.timeToPx(attack.time) + elementWidth / 2;
       // offset by 60 since that's where the bar is
       element.style.left = `${left}px`;
       element.style.setProperty('--height', `50px`);
@@ -93,40 +91,42 @@ export class Editor {
     // update the playback point
     const playbackPoint = document.querySelector<HTMLElement>("#playback-point")!;
     const playbackPointWidth = playbackPoint.clientWidth;
-    const playbackPointLeft = this.timeToPx(this.player.getCurrentTime(), scroll) + playbackPointWidth / 2;
+    const playbackPointLeft = this.timeToPx(this.player.getCurrentTime()) + playbackPointWidth / 2;
     playbackPoint.style.left = `${playbackPointLeft}px`;
   }
 
-  timeToPx(time: number, scroll: number) {
+  timeToPx(time: number) {
     // Make the bar length proportional to client width and video duration
-    const clientWidth = document.querySelector("#record-hud")!.clientWidth - 120;
+    const clientWidth = this.recordingControls.clientWidth - PLAYBACK_BAR_PADDING*2;
     // default 1 minute of content on screen
     let duration = time / 60.0;
-    // 10 px left padding to account for
-    if (scroll > 0) {
-      scroll = scroll - 10;
-    }
-    return (duration * clientWidth * this.zoom) - scroll;
+    return (duration * clientWidth * this.zoom);
   }
 
-  pxToTime(px: number, scroll: number) {
-    const clientWidth = document.querySelector("#record-hud")!.clientWidth - 120;
-    if (scroll > 0) {
-      scroll = scroll - 10;
-    }
-    return (px + scroll)*60.0 / (clientWidth * this.zoom);
+  pxToTime(px: number) {
+    const clientWidth = this.recordingControls.clientWidth - PLAYBACK_BAR_PADDING*2;
+    return (px*60.0 / (clientWidth * this.zoom));
   }
 
-  changeZoom(amount: number) {
-    // first grab the current scroll time
-    let scroll = this.recordingControls.scrollLeft;
-    let scrollTime = this.pxToTime(scroll, 0);
-    this.zoom += amount;
-    // set the scroll time to the same position
-    this.recordingControls.scrollLeft = this.timeToPx(scrollTime, 0);
+  changeZoom(event: WheelEvent) {
+    // grab the mouse position
+    let mouseX = event.offsetX;
+    let relativeX = mouseX - this.recordingControls.scrollLeft;
+    // get the time at that position
+    let time = this.pxToTime(mouseX);
+
+    // now change the zoom level
+    this.zoom += -event.deltaY / 1000;
+
+    // now make the scroll such that the time is at the same position
+    let positionNewCoordinates = this.timeToPx(time);
+    let targetScroll = positionNewCoordinates - relativeX;
+    this.recordingControls.scrollLeft = targetScroll;
   }
 
-
+  changeScroll(event: WheelEvent) {
+    this.recordingControls.scrollLeft += -event.deltaY / 5;
+  }
   
 
   update(keyJustPressed: Set<string>, currentTargetDir: AttackDirection) {
@@ -191,17 +191,14 @@ export class Editor {
     }
   }
 
+  /// get a mouse event relative to the playback bar's coordinates
   playbackBarClicked(event: MouseEvent) {
+    console.log("mousex", event.offsetX);
     // check the mouse event is left click
     if (event.button == 0) {
-      // get the scroll of the recording controls
-      let scroll = this.recordingControls.scrollLeft;
-
-      // get the x position of the click relative to the playback bar
-      let mouseX = event.clientX - this.playbackBar.getBoundingClientRect().left;
-
+      let mouseX = event.offsetX;
       // convert the x position to a time
-      let time = this.pxToTime(mouseX, scroll);
+      let time = this.pxToTime(mouseX);
       // seek to that time
       this.seek(time);
     }

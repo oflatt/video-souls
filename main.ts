@@ -317,9 +317,9 @@ class VideoSouls {
       keyPressed.delete(event.key);
     });
 
-    this.elements.recordingControls.addEventListener("mousewheel", (event) => { this.mouseWheel(event) }, { passive: false});
+    this.elements.recordingControls.addEventListener("mousewheel", (event) => { this.recordingMouseWheel(event) }, { passive: false});
     // Firefox
-    this.elements.recordingControls.addEventListener("DOMMouseScroll", (event) => { this.mouseWheel(event) }, { passive: false});
+    this.elements.recordingControls.addEventListener("DOMMouseScroll", (event) => { this.recordingMouseWheel(event) }, { passive: false});
 
     // when mouse is released, send this event to the editor
     document.addEventListener('mouseup', (event) => {
@@ -367,7 +367,7 @@ class VideoSouls {
     requestAnimationFrame(this.mainLoop.bind(this));
   }
 
-  mouseWheel(event: Event) {
+  recordingMouseWheel(event: Event) {
     // check if the event is a wheel event
     if (!(event instanceof WheelEvent)) {
       return;
@@ -377,9 +377,9 @@ class VideoSouls {
     if (keyPressed.has('Control')) {
       event.preventDefault();
       // increase the zoom in the editor
-      this.editor.changeZoom(-event.deltaY / 1000);
+      this.editor.changeZoom(event);
     } else {
-      this.elements.recordingControls.scrollLeft += event.deltaY;
+      this.editor.changeScroll(event);
     }
   }
 
