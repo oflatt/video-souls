@@ -120,12 +120,10 @@ export class Editor {
   changeZoom(amount: number) {
     // first grab the current scroll time
     let scroll = this.recordingControls.scrollLeft;
-    console.log("before", this.recordingControls.scrollLeft);
     let scrollTime = this.pxToTime(scroll, 0);
     this.zoom += amount;
     // set the scroll time to the same position
     this.recordingControls.scrollLeft = this.timeToPx(scrollTime, 0);
-    console.log(this.recordingControls.scrollLeft);
   }
 
 
