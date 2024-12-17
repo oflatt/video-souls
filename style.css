@@ -45,7 +45,7 @@ body {
   border-radius: 8px;
 }
 /* game HUD style */
-#game-hud, #battle-end-hud, #playback-record-hud, #record-hud {
+#game-hud, #battle-end-hud, #record-hud {
   position: absolute;
   top: 0px;
   left: 0px;
@@ -62,12 +62,6 @@ body {
   justify-content: center;
   align-items: center;
 }
-
-#playback-record-hud {
-  align-items: center;
-  flex-direction: row-reverse;
-}
-
 
 #game-hud {
   flex-direction: column;

@@ -28,6 +28,7 @@ export class Editor {
   player: YT.Player;
   playbackBar: HTMLElement;
   level: LevelData;
+  zoom: number;
 
   constructor(player: YT.Player, playbackBar: HTMLElement, level: LevelData) {
     this.frameToAttack = new Map<number, AttackData>();
@@ -35,11 +36,8 @@ export class Editor {
     this.selectedAttack = null;
     this.player = player;
     this.playbackBar = playbackBar;
-    const minLength = document.querySelector("#recording-controls")!.clientWidth - 120;
-    let nFrames = player.getDuration() * 40;
-    let multiplier = Math.max(minLength / nFrames, 1);
-    this.playbackBar.style.width = `${nFrames * multiplier}px`;
     this.level = level;
+    this.zoom = 1.0;
 
     // now add all existing attacks to UI
     this.addAttacks();
@@ -49,6 +47,43 @@ export class Editor {
     for (let attack of this.level.attackData) {
       this.addAttackElement(attack);
     }
+  }
+
+  // update all the elements
+  draw() {
+    const clientWidth = document.querySelector("#record-hud")!.clientWidth - 120;
+    let duration = this.player.getDuration();
+    let possibleW = this.timeToPx(duration);
+    // if we are zoomed out too far, set zoom to a larger number
+    if (possibleW < clientWidth || possibleW > 1000 * clientWidth || Number.isNaN(possibleW)) {
+      this.zoom = 1.0 / (duration / 60.0);
+    }
+    
+    let finalW = this.timeToPx(duration);
+    console.log(finalW);
+    console.log("clientWidth", clientWidth);
+    this.playbackBar.style.width = `${finalW}px`;
+
+    // update all of the attack elements positions
+    for (let [attack, element] of this.elements) {
+      // based on the zoom level and clientWidth, position this attack
+      let left = this.timeToPx(attack.time);
+      // offset by 60 since that's where the bar is
+      element.style.left = `${left}px`;
+      element.style.setProperty('--height', `50px`);
+    }
+
+    // update the playback point
+    const playbackPoint = document.querySelector<HTMLElement>("#playback-point")!;
+    playbackPoint.style.left = `${this.timeToPx(this.player.getCurrentTime())}px`;
+  }
+
+  timeToPx(time: number) {
+    // Make the bar length proportional to client width and video duration
+    const clientWidth = document.querySelector("#record-hud")!.clientWidth - 120;
+    // default 1 minute of content on screen
+    let duration = time / 60.0;
+    return duration * clientWidth * this.zoom;
   }
 
   update(keyJustPressed: Set<string>, currentTargetDir: AttackDirection) {
@@ -121,17 +156,6 @@ export class Editor {
     let targetTime = Math.min(Math.max(this.player.getCurrentTime() + seconds, 0), this.player.getDuration() - 0.05 * seconds);
     this.player.seekTo(targetTime, true);
     this.selectAttackAt(targetTime);
-    this.updatePlaybackPoint(this.player);
-  }
-
-  timeToPx(time: number) {
-    return time / this.player.getDuration() * this.playbackBar.clientWidth;
-  }
-
-  private updatePlaybackPoint(player: YT.Player) {
-    const playbackPoint = document.querySelector<HTMLElement>("#playback-point")!;
-    playbackPoint.style.left = `${this.timeToPx(player.getCurrentTime())}px`;
-    // playbackPoint.scrollIntoView();
   }
 
   private addAttackElement(attack: AttackData) {
@@ -140,8 +164,6 @@ export class Editor {
     const templateElement = document.querySelector<HTMLElement>(".attack-marker.template")!;
     let attackElement = <HTMLElement>templateElement.cloneNode(true); // Returns Node type by default
     attackElement.classList.remove("template");
-    attackElement.style.left = `${this.timeToPx(attack.time)}px`;
-    attackElement.style.setProperty('--height', `${25 + 15 * Math.random()}px`);
     attackElement.querySelector(".marker-handle")!.addEventListener("click", event => {
       if (this.selectedAttack != attack) {
         event.stopPropagation();
