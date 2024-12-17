@@ -253,7 +253,6 @@ class VideoSouls {
       recordHUD: document.querySelector<HTMLInputElement>("#record-hud")!,
 
       videoUrlInput: document.querySelector<HTMLInputElement>("#video-url")!,
-      recordSpeedInput: document.querySelector<HTMLInputElement>("#record-speed")!,
 
       retryButton: document.querySelector<HTMLButtonElement>("#retry-button")!,
       backButton: document.querySelector<HTMLButtonElement>("#back-button")!,
@@ -261,15 +260,22 @@ class VideoSouls {
       playButton: document.querySelector<HTMLButtonElement>("#play-button")!,
       exportButton: document.querySelector<HTMLButtonElement>("#export-button")!,
       level1Button: document.querySelector<HTMLButtonElement>("#lv1-button")!,
+      playbackBar: document.querySelector<HTMLInputElement>("#playback-bar")!,
+      recordingControls: document.querySelector<HTMLInputElement>("#recording-controls")!,
     } as const;
 
-    this.editor = new Editor.Editor(player, document.querySelector<HTMLInputElement>("#playback-bar")!, { video: null, attackData: [], version: 1 });
+    this.editor = new Editor.Editor(player, this.elements.recordingControls, this.elements.playbackBar, { video: null, attackData: [], version: 1 });
     this.gameMode = GameMode.MENU;
     this.battle = initialBattleState();
     this.alerts = [];
 
     this.initializeEventListeners();
     this.graphics = new Graphics(this.elements.canvas);
+
+    // make the recordingcontrols scroll using the mouse wheel
+    this.elements.recordingControls.addEventListener('wheel', (event) => {
+      this.elements.recordingControls.scrollLeft += event.deltaY;
+    });
   }
 
   private initializeEventListeners() {
@@ -315,6 +321,10 @@ class VideoSouls {
     document.addEventListener('keyup', event => {
       keyPressed.delete(event.key);
     });
+
+    document.addEventListener("mousewheel", (event) => { this.mouseWheel(event) }, { passive: false});
+    // Firefox
+    document.addEventListener("DOMMouseScroll", (event) => { this.mouseWheel(event) }, { passive: false});
   }
 
   mainLoop(time: DOMHighResTimeStamp) {
@@ -346,6 +356,20 @@ class VideoSouls {
     this.battle.prevTime = currentTime;
 
     requestAnimationFrame(this.mainLoop.bind(this));
+  }
+
+  mouseWheel(event: Event) {
+    // check if the event is a wheel event
+    if (!(event instanceof WheelEvent)) {
+      return;
+    }
+    
+    // if the control key is pressed, prevent the default behavior
+    if (keyPressed.has('Control')) {
+      event.preventDefault();
+      // increase the zoom in the editor
+      this.editor.zoom -= event.deltaY / 1000;
+    }
   }
 
   fadingAlert(message: string, fontSize: number = 40, position: string, color: string = 'white', font: string = 'Arial') {
@@ -703,15 +727,11 @@ class VideoSouls {
         this.elements.player.loadVideoById(this.editor.level.video);
       }
 
-      var playbackRate = 1.0;
       // delete the current recorded attacks
       this.editor.level.attackData = [];
-      // set the playback rate to the recording speed
-      playbackRate = Number(this.elements.recordSpeedInput.value);
-      this.elements.player.setPlaybackRate(playbackRate);
 
       // in the editing mode, create a new editor
-      this.editor = new Editor.Editor(this.elements.player, document.querySelector<HTMLInputElement>("#playback-bar")!, this.editor.level);
+      this.editor = new Editor.Editor(this.elements.player, this.elements.recordingControls, this.elements.playbackBar, this.editor.level);
     }
 
     // load the video for playing

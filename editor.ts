@@ -27,15 +27,18 @@ export class Editor {
   selectedAttack: AttackData | null;
   player: YT.Player;
   playbackBar: HTMLElement;
+  recordingControls: HTMLElement;
   level: LevelData;
   zoom: number;
+  
 
-  constructor(player: YT.Player, playbackBar: HTMLElement, level: LevelData) {
+  constructor(player: YT.Player, recordingControls: HTMLElement, playbackBar: HTMLElement, level: LevelData) {
     this.frameToAttack = new Map<number, AttackData>();
     this.elements = new Map<AttackData, HTMLElement>();
     this.selectedAttack = null;
     this.player = player;
     this.playbackBar = playbackBar;
+    this.recordingControls = recordingControls;
     this.level = level;
     this.zoom = 1.0;
 
@@ -52,16 +55,22 @@ export class Editor {
   // update all the elements
   draw() {
     const clientWidth = document.querySelector("#record-hud")!.clientWidth - 120;
+
+    // make the outer container the right size
+    this.recordingControls.style.width = `${clientWidth+20}px`;
+    // make the recordins controls have a series of lines based on the zoom level using repeating linear gradient
+    this.recordingControls.style.backgroundImage = `repeating-linear-gradient(#ccc 0 1px, transparent 1px 100%)`;
+    this.recordingControls.style.backgroundSize = `${this.timeToPx(5)}px 100%`;
+
+
     let duration = this.player.getDuration();
     let possibleW = this.timeToPx(duration);
     // if we are zoomed out too far, set zoom to a larger number
-    if (possibleW < clientWidth || possibleW > 1000 * clientWidth || Number.isNaN(possibleW)) {
+    if (possibleW < clientWidth && (this.player.getPlayerState() == YT.PlayerState.PLAYING || this.player.getPlayerState() == YT.PlayerState.PAUSED)) {
       this.zoom = 1.0 / (duration / 60.0);
     }
     
     let finalW = this.timeToPx(duration);
-    console.log(finalW);
-    console.log("clientWidth", clientWidth);
     this.playbackBar.style.width = `${finalW}px`;
 
     // update all of the attack elements positions
@@ -83,6 +92,7 @@ export class Editor {
     const clientWidth = document.querySelector("#record-hud")!.clientWidth - 120;
     // default 1 minute of content on screen
     let duration = time / 60.0;
+    // 5 pixels padding
     return duration * clientWidth * this.zoom;
   }
 

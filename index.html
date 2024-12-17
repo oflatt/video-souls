@@ -35,10 +35,6 @@
         <button id="play-button" style="display: none; margin-bottom: 20px;">Play</button>
         <input id="video-url" type="text" placeholder="Enter YouTube video URL" />
         <button id="record-button" style="margin-bottom: 20px;">Record Boss Fight</button>
-        <div>
-            <label for="record-speed">Recording Speed:</label>
-            <input id="record-speed" type="number" min="0" value="0.5" style="margin-bottom: 20px;" />
-        </div>
         <button id="export-button" style="display: none; margin-bottom: 20px;">Export</button>
         <button id="lv1-button" style="margin-bottom: 20px;">Level 1</button>
     </div>
@@ -57,22 +53,21 @@
     </div>
     <div id="record-hud">
         <div id="recording-controls">
-            <div id="playback-bar">
-                <div id="playback-bar-inner"></div>
-                <div id="playback-point"></div>
-                <!-- Example attack marker -->
-                <div class="attack-marker template">
-                <div class="marker-line">
-                    <div class="marker-handle">
-                    <div class="warning-line">
-                        <div class="warning-handle"></div>
-                    </div>
-                    <div class="damage-line">
-                        <div class="damage-handle"></div>
-                    </div>
-                    </div>
+            <div id="playback-point"></div>
+            <div id="playback-bar-wrapper">
+                <div id="playback-bar"></div>
+            </div>
+            <div class="attack-marker template">
+            <div class="marker-line">
+                <div class="marker-handle">
+                <div class="warning-line">
+                    <div class="warning-handle"></div>
+                </div>
+                <div class="damage-line">
+                    <div class="damage-handle"></div>
                 </div>
                 </div>
+            </div>
             </div>
         </div>
         <div id="controls-info">

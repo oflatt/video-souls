@@ -100,3 +100,6 @@ button {
     opacity: 100%;
 }
 
+#recording-controls {
+  overflow-x: auto;
+}
