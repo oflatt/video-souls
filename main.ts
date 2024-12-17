@@ -271,11 +271,6 @@ class VideoSouls {
 
     this.initializeEventListeners();
     this.graphics = new Graphics(this.elements.canvas);
-
-    // make the recordingcontrols scroll using the mouse wheel
-    this.elements.recordingControls.addEventListener('wheel', (event) => {
-      this.elements.recordingControls.scrollLeft += event.deltaY;
-    });
   }
 
   private initializeEventListeners() {
@@ -322,9 +317,23 @@ class VideoSouls {
       keyPressed.delete(event.key);
     });
 
-    document.addEventListener("mousewheel", (event) => { this.mouseWheel(event) }, { passive: false});
+    this.elements.recordingControls.addEventListener("mousewheel", (event) => { this.mouseWheel(event) }, { passive: false});
     // Firefox
-    document.addEventListener("DOMMouseScroll", (event) => { this.mouseWheel(event) }, { passive: false});
+    this.elements.recordingControls.addEventListener("DOMMouseScroll", (event) => { this.mouseWheel(event) }, { passive: false});
+
+    // when mouse is released, send this event to the editor
+    document.addEventListener('mouseup', (event) => {
+      if (this.gameMode === GameMode.EDITING) {
+        this.editor.mouseReleased(event);
+      }
+    });
+
+    // when the playback bar is clicked, seek to that time
+    this.elements.playbackBar.addEventListener('click', (event) => {
+      if (this.gameMode === GameMode.EDITING) {
+        this.editor.playbackBarClicked(event);
+      }
+    });
   }
 
   mainLoop(time: DOMHighResTimeStamp) {
@@ -363,12 +372,14 @@ class VideoSouls {
     if (!(event instanceof WheelEvent)) {
       return;
     }
-    
+
     // if the control key is pressed, prevent the default behavior
     if (keyPressed.has('Control')) {
       event.preventDefault();
       // increase the zoom in the editor
-      this.editor.zoom -= event.deltaY / 1000;
+      this.editor.changeZoom(-event.deltaY / 1000);
+    } else {
+      this.elements.recordingControls.scrollLeft += event.deltaY;
     }
   }
 
