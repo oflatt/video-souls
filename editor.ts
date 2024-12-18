@@ -86,9 +86,8 @@ export class Editor {
 
     // update all of the attack elements positions
     for (let [attack, element] of this.elements) {
-      let elementWidth = element.clientWidth;
       // based on the zoom level and clientWidth, position this attack
-      let left = this.timeToPx(attack.time) + elementWidth / 2;
+      let left = this.timeToPx(attack.time);
       // offset by 60 since that's where the bar is
       element.style.left = `${left}px`;
       element.style.setProperty('--height', `50px`);
@@ -96,8 +95,7 @@ export class Editor {
 
     // update the playback point
     const playbackPoint = document.querySelector<HTMLElement>("#playback-point")!;
-    const playbackPointWidth = playbackPoint.clientWidth;
-    const playbackPointLeft = this.timeToPx(this.player.getCurrentTime()) + playbackPointWidth / 2;
+    const playbackPointLeft = this.timeToPx(this.player.getCurrentTime());
     playbackPoint.style.left = `${playbackPointLeft}px`;
   }
 
@@ -278,7 +276,6 @@ export class Editor {
     if (attack != null) {
       this.selectedAttack = attack;
       this.elements.get(attack)!.classList.add("selected");
-      this.player.seekTo(attack.time, true);
     }
   }
 
