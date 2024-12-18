@@ -29,6 +29,7 @@ export class Editor {
   player: YT.Player;
   playbackBar: HTMLElement;
   recordingControls: HTMLElement;
+  recordingControlsInner: HTMLElement;
   level: LevelData;
   zoom: number;
   elementDragged: HTMLElement | null;
@@ -41,6 +42,7 @@ export class Editor {
     this.player = player;
     this.playbackBar = playbackBar;
     this.recordingControls = recordingControls;
+    this.recordingControlsInner = recordingControls.querySelector<HTMLElement>("#recording-controls-inner")!;
     this.level = level;
     this.zoom = 1.0;
     this.elementDragged = null;
@@ -64,9 +66,12 @@ export class Editor {
     const clientWidth = this.recordingControls.clientWidth - PLAYBACK_BAR_PADDING*2;
 
     // TODO make the recordins controls have a series of lines based on the zoom level using repeating linear gradient
-    //this.recordingControls.style.backgroundImage = `repeating-linear-gradient(#ccc 0 1px, transparent 1px 100%)`;
-    //this.recordingControls.style.backgroundSize = `${this.timeToPx(5, 0)}px 100%`;
-
+    this.recordingControlsInner = this.recordingControls.querySelector<HTMLElement>("#recording-controls-inner")!;
+    // lines every 1 second
+    let lineLength = 3;
+    let lineSpacing = this.timeToPx(1.0)-lineLength;
+    // make stripes- grey for lineLength, then transparent from lineLength to lineSpacing
+    this.recordingControlsInner.style.backgroundImage = `repeating-linear-gradient(to right, grey 0px, grey ${lineLength}px, transparent ${lineLength}px, transparent ${lineSpacing}px, grey ${lineSpacing}px)`;
 
     let duration = this.player.getDuration();
     let possibleW = this.timeToPx(duration);
