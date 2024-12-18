@@ -54,26 +54,23 @@
     <div id="record-hud">
         <!--recording-controls has a scrollbar with the editor inside-->
         <div id="recording-controls">
-            <!--houses the whole editor and has a background of lines-->
-            <div id="recording-controls-inner">
-                <div id="playback-point"></div>
-                <!-- playback-bar-warpper has a margin on each side of 10px -->
-                <div id="playback-bar-wrapper">
-                    <!--- the clickable playback bar. Pixel coordinates are relative to this element -->
-                    <div id="playback-bar"></div>
+            <div id="playback-point"></div>
+            <!-- playback-bar-warpper has a margin on each side of 10px -->
+            <div id="playback-bar-wrapper">
+                <!--- the clickable playback bar. Pixel coordinates are relative to this element -->
+                <div id="playback-bar"></div>
+            </div>
+            <div class="attack-marker template">
+            <div class="marker-line">
+                <div class="marker-handle">
+                <div class="warning-line">
+                    <div class="warning-handle"></div>
                 </div>
-                <div class="attack-marker template">
-                <div class="marker-line">
-                    <div class="marker-handle">
-                    <div class="warning-line">
-                        <div class="warning-handle"></div>
-                    </div>
-                    <div class="damage-line">
-                        <div class="damage-handle"></div>
-                    </div>
-                    </div>
+                <div class="damage-line">
+                    <div class="damage-handle"></div>
                 </div>
                 </div>
+            </div>
             </div>
         </div>
         <div id="controls-info">

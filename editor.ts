@@ -29,7 +29,7 @@ export class Editor {
   player: YT.Player;
   playbackBar: HTMLElement;
   recordingControls: HTMLElement;
-  recordingControlsInner: HTMLElement;
+  playbackWrapper: HTMLElement;
   level: LevelData;
   zoom: number;
   elementDragged: HTMLElement | null;
@@ -42,7 +42,7 @@ export class Editor {
     this.player = player;
     this.playbackBar = playbackBar;
     this.recordingControls = recordingControls;
-    this.recordingControlsInner = recordingControls.querySelector<HTMLElement>("#recording-controls-inner")!;
+    this.playbackWrapper = recordingControls.querySelector<HTMLElement>("#playback-bar-wrapper")!;
     this.level = level;
     this.zoom = 1.0;
     this.elementDragged = null;
@@ -65,23 +65,24 @@ export class Editor {
   draw() {
     const clientWidth = this.recordingControls.clientWidth - PLAYBACK_BAR_PADDING*2;
 
-    // TODO make the recordins controls have a series of lines based on the zoom level using repeating linear gradient
-    this.recordingControlsInner = this.recordingControls.querySelector<HTMLElement>("#recording-controls-inner")!;
-    // lines every 1 second
-    let lineLength = 3;
-    let lineSpacing = this.timeToPx(1.0)-lineLength;
-    // make stripes- grey for lineLength, then transparent from lineLength to lineSpacing
-    this.recordingControlsInner.style.backgroundImage = `repeating-linear-gradient(to right, grey 0px, grey ${lineLength}px, transparent ${lineLength}px, transparent ${lineSpacing}px, grey ${lineSpacing}px)`;
-
     let duration = this.player.getDuration();
     let possibleW = this.timeToPx(duration);
     // if we are zoomed out too far, set zoom to a larger number
-    if (possibleW < clientWidth && (this.player.getPlayerState() == YT.PlayerState.PLAYING || this.player.getPlayerState() == YT.PlayerState.PAUSED)) {
+    if (possibleW < clientWidth && !Number.isNaN(duration) && duration != 0) {
       this.zoom = 1.0 / (duration / 60.0);
     }
     
     let finalW = this.timeToPx(duration);
     this.playbackBar.style.width = `${finalW}px`;
+
+    // the recordins controls have a series of lines based on the zoom level using repeating linear gradient
+    this.playbackWrapper = this.recordingControls.querySelector<HTMLElement>("#playback-bar-wrapper")!;
+    // lines every 1 second
+    let lineLength = 3;
+    let lineSpacing = this.timeToPx(1.0)-lineLength;
+    // make stripes- grey for lineLength, then transparent from lineLength to lineSpacing
+    this.playbackWrapper.style.backgroundImage = `repeating-linear-gradient(to right, grey 0px, grey ${lineLength}px, transparent ${lineLength}px, transparent ${lineSpacing}px, grey ${lineSpacing}px)`;
+
 
     // update all of the attack elements positions
     for (let [attack, element] of this.elements) {
