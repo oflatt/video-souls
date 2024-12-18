@@ -3,6 +3,12 @@ enum AttackDirection {
   UP, UP_RIGHT, RIGHT, DOWN_RIGHT, DOWN, DOWN_LEFT, LEFT, UP_LEFT, CENTER
 }
 
+type AttackInterval = {
+  start: number,
+  end: number,
+  name: string
+};
+
 
 type AttackData = {
   time: number,
@@ -13,6 +19,11 @@ type AttackData = {
 export type LevelData = {
   video: string | null,
   attackData: AttackData[],
+  // attack intervals are currently unused
+  attackIntervals: AttackInterval[],
+  // custom script for defining the behavior of the boss, currently unused
+  customScript: String,
+  // version number for backwards compatibility, list changes here
   version: number
 };
 
@@ -26,6 +37,7 @@ export class Editor {
   } as const;
   frameToAttack: Map<number, AttackData>;
   elements: Map<AttackData, HTMLElement>;
+  intervalElements: Map<AttackInterval, HTMLElement>;
   selectedAttack: AttackData | null;
   player: YT.Player;
   playbackBar: HTMLElement;
@@ -34,11 +46,12 @@ export class Editor {
   level: LevelData;
   zoom: number;
   attackDragged: AttackData | null;
-  
+  freshName: number;
 
   constructor(player: YT.Player, recordingControls: HTMLElement, playbackBar: HTMLElement, level: LevelData) {
     this.frameToAttack = new Map<number, AttackData>();
     this.elements = new Map<AttackData, HTMLElement>();
+    this.intervalElements = new Map<AttackInterval, HTMLElement>();
     this.selectedAttack = null;
     this.player = player;
     this.playbackBar = playbackBar;
@@ -47,6 +60,14 @@ export class Editor {
     this.level = level;
     this.zoom = 1.0;
     this.attackDragged = null;
+    // find a number greater than all the existing ones to avoid name collisions
+    this.freshName = 0;
+    for (let attack of this.level.attackIntervals) {
+      let stringNum = parseInt(attack.name);
+      if (!isNaN(stringNum) && stringNum >= this.freshName) {
+        this.freshName = stringNum + 1;
+      }
+    }
 
     // now add all existing attacks to UI
     this.addAttacks();
