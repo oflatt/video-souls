@@ -3,6 +3,7 @@ enum AttackDirection {
   UP, UP_RIGHT, RIGHT, DOWN_RIGHT, DOWN, DOWN_LEFT, LEFT, UP_LEFT, CENTER
 }
 
+
 type AttackData = {
   time: number,
   direction: AttackDirection,
@@ -51,8 +52,14 @@ export class Editor {
     this.addAttacks();
   }
 
-  mouseReleased(_event: MouseEvent) {
+  mouseReleased(event: MouseEvent) {
     if (this.attackDragged != null) {
+      // remove the attack
+      this.deleteAttack(this.attackDragged);
+
+      // add the attack back at the mouse position
+      this.createAttackAtMousePosition(event.clientX, this.attackDragged.direction, this.attackDragged.damage);
+
       this.attackDragged = null;
     }
   }
@@ -166,14 +173,26 @@ export class Editor {
       this.seekForward(0.5);
     }
     if (keyJustPressed.has("Enter") || keyJustPressed.has("k")) {
-      this.createAttackAt(this.player.getCurrentTime(), currentTargetDir);
+      this.createAttackAt(this.player.getCurrentTime(), currentTargetDir, Editor.defaults.attackDamage);
     }
     if (keyJustPressed.has("x")) {
       this.removeSelectedAttack();
     }
   }
 
-  createAttackAt(timestamp: DOMHighResTimeStamp, targetDir: AttackDirection) {
+  createAttackAtMousePosition(pos: number, targetDir: AttackDirection, damage: number) {
+    let posRelative = pos - this.playbackBar.getBoundingClientRect().left;
+    let time = this.pxToTime(posRelative);
+    let newAttack = {
+      time: time,
+      direction: targetDir,
+      damage: damage
+    };
+    this.createAttack(newAttack);
+    this.selectAttack(newAttack);
+  }
+
+  createAttackAt(timestamp: DOMHighResTimeStamp, targetDir: AttackDirection, damage: number) {
     // Disallow overlapping attacks
     let existingAttack = this.frameToAttack.get(this.frameIndex(timestamp));
     if (existingAttack != null) {
@@ -182,9 +201,9 @@ export class Editor {
     let newAttack = {
       time: timestamp,
       direction: targetDir,
-      damage: Editor.defaults.attackDamage
+      damage: damage
     };
-    this.addAttack(newAttack);
+    this.createAttack(newAttack);
     this.selectAttack(newAttack);
   }
 
@@ -248,7 +267,7 @@ export class Editor {
     this.frameToAttack.set(this.frameIndex(attack), attack);
   }
   
-  private addAttack(attack: AttackData) {
+  private createAttack(attack: AttackData) {
     // Insert attack chronologically
     let index = this.level.attackData.findIndex(a => attack.time < a.time);
     if (index == -1) {
