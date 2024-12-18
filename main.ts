@@ -266,7 +266,7 @@ class VideoSouls {
       recordingControls: document.querySelector<HTMLInputElement>("#recording-controls")!,
     } as const;
 
-    this.editor = new Editor.Editor(player, this.elements.recordingControls, this.elements.playbackBar, { video: null, attackData: [], attackIntervals: [], version: 1 });
+    this.editor = new Editor.Editor(player, this.elements.recordingControls, this.elements.playbackBar, { video: null, attackData: [], attackIntervals: [], customScript: "", version: 1 });
     this.gameMode = GameMode.MENU;
     this.battle = initialBattleState();
     this.alerts = [];
