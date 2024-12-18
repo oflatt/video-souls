@@ -266,13 +266,13 @@ class VideoSouls {
       recordingControls: document.querySelector<HTMLInputElement>("#recording-controls")!,
     } as const;
 
-    this.editor = new Editor.Editor(player, this.elements.recordingControls, this.elements.playbackBar, { video: null, attackData: [], attackIntervals: [], customScript: "", version: 1 });
+    this.graphics = new Graphics(this.elements.canvas);
+    this.editor = new Editor.Editor(player, this.elements.recordingControls, this.elements.playbackBar, { video: null, attackData: [], attackIntervals: [], customScript: "", version: 1 }, this.graphics);
     this.gameMode = GameMode.MENU;
     this.battle = initialBattleState();
     this.alerts = [];
 
     this.initializeEventListeners();
-    this.graphics = new Graphics(this.elements.canvas);
   }
 
   private initializeEventListeners() {
@@ -749,7 +749,7 @@ class VideoSouls {
       this.editor.level.attackData = [];
 
       // in the editing mode, create a new editor
-      this.editor = new Editor.Editor(this.elements.player, this.elements.recordingControls, this.elements.playbackBar, this.editor.level);
+      this.editor = new Editor.Editor(this.elements.player, this.elements.recordingControls, this.elements.playbackBar, this.editor.level, this.graphics);
     }
 
     // load the video for playing

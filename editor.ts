@@ -47,8 +47,10 @@ export class Editor {
   zoom: number;
   attackDragged: AttackData | null;
   freshName: number;
+  graphics: Graphics;
 
-  constructor(player: YT.Player, recordingControls: HTMLElement, playbackBar: HTMLElement, level: LevelData) {
+  constructor(player: YT.Player, recordingControls: HTMLElement, playbackBar: HTMLElement, level: LevelData, graphics: Graphics) {
+    this.graphics = graphics;
     this.frameToAttack = new Map<number, AttackData>();
     this.elements = new Map<AttackData, HTMLElement>();
     this.intervalElements = new Map<AttackInterval, HTMLElement>();
@@ -286,6 +288,32 @@ export class Editor {
       parentElement.insertBefore(attackElement, this.elements.get(this.level.attackData[index])!);
     }
     this.frameToAttack.set(this.frameIndex(attack), attack);
+
+    // now add an arrow image to the attack element based on the direction of the attack
+    let arrowImg = this.graphics.arrowSprite;
+    let arrowSize = 50;
+    let arrowDir = attack.direction;
+    let arrowCanvas = document.createElement("canvas");
+    arrowCanvas.width = arrowSize;
+    arrowCanvas.height = arrowSize;
+    let arrowCtx = arrowCanvas.getContext("2d")!;
+    arrowCtx.translate(arrowSize/2, arrowSize/2);
+    arrowCtx.rotate((Math.PI/4) * attack.direction);
+    arrowCtx.drawImage(arrowImg, -arrowSize/2, -arrowSize/2, arrowSize, arrowSize);
+    // now add the canvas to the attack element in the right position
+    let arrowElement = document.createElement("div");
+    arrowElement.appendChild(arrowCanvas);
+    arrowElement.style.position = "absolute";
+    let pos_vector: [number, number] = [0, 30];
+    // rotate pos_vector clockwise by attack data direction
+    let angle = (Math.PI/4) * attack.direction;
+    let rotated_vector = roatate_vec2(pos_vector, angle);
+    let left = -arrowSize/2 + rotated_vector[0];
+    let top = -arrowSize/2 + rotated_vector[1];
+    arrowElement.style.left = `${left}px`;
+    arrowElement.style.bottom = `calc(var(--height) + ${top}px)`;
+
+    attackElement.appendChild(arrowElement);
   }
   
   private createAttack(attack: AttackData) {
@@ -339,4 +367,14 @@ export class Editor {
   }
 }
 
+}
+
+// rotate a vector by radians, clockwise
+function roatate_vec2(vec: [number, number], clockwise_angle: number): [number, number] {
+  let angle = -clockwise_angle;
+  let x = vec[0];
+  let y = vec[1];
+  let rotated_x = x * Math.cos(angle) - y * Math.sin(angle);
+  let rotated_y = x * Math.sin(angle) + y * Math.cos(angle);
+  return [rotated_x, rotated_y];
 }
