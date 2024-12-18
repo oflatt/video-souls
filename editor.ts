@@ -175,7 +175,7 @@ export class Editor {
     if (keyJustPressed.has("Enter") || keyJustPressed.has("k")) {
       this.createAttackAt(this.player.getCurrentTime(), currentTargetDir, Editor.defaults.attackDamage);
     }
-    if (keyJustPressed.has("x")) {
+    if (keyJustPressed.has("x") || keyJustPressed.has("Backspace") || keyJustPressed.has("Delete")) {
       this.removeSelectedAttack();
     }
   }
