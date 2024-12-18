@@ -72,7 +72,7 @@ const PARRY_END_LAG = 0.2;
 const SUCCESS_PARRY_ANIM_FADE = 0.2;
 
 const ATTACK_COMBO_STARTUP_TIMES = [0.2, 0.2, 0.3, 0.2, 0.4];
-const ATTACK_COMBO_DAMAGE_MULT = [1.0, 1.1, 1.3, 1.0, 1.8];
+const ATTACK_COMBO_DAMAGE_MULT = [1.0, 1.1, 1.3, 1.0, 2.2];
 const ATTACK_END_LAG = 0.15;
 const COMBO_EXTEND_TIME = 3.0; // number of seconds before combo lapses
 
