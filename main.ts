@@ -66,6 +66,8 @@ type AlertData = {
 
 const keyPressed = new Set<string>();
 const keyJustPressed = new Set<string>();
+var mouseX = 0;
+var mouseY = 0;
 
 const PARRY_WINDOW = 0.2;
 const PARRY_END_LAG = 0.2;
@@ -274,6 +276,11 @@ class VideoSouls {
   }
 
   private initializeEventListeners() {
+    document.body.addEventListener('mousemove', (event) => {
+      mouseX = event.clientX;
+      mouseY = event.clientY;
+    });
+
     this.elements.canvas.width = window.innerWidth;
     this.elements.canvas.height = window.innerHeight;
   
@@ -355,7 +362,7 @@ class VideoSouls {
     if (this.gameMode === GameMode.EDITING) {
       this.drawSword();
       // draw the editor
-      this.editor.draw();
+      this.editor.draw(mouseX, mouseY);
     }
 
     this.fadeOutAlerts();

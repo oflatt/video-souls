@@ -32,7 +32,7 @@ export class Editor {
   playbackWrapper: HTMLElement;
   level: LevelData;
   zoom: number;
-  elementDragged: HTMLElement | null;
+  attackDragged: AttackData | null;
   
 
   constructor(player: YT.Player, recordingControls: HTMLElement, playbackBar: HTMLElement, level: LevelData) {
@@ -45,14 +45,16 @@ export class Editor {
     this.playbackWrapper = recordingControls.querySelector<HTMLElement>("#playback-bar-wrapper")!;
     this.level = level;
     this.zoom = 1.0;
-    this.elementDragged = null;
+    this.attackDragged = null;
 
     // now add all existing attacks to UI
     this.addAttacks();
   }
 
   mouseReleased(_event: MouseEvent) {
-
+    if (this.attackDragged != null) {
+      this.attackDragged = null;
+    }
   }
 
   addAttacks() {
@@ -62,7 +64,7 @@ export class Editor {
   }
 
   // update all the elements
-  draw() {
+  draw(mouseX: number, mouseY: number) {
     const clientWidth = this.recordingControls.clientWidth - PLAYBACK_BAR_PADDING*2;
 
     let duration = this.player.getDuration();
@@ -86,8 +88,12 @@ export class Editor {
 
     // update all of the attack elements positions
     for (let [attack, element] of this.elements) {
-      // based on the zoom level and clientWidth, position this attack
-      let left = this.timeToPx(attack.time);
+      // if this one is being dragged, follow mouse
+      var left = this.timeToPx(attack.time);
+      if (this.attackDragged == attack) {
+        left = mouseX - this.playbackBar.getBoundingClientRect().left;
+      }
+
       // offset by 60 since that's where the bar is
       element.style.left = `${left}px`;
       element.style.setProperty('--height', `50px`);
@@ -222,15 +228,13 @@ export class Editor {
 
   private addAttackElement(attack: AttackData) {
     // Set up attack marker element
-    const parentElement = document.querySelector<HTMLElement>("#playback-bar")!;
+    const parentElement = this.playbackWrapper;
     const templateElement = document.querySelector<HTMLElement>(".attack-marker.template")!;
     let attackElement = <HTMLElement>templateElement.cloneNode(true); // Returns Node type by default
     attackElement.classList.remove("template");
-    attackElement.querySelector(".marker-handle")!.addEventListener("click", event => {
-      if (this.selectedAttack != attack) {
-        event.stopPropagation();
-        this.selectAttack(attack);
-      }
+    attackElement.querySelector(".marker-handle")!.addEventListener("mousedown", event => {
+      event.stopPropagation();
+      this.attackMouseDown(attack);
     });
     this.elements.set(attack, attackElement);
     
@@ -266,6 +270,12 @@ export class Editor {
     if (this.selectedAttack == attack) {
       this.selectedAttack = null;
     }
+  }
+
+  private attackMouseDown(attack: AttackData) {
+    console.log("attackMouseDown", attack);
+    this.selectAttack(attack);
+    this.attackDragged = attack;
   }
 
   private selectAttack(attack: AttackData | null) {
