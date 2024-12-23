@@ -395,7 +395,21 @@ function roatate_vec2(vec: [number, number], clockwise_angle: number): [number, 
 
 // Returns null if the level data is valid, otherwise returns an error message
 export function validateLevelData(levelData: unknown): null | string {
-  console.log("new validation");
+  // check that it's an object
+  if (typeof levelData !== "object" || levelData === null) {
+    return "Expected an object";
+  }
+
+  // check that it has a version field
+  if (!("version" in levelData)) {
+    return "Expected a version field";
+  }
+
+  // check that the version number is "0.0.0"
+  if (levelData.version !== "0.0.0") {
+    return "Expected version number to be 0.0.0";
+  }
+
   const res = typia.validate<LevelDataV0>(levelData);
   if (res.success) {
     return null;
