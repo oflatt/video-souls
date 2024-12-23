@@ -10,7 +10,7 @@ then
 else
     python -m http.server 8001 &
 fi
- 
+
 PIDS[1]=$!
 
 trap "kill ${PIDS[*]}" SIGINT

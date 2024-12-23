@@ -1,4 +1,13 @@
-namespace Editor {
+import {
+  validate,
+  Contains,
+  Equals,
+} from 'class-validator';
+
+import { Graphics } from './graphics.js';
+
+
+export namespace Editor {
 enum AttackDirection {
   UP, UP_RIGHT, RIGHT, DOWN_RIGHT, DOWN, DOWN_LEFT, LEFT, UP_LEFT, CENTER
 }
@@ -16,15 +25,24 @@ type AttackData = {
   // currently unused attributes
   damage: number,
 };
-export type LevelData = {
-  video: string | null,
-  attackData: AttackData[],
+
+export class LevelData {
+  video: string | null;
+  attackData: AttackData[];
   // attack intervals are currently unused
-  attackIntervals: AttackInterval[],
+  attackIntervals: AttackInterval[];
   // custom script for defining the behavior of the boss, currently unused
-  customScript: String,
+  customScript: String;
   // version number for backwards compatibility, list changes here
-  version: number
+  version: String;
+
+  constructor() {
+    this.video = null;
+    this.attackData = [];
+    this.attackIntervals = [];
+    this.customScript = "";
+    this.version = "0.0.0";
+  }
 };
 
 
@@ -365,8 +383,8 @@ export class Editor {
     }
     return Math.floor(timeOrAttack.time / FRAME_LENGTH);
   }
-}
 
+}
 }
 
 // rotate a vector by radians, clockwise
@@ -378,3 +396,4 @@ function roatate_vec2(vec: [number, number], clockwise_angle: number): [number, 
   let rotated_y = x * Math.sin(angle) + y * Math.cos(angle);
   return [rotated_x, rotated_y];
 }
+

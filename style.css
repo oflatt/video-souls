@@ -43,6 +43,8 @@ body {
   background-color: rgba(0, 0, 0, 0.8);
   padding: 10px 20px;
   border-radius: 8px;
+  overflow-y: auto;
+  height: 100%;
 }
 /* game HUD style */
 #game-hud, #battle-end-hud, #record-hud {
@@ -75,9 +77,27 @@ input {
   border-radius: 4px;
   font-size: 1em;
 }
+
+textarea {
+  border: none;
+  border-radius: 4px;
+  padding: 5px;
+  font-size: 1em;
+  width: 300px;
+  min-height: 300px;
+}
+
+h1 {
+  font-size: 40px;
+}
+
+h2 {
+  font-size: 30px;
+}
+
 button {
   padding: 5px 10px;
-  font-size: 2em;
+  font-size: 20px;
   cursor: pointer;
   border: none;
   border-radius: 4px;
