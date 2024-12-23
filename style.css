@@ -90,9 +90,10 @@ textarea {
   width: 300px;
 }
 
+/* TODO how to make it resize with content? */
 #validation-error {
   color: red;
-  resize: vertical;
+  min-height: 200px;
 }
 
 h1 {
