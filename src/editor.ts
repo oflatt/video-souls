@@ -4,7 +4,7 @@ import {
   Equals,
 } from 'class-validator';
 
-import { Graphics } from './graphics.js';
+import { Graphics } from './graphics';
 
 
 export namespace Editor {

@@ -3,7 +3,7 @@
 
 # Define the target to start the server
 build:
-	tsc
+	npx webpack
 
 
 install:

@@ -1,7 +1,7 @@
 // main.ts
 
-import { Editor, validateLevelData } from './editor.js';
-import { Graphics } from './graphics.js';
+import { Editor, validateLevelData } from './editor';
+import { Graphics } from './graphics';
 
 
 enum GameMode {

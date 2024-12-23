@@ -1,4 +1,4 @@
-import { VideoSouls } from './videosouls.js';
+import { VideoSouls } from './videosouls';
 
 // HACK to make typescript happy
 declare const window: any;
