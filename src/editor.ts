@@ -1,13 +1,8 @@
-import {
-  validate,
-  Contains,
-  Equals,
-} from 'class-validator';
+import typia from "typia";
 
 import { Graphics } from './graphics';
 
 
-export namespace Editor {
 enum AttackDirection {
   UP, UP_RIGHT, RIGHT, DOWN_RIGHT, DOWN, DOWN_LEFT, LEFT, UP_LEFT, CENTER
 }
@@ -34,7 +29,6 @@ export class LevelDataV0 {
   // custom script for defining the behavior of the boss, currently unused
   customScript: String;
   // version number for backwards compatibility, list changes here
-  @Equals("0.0.0")
   version: String;
 
   constructor() {
@@ -386,7 +380,6 @@ export class Editor {
   }
 
 }
-}
 
 // rotate a vector by radians, clockwise
 function roatate_vec2(vec: [number, number], clockwise_angle: number): [number, number] {
@@ -401,11 +394,14 @@ function roatate_vec2(vec: [number, number], clockwise_angle: number): [number, 
 
 
 // Returns null if the level data is valid, otherwise returns an error message
-export async function validateLevelData(levelData: Editor.LevelDataV0): Promise<null | string> {
-  // wait for validation
-  const res = await validate(levelData);
-  if (res.length == 0) {
+export function validateLevelData(levelData: unknown): null | string {
+  console.log("new validation");
+  const res = typia.validate<LevelDataV0>(levelData);
+  if (res.success) {
     return null;
+  } else {
+    return res.errors.map(function (error) {
+      return `Error at ${error.path}: expected ${error.expected} but got ${error.value}`;
+    }).join("\n");
   }
-  return res.map(e => e.toString()).join("\n");
 }

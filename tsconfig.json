@@ -1,18 +1,23 @@
 {
-    "compilerOptions": {
-        "module": "ESNext",
-        "moduleResolution": "node",
-        "target": "ES2020",
-        "jsx": "react",
-        "strict": true,
-        "strictNullChecks": true,
-        "strictFunctionTypes": true,
-        "outDir": "js",
-        "emitDecoratorMetadata": true,
-        "experimentalDecorators": true
-    },
-    "exclude": [
-        "node_modules",
-        "**/node_modules/*"
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "target": "ES2020",
+    "jsx": "react",
+    "strict": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "outDir": "js",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "plugins": [
+      {
+        "transform": "typia/lib/transform"
+      }
     ]
+  },
+  "exclude": [
+    "node_modules",
+    "**/node_modules/*"
+  ]
 }

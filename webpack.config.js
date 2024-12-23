@@ -1,22 +1,25 @@
-const path = require('path');
-
+const path = require("path");
+ 
 module.exports = {
+  // CUSTOMIZE HERE
   entry: './src/main.ts',
+  optimization: {
+    minimize: false,
+  },
+ 
+  // JUST KEEP THEM
+  mode: "development",
+  target: "node",
   module: {
     rules: [
       {
-        test: /\.tsx?$/,
-        use: 'ts-loader',
+        test: /\.ts$/,
         exclude: /node_modules/,
+        loader: "ts-loader",
       },
     ],
   },
   resolve: {
-    extensions: ['.tsx', '.ts', '.js'],
+    extensions: [".tsx", ".ts", ".js"],
   },
-  output: {
-    filename: 'bundle.js',
-    path: path.resolve(__dirname, 'dist'),
-  },
-  mode: 'development',
 };

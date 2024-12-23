@@ -1,11 +1,18 @@
 {
   "dependencies": {
     "@types/youtube": "^0.1.0",
-    "class-validator": "^0.14.1"
+    "typia": "^7.5.1",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "ts-loader": "^9.5.1",
+    "ts-patch": "^3.3.0",
+    "tsc-watch": "^6.2.1",
+    "typescript": "~5.7.2",
     "webpack": "^5.97.1",
     "webpack-cli": "^6.0.1"
+  },
+  "scripts": {
+    "prepare": "ts-patch install && typia patch"
   }
 }

@@ -152,7 +152,7 @@ export class VideoSouls {
   graphics: Graphics;
   audio: AudioPlayer;
   // only defined when in editing mode
-  editor: Editor.Editor;
+  editor: Editor;
 
   constructor(player: YT.Player) {
     this.audio = new AudioPlayer();
@@ -181,10 +181,11 @@ export class VideoSouls {
       recordingControls: document.querySelector<HTMLInputElement>("#recording-controls")!,
       customLevelInput: document.querySelector<HTMLInputElement>("#custom-level-input")!,
       customLevelEditButton: document.querySelector<HTMLInputElement>("#custom-level-edit-button")!,
+      validationError: document.querySelector<HTMLInputElement>("#validation-error")!,
     } as const;
 
     this.graphics = new Graphics(this.elements.canvas);
-    this.editor = new Editor.Editor(player, this.elements.recordingControls, this.elements.playbackBar, { video: null, attackData: [], attackIntervals: [], customScript: "", version: "0.0.0" }, this.graphics);
+    this.editor = new Editor(player, this.elements.recordingControls, this.elements.playbackBar, { video: null, attackData: [], attackIntervals: [], customScript: "", version: "0.0.0" }, this.graphics);
     this.gameMode = GameMode.MENU;
     this.battle = initialBattleState();
     this.alerts = [];
@@ -351,12 +352,14 @@ export class VideoSouls {
         this.editor.level = level;
         return true;
       } else {
-        this.fadingAlert(validation, 30, "20px");
+        this.fadingAlert("Invalid Level- see validation error below", 30, "20px");
+        this.elements.validationError.textContent = validation;
+        this.elements.validationError.style.display = 'block';
         return false;
       }
     } catch (error) {
-      this.fadingAlert('Failed to import level data.', 30, "20px");
-      console.error('Failed to import level data: ', error);
+      this.fadingAlert('Invalid JSON, failed to parse level data', 30, "20px");
+      console.error('Invalid JSON', error);
       return false;
     }
   }
@@ -634,6 +637,9 @@ export class VideoSouls {
   setGameMode(mode: GameMode) {
     // always sync the custom level input with the level data
     this.elements.customLevelInput.value = JSON.stringify(this.editor.level, null, 2);
+    // clear validation errors
+    this.elements.validationError.textContent = '';
+    this.elements.validationError.style.display = 'none';
 
 
     // if the video is valid, load it
@@ -692,7 +698,7 @@ export class VideoSouls {
       this.editor.level.attackData = [];
 
       // in the editing mode, create a new editor
-      this.editor = new Editor.Editor(this.elements.player, this.elements.recordingControls, this.elements.playbackBar, this.editor.level, this.graphics);
+      this.editor = new Editor(this.elements.player, this.elements.recordingControls, this.elements.playbackBar, this.editor.level, this.graphics);
     }
 
     // load the video for playing

@@ -1,6 +1,6 @@
 #tsc --watch --onSuccess "npx webpack" &
 #PIDS[0]=$!
-npx webpack
+tsc-watch --onSuccess "npx webpack" &
 
 echo "Starting server on http://localhost:8001"
 
