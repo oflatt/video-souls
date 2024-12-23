@@ -4,3 +4,5 @@ js/
 **/.DS_Store
 **/.vs
 **/.vscode/*
+
+dist
