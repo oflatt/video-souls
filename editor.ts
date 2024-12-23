@@ -26,7 +26,7 @@ type AttackData = {
   damage: number,
 };
 
-export class LevelData {
+export class LevelDataV0 {
   video: string | null;
   attackData: AttackData[];
   // attack intervals are currently unused
@@ -34,6 +34,7 @@ export class LevelData {
   // custom script for defining the behavior of the boss, currently unused
   customScript: String;
   // version number for backwards compatibility, list changes here
+  @Equals("0.0.0")
   version: String;
 
   constructor() {
@@ -61,13 +62,13 @@ export class Editor {
   playbackBar: HTMLElement;
   recordingControls: HTMLElement;
   playbackWrapper: HTMLElement;
-  level: LevelData;
+  level: LevelDataV0;
   zoom: number;
   attackDragged: AttackData | null;
   freshName: number;
   graphics: Graphics;
 
-  constructor(player: YT.Player, recordingControls: HTMLElement, playbackBar: HTMLElement, level: LevelData, graphics: Graphics) {
+  constructor(player: YT.Player, recordingControls: HTMLElement, playbackBar: HTMLElement, level: LevelDataV0, graphics: Graphics) {
     this.graphics = graphics;
     this.frameToAttack = new Map<number, AttackData>();
     this.elements = new Map<AttackData, HTMLElement>();
@@ -397,3 +398,14 @@ function roatate_vec2(vec: [number, number], clockwise_angle: number): [number, 
   return [rotated_x, rotated_y];
 }
 
+
+
+// Returns null if the level data is valid, otherwise returns an error message
+export async function validateLevelData(levelData: Editor.LevelDataV0): Promise<null | string> {
+  // wait for validation
+  const res = await validate(levelData);
+  if (res.length == 0) {
+    return null;
+  }
+  return res.map(e => e.toString()).join("\n");
+}

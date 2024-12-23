@@ -1,6 +1,6 @@
 // main.ts
 
-import { Editor } from './editor.js';
+import { Editor, validateLevelData } from './editor.js';
 import { Graphics } from './graphics.js';
 
 
@@ -218,8 +218,8 @@ export class VideoSouls {
       this.setGameMode(GameMode.MENU);
     });
 
-    this.elements.customLevelPlayButton.addEventListener('click', () => {
-      if (this.importLevel()) {
+    this.elements.customLevelPlayButton.addEventListener('click', async () => {
+      if (await this.importLevel()) {
         this.setGameMode(GameMode.PLAYING);
       }
     });
@@ -342,12 +342,11 @@ export class VideoSouls {
   }
 
   // returns true if the level was successfully imported
-  importLevel(): boolean {
+  async importLevel(): Promise<boolean> {
     const levelData = this.elements.customLevelInput.value;
     try {
       const level = JSON.parse(levelData);
-      //const validation = Editor.validateLevel(level);
-      const validation = null;
+      const validation = await validateLevelData(level);
       if (validation === null) {
         this.editor.level = level;
         return true;
