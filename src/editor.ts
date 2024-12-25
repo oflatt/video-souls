@@ -287,16 +287,6 @@ export class Editor {
   seekForward(seconds: number) {
     let targetTime = Math.min(Math.max(this.player.getCurrentTime() + seconds, 0), this.player.getDuration() - 0.05 * seconds);
     this.player.seekTo(targetTime, true);
-    // if there is a selected attack, move it to the new time
-    if (this.selectedAttack != null) {
-      this.selectedAttack.time = targetTime;
-      let attack = this.selectedAttack;
-      // remove the selected attack
-      this.deleteAttack(this.selectedAttack);
-      // add it back
-      this.createAttack(attack);
-      this.selectAttack(attack);
-    }
   }
 
   private addAttackElement(attack: AttackData) {
