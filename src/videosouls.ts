@@ -234,6 +234,12 @@ export class VideoSouls {
       this.recordVideo(videoUrl);
     });
 
+    this.elements.customLevelEditButton.addEventListener('click', () => {
+      // load the level data into the editor
+      this.importLevel();
+      this.setGameMode(GameMode.EDITING);
+    });
+
     document.addEventListener('keydown', event => {
       if (!keyPressed.has(event.key)) {
         keyPressed.add(event.key);
@@ -637,6 +643,7 @@ export class VideoSouls {
   setGameMode(mode: GameMode) {
     // always sync the custom level input with the level data
     this.elements.customLevelInput.value = JSON.stringify(this.editor.level, null, 2);
+    
     // clear validation errors
     this.elements.validationError.textContent = '';
     this.elements.validationError.style.display = 'none';
