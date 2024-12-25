@@ -529,7 +529,7 @@ export class VideoSouls {
 
     // if the game mode is editing, update the editor
     if (this.gameMode == GameMode.EDITING) {
-      this.editor!.update(keyJustPressed, currentTargetDir());
+      this.editor!.update(keyJustPressed, currentTargetDir(), mouseX);
     }
 
   

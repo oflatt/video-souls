@@ -182,7 +182,7 @@ export class Editor {
   }
   
 
-  update(keyJustPressed: Set<string>, currentTargetDir: AttackDirection) {
+  update(keyJustPressed: Set<string>, currentTargetDir: AttackDirection, mouseX: number) {
     if (keyJustPressed.has(" ")) {
       if (this.player.getPlayerState() == YT.PlayerState.PLAYING) {
         this.player.pauseVideo();
@@ -213,6 +213,14 @@ export class Editor {
     }
     if (keyJustPressed.has("x") || keyJustPressed.has("Backspace") || keyJustPressed.has("Delete")) {
       this.removeSelectedAttack();
+    }
+
+
+    // if an attack is being dragged, seek to mouse cursor
+    if (this.attackDragged != null) {
+      let posRelative = mouseX - this.playbackBar.getBoundingClientRect().left;
+      let time = this.pxToTime(posRelative);
+      this.seek(time);
     }
   }
 
@@ -367,6 +375,7 @@ export class Editor {
     if (attack != null) {
       this.selectedAttack = attack;
       this.elements.get(attack)!.classList.add("selected");
+      this.seek(attack.time);
     }
   }
 
