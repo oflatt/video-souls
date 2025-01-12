@@ -44,13 +44,26 @@ export class LevelDataV0 {
 const FRAME_LENGTH = 0.05;
 const PLAYBACK_BAR_PADDING = 20;
 
+
+class IntervalElements {
+  startElement: HTMLElement;
+  endElement: HTMLElement;
+  nameElement: HTMLElement;
+
+  constructor(startElement: HTMLElement, endElement: HTMLElement, nameElement: HTMLElement) {
+    this.startElement = startElement;
+    this.endElement = endElement;
+    this.nameElement = nameElement;
+  }
+}
+
 export class Editor {
   static defaults = {
     attackDamage: 0.1
   } as const;
   frameToAttack: Map<number, AttackData>;
   elements: Map<AttackData, HTMLElement>;
-  intervalElements: Map<AttackInterval, HTMLElement>;
+  intervalElements: Map<AttackInterval, IntervalElements>;
   selectedAttack: AttackData | null;
   player: YT.Player;
   playbackBar: HTMLElement;
@@ -66,7 +79,7 @@ export class Editor {
     this.graphics = graphics;
     this.frameToAttack = new Map<number, AttackData>();
     this.elements = new Map<AttackData, HTMLElement>();
-    this.intervalElements = new Map<AttackInterval, HTMLElement>();
+    this.intervalElements = new Map<AttackInterval, IntervalElements>();
     this.selectedAttack = null;
     this.player = player;
     this.playbackBar = playbackBar;
@@ -104,6 +117,10 @@ export class Editor {
     for (let attack of this.level.attackData) {
       this.addAttackElement(attack);
     }
+
+    for (let interval of this.level.attackIntervals) {
+      this.addIntervalElements(interval);
+    }
   }
 
   // update all the elements
@@ -137,9 +154,18 @@ export class Editor {
         left = mouseX - this.playbackBar.getBoundingClientRect().left;
       }
 
-      // offset by 60 since that's where the bar is
       element.style.left = `${left}px`;
       element.style.setProperty('--height', `50px`);
+    }
+
+    // update all the interval elements positions
+    for (let [interval, elements] of this.intervalElements) {
+      let startLeft = this.timeToPx(interval.start);
+      let endLeft = this.timeToPx(interval.end);
+      elements.startElement.style.left = `${startLeft}px`;
+      elements.endElement.style.left = `${endLeft}px`;
+      elements.nameElement.style.left = `${(startLeft + endLeft) / 2}px`;
+      elements.nameElement.style.width = (interval.name.length + 2) + "ch";
     }
 
     // update the playback point
@@ -211,6 +237,9 @@ export class Editor {
     if (keyJustPressed.has("Enter") || keyJustPressed.has("k")) {
       this.createAttackAt(this.player.getCurrentTime(), currentTargetDir, Editor.defaults.attackDamage);
     }
+    if (keyJustPressed.has("i")) {
+      this.createIntervalAt(this.player.getCurrentTime());
+    }
     if (keyJustPressed.has("x") || keyJustPressed.has("Backspace") || keyJustPressed.has("Delete")) {
       this.removeSelectedAttack();
     }
@@ -251,6 +280,23 @@ export class Editor {
     this.selectAttack(newAttack);
   }
 
+  createIntervalAt(timestamp: DOMHighResTimeStamp) {
+    let endTime = Math.min(timestamp + 2, this.player.getDuration());
+    // if the end time is the same as the start time, don't create
+    if (endTime == timestamp) {
+      return;
+    }
+    
+    let newInterval = {
+      start: timestamp,
+      end: endTime,
+      name: this.freshName.toString()
+    };
+    this.freshName += 1;
+
+    this.createInterval(newInterval);
+  }
+
   selectAttackAt(timestamp: number) {
     let existingAttack = this.frameToAttack.get(this.frameIndex(timestamp));
     if (existingAttack != null) {
@@ -266,7 +312,6 @@ export class Editor {
 
   /// get a mouse event relative to the playback bar's coordinates
   playbackBarClicked(event: MouseEvent) {
-    console.log("mousex", event.offsetX);
     // check the mouse event is left click
     if (event.button == 0) {
       let mouseX = event.offsetX;
@@ -287,6 +332,32 @@ export class Editor {
   seekForward(seconds: number) {
     let targetTime = Math.min(Math.max(this.player.getCurrentTime() + seconds, 0), this.player.getDuration() - 0.05 * seconds);
     this.player.seekTo(targetTime, true);
+  }
+
+  private addIntervalElements(interval: AttackInterval) {   
+    const parentElement = this.playbackWrapper;
+    let startElement = document.createElement("div");
+    startElement.classList.add("interval-start");
+    let endElement = document.createElement("div");
+    endElement.classList.add("interval-end");
+
+    // text input for name
+    let nameElement = document.createElement("input");
+    nameElement.type = "text";
+    nameElement.value = interval.name;
+    // make it not editable for now
+    nameElement.addEventListener("change", event => {
+      nameElement.value = interval.name;
+    });
+    nameElement.classList.add("interval-name");
+
+    let elements = new IntervalElements(startElement, endElement, nameElement);
+
+    this.intervalElements.set(interval, elements);
+
+    parentElement.appendChild(startElement);
+    parentElement.appendChild(endElement);
+    parentElement.appendChild(nameElement);
   }
 
   private addAttackElement(attack: AttackData) {
@@ -336,6 +407,22 @@ export class Editor {
 
     attackElement.appendChild(arrowElement);
   }
+
+  private createInterval(interval: AttackInterval) {
+    // if any intervals have an end time or start time at the same time, don't create
+    let existingInterval = this.level.attackIntervals.find(otherinterval => {
+      return (interval.start == otherinterval.start || interval.end == otherinterval.end);
+    });
+    if (existingInterval !== undefined) {
+      return;
+    }
+
+    // add interval to the back
+    this.level.attackIntervals.push(interval);
+
+    // add the interval elements
+    this.addIntervalElements(interval);
+  }
   
   private createAttack(attack: AttackData) {
     // Insert attack chronologically
@@ -362,7 +449,6 @@ export class Editor {
   }
 
   private attackMouseDown(attack: AttackData) {
-    console.log("attackMouseDown", attack);
     this.selectAttack(attack);
     this.attackDragged = attack;
   }

@@ -148,6 +148,42 @@
   --highlight-color: hsl(130, 55%, 50%);
 }
 
+/* Intervals */
+
+.interval-start, .interval-end {
+  position: absolute;
+  bottom: 20px;
+  height: 40px;
+  width: 10px;
+}
+
+.interval-start {
+  border-radius: 8px 0 0 8px;
+  /* start interval is right-aligned */
+  transform: translateX(-100%);
+}
+
+.interval-end {
+  /* end interval is left-aligned */
+  border-radius: 0 8px 8px 0;
+}
+
+.interval-name {
+  position: absolute;
+  bottom: 0px;
+  height: 20px;
+  transform: translateX(-50%);
+}
+
+.interval-start:not(.selected), .interval-end:not(.selected) {
+  background-image: linear-gradient(to bottom, hsl(210, 70%, 40%) 0%, hsl(210, 70%, 30%) 100%);
+}
+
+.interval-start.selected, .interval-end.selected {
+  background-image: linear-gradient(to bottom, hsl(130, 70%, 40%) 0%, hsl(130, 70%, 30%) 100%);
+}
+
+
 /* Controls info */
 
 #controls-info {
