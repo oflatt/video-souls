@@ -269,7 +269,7 @@ export class VideoSouls {
     });
   }
 
-  mainLoop(time: DOMHighResTimeStamp) {
+  mainLoop(_time: DOMHighResTimeStamp) {
     // Debug
     const currentTime = this.elements.player.getCurrentTime();
     const timeInMilliseconds = Math.floor(currentTime * 1000);

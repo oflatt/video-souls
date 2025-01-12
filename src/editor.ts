@@ -57,6 +57,28 @@ class IntervalElements {
   }
 }
 
+class DraggedInterval {
+  interval: AttackInterval;
+  isStart: boolean;
+  ty: "interval";
+
+  constructor(interval: AttackInterval, isStart: boolean) {
+    this.interval = interval;
+    this.isStart = isStart;
+    this.ty = "interval";
+  } 
+}
+
+class DraggedAttack {
+  attack: AttackData;
+  ty: "attack";
+
+  constructor(attack: AttackData) {
+    this.attack = attack;
+    this.ty = "attack";
+  }
+}
+
 export class Editor {
   static defaults = {
     attackDamage: 0.1
@@ -64,14 +86,14 @@ export class Editor {
   frameToAttack: Map<number, AttackData>;
   elements: Map<AttackData, HTMLElement>;
   intervalElements: Map<AttackInterval, IntervalElements>;
-  selectedAttack: AttackData | null;
+  selected: AttackData | null | AttackInterval;
   player: YT.Player;
   playbackBar: HTMLElement;
   recordingControls: HTMLElement;
   playbackWrapper: HTMLElement;
   level: LevelDataV0;
   zoom: number;
-  attackDragged: AttackData | null;
+  dragged: DraggedAttack | null | DraggedInterval;
   freshName: number;
   graphics: Graphics;
 
@@ -80,14 +102,14 @@ export class Editor {
     this.frameToAttack = new Map<number, AttackData>();
     this.elements = new Map<AttackData, HTMLElement>();
     this.intervalElements = new Map<AttackInterval, IntervalElements>();
-    this.selectedAttack = null;
+    this.selected = null;
     this.player = player;
     this.playbackBar = playbackBar;
     this.recordingControls = recordingControls;
     this.playbackWrapper = recordingControls.querySelector<HTMLElement>("#playback-bar-wrapper")!;
     this.level = level;
     this.zoom = 1.0;
-    this.attackDragged = null;
+    this.dragged = null;
     // find a number greater than all the existing ones to avoid name collisions
     this.freshName = 0;
     for (let attack of this.level.attackIntervals) {
@@ -102,14 +124,49 @@ export class Editor {
   }
 
   mouseReleased(event: MouseEvent) {
-    if (this.attackDragged != null) {
-      // remove the attack
-      this.deleteAttack(this.attackDragged);
+    console.log("dragged: ", this.dragged);
+    if (this.dragged != null) {
+      // TODO evil hack with constructor name
+      if (this.dragged.ty == "attack") {
+        this.dragged = <DraggedAttack>this.dragged;
+        // remove the attack
+        this.deleteAttack(this.dragged.attack);
 
-      // add the attack back at the mouse position
-      this.createAttackAtMousePosition(event.clientX, this.attackDragged.direction, this.attackDragged.damage);
+        // add the attack back at the mouse position
+        this.createAttackAtMousePosition(event.clientX, this.dragged.attack.direction, this.dragged.attack.damage);
 
-      this.attackDragged = null;
+        this.dragged = null;
+      } else if (this.dragged.constructor.name == "DraggedInterval") {
+        this.dragged = <DraggedInterval>this.dragged;
+        // remove the interval
+        this.deleteInterval(this.dragged.interval);
+
+        var newInterval: AttackInterval = {
+          start: 0,
+          end: 0,
+          name: this.dragged.interval.name
+        };
+        newInterval.start = this.dragged.interval.start;
+        newInterval.end = this.dragged.interval.end;
+        if (this.dragged.isStart) {
+          newInterval.start = this.pxToTime(event.clientX - this.playbackBar.getBoundingClientRect().left);
+          // make sure the end is after or equal to the start
+          if (newInterval.end < newInterval.start) {
+            newInterval.end = newInterval.start;
+          }
+        } else {
+          newInterval.end = this.pxToTime(event.clientX - this.playbackBar.getBoundingClientRect().left);
+          // make sure the start is before or eqaual to the end
+          if (newInterval.start > newInterval.end) {
+            newInterval.start = newInterval.end;
+          }
+        }
+
+        this.createInterval(newInterval);
+        // select the new interval at the same endpoint
+        this.selectInterval(newInterval, this.dragged.isStart);
+        this.dragged = null;
+      }
     }
   }
 
@@ -150,8 +207,10 @@ export class Editor {
     for (let [attack, element] of this.elements) {
       // if this one is being dragged, follow mouse
       var left = this.timeToPx(attack.time);
-      if (this.attackDragged == attack) {
-        left = mouseX - this.playbackBar.getBoundingClientRect().left;
+      if (this.dragged != null && this.dragged.ty == "attack") {
+        if (this.dragged.attack == attack) {
+          left = mouseX - this.playbackBar.getBoundingClientRect().left;
+        }
       }
 
       element.style.left = `${left}px`;
@@ -160,8 +219,19 @@ export class Editor {
 
     // update all the interval elements positions
     for (let [interval, elements] of this.intervalElements) {
-      let startLeft = this.timeToPx(interval.start);
-      let endLeft = this.timeToPx(interval.end);
+      var startLeft = this.timeToPx(interval.start);
+      var endLeft = this.timeToPx(interval.end);
+      if (this.dragged != null && this.dragged.constructor.name == "DraggedInterval") {
+        this.dragged = <DraggedInterval>this.dragged;
+        if (this.dragged.interval == interval) {
+          if (this.dragged.isStart) {
+            startLeft = mouseX - this.playbackBar.getBoundingClientRect().left;
+          } else {
+            endLeft = mouseX - this.playbackBar.getBoundingClientRect().left;
+          }
+        }
+      }
+
       elements.startElement.style.left = `${startLeft}px`;
       elements.endElement.style.left = `${endLeft}px`;
       elements.nameElement.style.left = `${(startLeft + endLeft) / 2}px`;
@@ -241,15 +311,37 @@ export class Editor {
       this.createIntervalAt(this.player.getCurrentTime());
     }
     if (keyJustPressed.has("x") || keyJustPressed.has("Backspace") || keyJustPressed.has("Delete")) {
-      this.removeSelectedAttack();
+      this.removeSelected();
     }
 
 
     // if an attack is being dragged, seek to mouse cursor
-    if (this.attackDragged != null) {
+    if (this.dragged != null) {
       let posRelative = mouseX - this.playbackBar.getBoundingClientRect().left;
       let time = this.pxToTime(posRelative);
       this.seek(time);
+    }
+
+    // now check if there is a "death" attack interval, if not, add one
+    let hasDeath = false;
+    for (let interval of this.level.attackIntervals) {
+      if (interval.name == "death") {
+        hasDeath = true;
+        break;
+      }
+    }
+
+
+    // check the state of the player so duration is valid
+    if (!hasDeath && this.player.getPlayerState() == YT.PlayerState.PAUSED || this.player.getPlayerState() == YT.PlayerState.PLAYING) {
+      let startTime = Math.max(this.player.getDuration() - 2, 0);
+      let endTime = this.player.getDuration();
+      let deathInterval = {
+        start: startTime,
+        end: endTime,
+        name: "death"
+      };
+      this.createInterval(deathInterval);
     }
   }
 
@@ -304,9 +396,13 @@ export class Editor {
     }
   }
 
-  removeSelectedAttack() {
-    if (this.selectedAttack != null) {
-      this.deleteAttack(this.selectedAttack);
+  removeSelected() {
+    if (this.selected != null) {
+      if (this.selected.constructor.name == "AttackData") {
+        this.deleteAttack(<AttackData>this.selected);
+      } else if (this.selected.constructor.name == "AttackInterval") {
+        this.deleteInterval(<AttackInterval>this.selected);
+      }
     }
   }
 
@@ -354,6 +450,15 @@ export class Editor {
     let elements = new IntervalElements(startElement, endElement, nameElement);
 
     this.intervalElements.set(interval, elements);
+
+    startElement.addEventListener("mousedown", event => {
+      event.stopPropagation();
+      this.intervalMouseDown(interval, true);
+    });
+    endElement.addEventListener("mousedown", event => {
+      event.stopPropagation();
+      this.intervalMouseDown(interval, false);
+    });
 
     parentElement.appendChild(startElement);
     parentElement.appendChild(endElement);
@@ -435,6 +540,18 @@ export class Editor {
     this.addAttackElement(attack);
   }
 
+  private deleteInterval(interval: AttackInterval) {
+    this.intervalElements.get(interval)!.startElement.remove();
+    this.intervalElements.get(interval)!.endElement.remove();
+    this.intervalElements.get(interval)!.nameElement.remove();
+    this.intervalElements.delete(interval);
+    let index = this.level.attackIntervals.indexOf(interval);
+    this.level.attackIntervals.splice(index, 1);
+    if (this.selected == interval) {
+      this.selected = null;
+    }
+  }
+
   private deleteAttack(attack: AttackData) {
     let frameIndex = this.frameIndex(attack);
     if (this.frameToAttack.get(frameIndex) == attack) {
@@ -443,23 +560,52 @@ export class Editor {
     this.elements.get(attack)!.remove();
     let index = this.level.attackData.indexOf(attack);
     this.level.attackData.splice(index, 1);
-    if (this.selectedAttack == attack) {
-      this.selectedAttack = null;
+    if (this.selected == attack) {
+      this.selected = null;
     }
   }
 
   private attackMouseDown(attack: AttackData) {
     this.selectAttack(attack);
-    this.attackDragged = attack;
+    this.dragged = new DraggedAttack(attack);
+  }
+
+  private intervalMouseDown(interval: AttackInterval, isStart: boolean) {
+    this.selectInterval(interval, isStart);
+    this.dragged = new DraggedInterval(interval, isStart);
+  }
+
+  private selectInterval(interval: AttackInterval, isStart: boolean) {
+    this.selected = null;
+    for (let elements of this.intervalElements.values()) {
+      elements.startElement.classList.remove("selected");
+      elements.endElement.classList.remove("selected");
+    }
+    for (let attackElement of this.elements.values()) {
+      attackElement.classList.remove("selected");
+    }
+    if (interval != null) {
+      this.selected = interval;
+      if (isStart) {
+        this.intervalElements.get(interval)!.startElement.classList.add("selected");
+      } else {
+        this.intervalElements.get(interval)!.endElement.classList.add("selected");
+      }
+      this.seek(interval.start);
+    }
   }
 
   private selectAttack(attack: AttackData | null) {
-    this.selectedAttack = null;
+    this.selected = null;
     for (let element of this.elements.values()) {
       element.classList.remove("selected");
     }
+    for (let elements of this.intervalElements.values()) {
+      elements.startElement.classList.remove("selected");
+      elements.endElement.classList.remove("selected");
+    }
     if (attack != null) {
-      this.selectedAttack = attack;
+      this.selected = attack;
       this.elements.get(attack)!.classList.add("selected");
       this.seek(attack.time);
     }
