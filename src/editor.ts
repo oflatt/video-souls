@@ -86,7 +86,7 @@ export class Editor {
   frameToAttack: Map<number, AttackData>;
   elements: Map<AttackData, HTMLElement>;
   intervalElements: Map<AttackInterval, IntervalElements>;
-  selected: AttackData | null | AttackInterval;
+  selected: DraggedAttack | null | DraggedInterval;
   player: YT.Player;
   playbackBar: HTMLElement;
   recordingControls: HTMLElement;
@@ -323,17 +323,23 @@ export class Editor {
     }
 
     // now check if there is a "death" attack interval, if not, add one
-    let hasDeath = false;
+    var hasDeath = false;
+    var hasIntro = false;
+    var hasNonDeathIntro = false;
     for (let interval of this.level.attackIntervals) {
-      if (interval.name == "death") {
+      if (interval.name === "death") {
         hasDeath = true;
-        break;
+      } else if (interval.name === "intro") {
+        hasIntro = true;
+      } else {
+        hasNonDeathIntro = true;
       }
     }
+    let playerReady = (this.player.getPlayerState() == YT.PlayerState.PAUSED || this.player.getPlayerState() == YT.PlayerState.PLAYING);
 
 
     // check the state of the player so duration is valid
-    if (!hasDeath && this.player.getPlayerState() == YT.PlayerState.PAUSED || this.player.getPlayerState() == YT.PlayerState.PLAYING) {
+    if (!hasDeath && playerReady) {
       let startTime = Math.max(this.player.getDuration() - 2, 0);
       let endTime = this.player.getDuration();
       let deathInterval = {
@@ -342,6 +348,29 @@ export class Editor {
         name: "death"
       };
       this.createInterval(deathInterval);
+    }
+    if (!hasIntro && playerReady) {
+      let startTime = 0;
+      let endTime = Math.min(2, this.player.getDuration());
+      let introInterval = {
+        start: startTime,
+        end: endTime,
+        name: "intro"
+      };
+      this.createInterval(introInterval);
+    }
+
+    // if there's no attacks, add a default one
+    if (!hasNonDeathIntro && playerReady) {
+      let startTime = Math.min(2, this.player.getDuration());
+      let endTime = Math.max(this.player.getDuration() - 2, 0);
+      let defaultInterval = {
+        start: startTime,
+        end: endTime,
+        name: "0"
+      };
+      this.freshName = 1;
+      this.createInterval(defaultInterval);
     }
   }
 
@@ -397,11 +426,12 @@ export class Editor {
   }
 
   removeSelected() {
+    console.log("selected to remove: ", this.selected);
     if (this.selected != null) {
-      if (this.selected.constructor.name == "AttackData") {
-        this.deleteAttack(<AttackData>this.selected);
-      } else if (this.selected.constructor.name == "AttackInterval") {
-        this.deleteInterval(<AttackInterval>this.selected);
+      if (this.selected.ty == "attack") {
+        this.deleteAttack(this.selected.attack);
+      } else if (this.selected.ty == "interval") {
+        this.deleteInterval(this.selected.interval);
       }
     }
   }
@@ -442,9 +472,7 @@ export class Editor {
     nameElement.type = "text";
     nameElement.value = interval.name;
     // make it not editable for now
-    nameElement.addEventListener("change", event => {
-      nameElement.value = interval.name;
-    });
+    nameElement.readOnly = true;
     nameElement.classList.add("interval-name");
 
     let elements = new IntervalElements(startElement, endElement, nameElement);
@@ -547,7 +575,7 @@ export class Editor {
     this.intervalElements.delete(interval);
     let index = this.level.attackIntervals.indexOf(interval);
     this.level.attackIntervals.splice(index, 1);
-    if (this.selected == interval) {
+    if (this.selected != null && this.selected.ty == "interval" && this.selected.interval == interval) {
       this.selected = null;
     }
   }
@@ -560,7 +588,7 @@ export class Editor {
     this.elements.get(attack)!.remove();
     let index = this.level.attackData.indexOf(attack);
     this.level.attackData.splice(index, 1);
-    if (this.selected == attack) {
+    if (this.selected != null && this.selected.ty == "attack" && this.selected.attack == attack) {
       this.selected = null;
     }
   }
@@ -575,37 +603,38 @@ export class Editor {
     this.dragged = new DraggedInterval(interval, isStart);
   }
 
-  private selectInterval(interval: AttackInterval, isStart: boolean) {
-    this.selected = null;
+  private clearSelectClass() {
     for (let elements of this.intervalElements.values()) {
       elements.startElement.classList.remove("selected");
       elements.endElement.classList.remove("selected");
+      elements.nameElement.classList.remove("selected");
     }
     for (let attackElement of this.elements.values()) {
       attackElement.classList.remove("selected");
     }
+  }
+
+  private selectInterval(interval: AttackInterval, isStart: boolean) {
+    this.selected = null;
+    this.clearSelectClass();
     if (interval != null) {
-      this.selected = interval;
+      this.selected = new DraggedInterval(interval, isStart);
+      this.intervalElements.get(interval)!.startElement.classList.add("selected");
+      this.intervalElements.get(interval)!.endElement.classList.add("selected");
+      this.intervalElements.get(interval)!.nameElement.classList.add("selected");
       if (isStart) {
-        this.intervalElements.get(interval)!.startElement.classList.add("selected");
+        this.seek(interval.start);
       } else {
-        this.intervalElements.get(interval)!.endElement.classList.add("selected");
+        this.seek(interval.end);
       }
-      this.seek(interval.start);
     }
   }
 
   private selectAttack(attack: AttackData | null) {
     this.selected = null;
-    for (let element of this.elements.values()) {
-      element.classList.remove("selected");
-    }
-    for (let elements of this.intervalElements.values()) {
-      elements.startElement.classList.remove("selected");
-      elements.endElement.classList.remove("selected");
-    }
+    this.clearSelectClass();
     if (attack != null) {
-      this.selected = attack;
+      this.selected = new DraggedAttack(attack);
       this.elements.get(attack)!.classList.add("selected");
       this.seek(attack.time);
     }
