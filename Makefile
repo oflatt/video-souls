@@ -1,5 +1,5 @@
 # serve is phony
-.PHONY: build install
+.PHONY: build install serve
 
 # Define the target to start the server
 build:
@@ -9,3 +9,6 @@ build:
 install:
 	npm install
 
+
+serve:
+	bash serve.sh

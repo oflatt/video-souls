@@ -1,6 +1,6 @@
 // main.ts
 
-import { Editor, validateLevelData } from './editor';
+import { Editor, levelDataFromVideo, validateLevelData } from './editor';
 import { Graphics } from './graphics';
 
 
@@ -185,7 +185,7 @@ export class VideoSouls {
     } as const;
 
     this.graphics = new Graphics(this.elements.canvas);
-    this.editor = new Editor(player, this.elements.recordingControls, this.elements.playbackBar, { video: null, attackData: [], attackIntervals: [], customScript: "", version: "0.0.0" }, this.graphics);
+    this.editor = new Editor(player, this.elements.recordingControls, this.elements.playbackBar, { video: null, attackData: [], attackIntervals: [], version: "0.0.0", attackSchedule: "" }, this.graphics);
     this.gameMode = GameMode.MENU;
     this.battle = initialBattleState();
     this.alerts = [];
@@ -701,9 +701,6 @@ export class VideoSouls {
         this.elements.player.loadVideoById(this.editor.level.video);
       }
 
-      // delete the current recorded attacks
-      this.editor.level.attackData = [];
-
       // in the editing mode, create a new editor
       this.editor = new Editor(this.elements.player, this.elements.recordingControls, this.elements.playbackBar, this.editor.level, this.graphics);
     }
@@ -723,7 +720,7 @@ export class VideoSouls {
   }
   
   setCurrentVideo(videoId: string) {
-    this.editor.level.video = videoId;
+    this.editor.level = levelDataFromVideo(videoId);
   }
 
   // Function to play a YouTube video by extracting the video ID from the URL

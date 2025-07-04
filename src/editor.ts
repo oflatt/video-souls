@@ -13,6 +13,94 @@ type AttackInterval = {
   name: string
 };
 
+// Input interface for the attack schedule function
+type BossState = {
+  // Boss health as a percentage (0.0 to 1.0)
+  healthPercentage: number;
+  // Current attack interval the boss is in (null if not in any interval)
+  currentInterval: string;
+  // Current video playback time in seconds
+  currentTime: number;
+  // Time elapsed since the current interval started (0 if not in interval)
+  intervalElapsedTime: number;
+  // Player health as a percentage (0.0 to 1.0)
+  playerHealthPercentage: number;
+  // TODO add information about the player to allow smarter AI? Like if they are attacking or not
+  // Map from interval name to interval data
+  availableIntervals: Map<string, AttackInterval>;
+};
+
+// Output interface for controlling boss behavior
+type BossScheduleResult = {
+  // Whether to continue with the current behavior
+  continueNormal: boolean;
+  // If not continuing normal, transition to this interval immediately
+  transitionToInterval?: string; // interval name
+  // Optional: offset into the interval to start at
+  intervalOffset?: number;
+};
+
+// Type definition for the attack schedule function
+type AttackScheduleFunction = (state: BossState) => BossScheduleResult;
+
+const DEFAULT_ATTACK_SCHEDULE = `(state) => {
+  // Default attack schedule: pick random intervals after the first one
+  
+  // If we're in the intro interval, continue normally
+  if (state.currentInterval === "intro") {
+    return { continueNormal: true };
+  }
+  
+  // If we're in the death interval, continue normally
+  if (state.currentInterval === "death") {
+    return { continueNormal: true };
+  }
+  
+  // Get all non-special intervals (not intro/death)
+  const attackIntervals = Array.from(state.availableIntervals.values()).filter(
+    interval => interval.name !== "intro" && interval.name !== "death"
+  );
+  
+  // If no attack intervals available, go to death immediately
+  if (attackIntervals.length === 0) {
+
+      return {
+        continueNormal: false,
+        transitionToInterval: "death",
+        intervalOffset: 0
+      };
+  }
+  
+  // If we're not in any interval, start with the first attack interval
+  if (!state.currentInterval || state.currentInterval === "") {
+    return {
+      continueNormal: false,
+      transitionToInterval: attackIntervals[0].name,
+      intervalOffset: 0
+    };
+  }
+  
+  // If we're in an attack interval and have reached near the end (90% through)
+  const currentInterval = state.availableIntervals.get(state.currentInterval);
+  if (currentInterval) {
+    const intervalDuration = currentInterval.end - currentInterval.start;
+    const progressRatio = state.intervalElapsedTime / intervalDuration;
+    
+    // Near the end of current interval, pick a random next interval
+    if (progressRatio >= 0.9) {
+      // Pick a random interval (could be the same one for looping)
+      const randomIndex = Math.floor(Math.random() * attackIntervals.length);
+      return {
+        continueNormal: false,
+        transitionToInterval: attackIntervals[randomIndex].name,
+        intervalOffset: 0
+      };
+    }
+  }
+  
+  // Otherwise continue with current behavior
+  return { continueNormal: true };
+}`;
 
 type AttackData = {
   time: number,
@@ -21,13 +109,20 @@ type AttackData = {
   damage: number,
 };
 
+export function levelDataFromVideo(videoId: string): LevelDataV0 {
+  const level = new LevelDataV0();
+  level.video = videoId;
+  return level;
+}
+
 export class LevelDataV0 {
   video: string | null;
   attackData: AttackData[];
   // attack intervals are currently unused
   attackIntervals: AttackInterval[];
-  // custom script for defining the behavior of the boss, currently unused
-  customScript: String;
+  // JavaScript string that evaluates to a function controlling boss AI behavior
+  // The function should have signature: (state: BossState) => BossScheduleResult
+  attackSchedule: String;
   // version number for backwards compatibility, list changes here
   version: String;
 
@@ -35,7 +130,7 @@ export class LevelDataV0 {
     this.video = null;
     this.attackData = [];
     this.attackIntervals = [];
-    this.customScript = "";
+    this.attackSchedule = DEFAULT_ATTACK_SCHEDULE;
     this.version = "0.0.0";
   }
 };
@@ -689,3 +784,5 @@ export function validateLevelData(levelData: unknown): null | string {
     }).join("\n");
   }
 }
+
+export type { AttackInterval, BossState, BossScheduleResult, AttackScheduleFunction };
