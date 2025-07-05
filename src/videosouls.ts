@@ -1,9 +1,7 @@
 // main.ts
 
-import { Editor, levelDataFromVideo, LevelDataV0, validateLevelData, BossState, BossScheduleResult, AttackScheduleFunction } from './editor';
+import { Editor, levelDataFromVideo, LevelDataV0, validateLevelData, BossState, BossScheduleResult, AttackScheduleFunction, stringifyWithMaps, parseWithMaps } from './editor';
 import { Graphics } from './graphics';
-// typia json
-import typia from 'typia';
 
 // Load the interpreter from the local acorn_interpreter.js file
 declare const Interpreter: any;
@@ -353,7 +351,7 @@ export class VideoSouls {
   async importLevel(): Promise<boolean> {
     const levelData = this.elements.customLevelInput.value;
     try {
-      const level = JSON.parse(levelData);
+      const level = parseWithMaps(levelData);
       const validation = await validateLevelData(level);
       if (validation === null) {
         this.editor.level = level;
@@ -372,8 +370,8 @@ export class VideoSouls {
   }
 
   exportLevel() {
-    // use the typia json stringify to ensure the level data is valid
-    const json = typia.json.stringify<LevelDataV0>(this.editor.level);
+    // use the generic stringify function that handles Maps
+    const json = stringifyWithMaps(this.editor.level);
     // copy the link to the clipboard
     navigator.clipboard.writeText(json).then(() => {
       this.fadingAlert('Level data copied to clipboard.', 30, "20px");
@@ -593,6 +591,16 @@ export class VideoSouls {
   private handleAttackSchedule() {
     const currentTime = this.elements.player.getCurrentTime();
 
+    // Check if boss health is zero or lower and transition to death
+    if (this.battle.bossHealth <= 0) {
+      const deathInterval = this.editor.level.attackIntervals.get("death");
+      if (deathInterval && this.battle.currentInterval !== "death") {
+        this.battle.currentInterval = "death";
+        this.elements.player.seekTo(deathInterval.start, true);
+        return;
+      }
+    }
+
     const scheduleResult = this.evaluateAttackSchedule();
 
     // Handle schedule result
@@ -723,8 +731,8 @@ export class VideoSouls {
   }
 
   setGameMode(mode: GameMode) {
-    // always sync the custom level input with the level data
-    this.elements.customLevelInput.value = typia.json.stringify<LevelDataV0>(this.editor.level);
+    // always sync the custom level input with the level data using generic stringify
+    this.elements.customLevelInput.value = stringifyWithMaps(this.editor.level);
     
     // clear validation errors
     this.elements.validationError.textContent = '';

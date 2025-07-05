@@ -44,8 +44,6 @@ type BossScheduleResult = {
 type AttackScheduleFunction = (state: BossState) => BossScheduleResult;
 
 const DEFAULT_ATTACK_SCHEDULE = `function(state) {
-  // Default attack schedule: pick random intervals after the first one
-  
   // If we're in the intro interval, continue normally
   if (state.currentInterval === "intro") {
     return { continueNormal: true };
@@ -54,26 +52,6 @@ const DEFAULT_ATTACK_SCHEDULE = `function(state) {
   // If we're in the death interval, continue normally
   if (state.currentInterval === "death") {
     return { continueNormal: true };
-  }
-  
-  // Get all non-special intervals (not intro/death)
-  var attackIntervals = [];
-  var availableIntervals = state.availableIntervals;
-  // Convert Map to array for easier handling in interpreter
-  var intervalNames = [];
-  availableIntervals.forEach(function(interval, name) {
-    if (name !== "intro" && name !== "death") {
-      intervalNames.push(name);
-    }
-  });
-  
-  // If no attack intervals available, go to death immediately
-  if (intervalNames.length === 0) {
-    return {
-      continueNormal: false,
-      transitionToInterval: "death",
-      intervalOffset: 0
-    };
   }
   
   // If we're not in any interval, start with intro
@@ -85,21 +63,43 @@ const DEFAULT_ATTACK_SCHEDULE = `function(state) {
     };
   }
   
-  // Get current interval from available intervals
-  var currentInterval = availableIntervals.get(state.currentInterval);
+  // Get all attack intervals (not intro/death)
+  var attackIntervals = [];
+  state.availableIntervals.forEach(function(interval, name) {
+    if (name !== "intro" && name !== "death") {
+      attackIntervals.push(name);
+    }
+  });
+  
+  // If no attack intervals available, go to death
+  if (attackIntervals.length === 0) {
+    return {
+      continueNormal: false,
+      transitionToInterval: "death",
+      intervalOffset: 0
+    };
+  }
+  
+  // Check if current interval is completed (100% through)
+  var currentInterval = state.availableIntervals.get(state.currentInterval);
   if (currentInterval) {
     var intervalDuration = currentInterval.end - currentInterval.start;
     var progressRatio = state.intervalElapsedTime / intervalDuration;
     
-    // Near the end of current interval (90% through), transition
-    if (progressRatio >= 0.9) {
-      // For simplicity, just continue for now
-      // In a real implementation, you'd pick a random next interval
-      return { continueNormal: true };
+    if (progressRatio >= 1.0) {
+      // Pick a random attack interval
+      var randomIndex = Math.floor(Math.random() * attackIntervals.length);
+      var nextInterval = attackIntervals[randomIndex];
+      
+      return {
+        continueNormal: false,
+        transitionToInterval: nextInterval,
+        intervalOffset: 0
+      };
     }
   }
   
-  // Otherwise continue with current behavior
+  // Continue with current behavior
   return { continueNormal: true };
 }`;
 
@@ -135,6 +135,66 @@ export class LevelDataV0 {
   }
 };
 
+// Generic JSON utilities for handling Maps and other non-serializable types
+export function stringifyWithMaps(obj: any): string {
+  return JSON.stringify(obj, (key, value) => {
+    if (value instanceof Map) {
+      return {
+        __type: 'Map',
+        entries: Array.from(value.entries())
+      };
+    }
+    return value;
+  }, 2);
+}
+
+export function parseWithMaps(jsonString: string): any {
+  return JSON.parse(jsonString, (key, value) => {
+    if (value && typeof value === 'object' && value.__type === 'Map') {
+      return new Map(value.entries);
+    }
+    return value;
+  });
+}
+
+export function stringifyLevelData(levelData: LevelDataV0): string {
+  // Convert Map to a plain object for serialization
+  const attackIntervalsObj: Record<string, AttackInterval> = {};
+  for (const [key, value] of levelData.attackIntervals) {
+    attackIntervalsObj[key] = value;
+  }
+
+  const serializable = {
+    video: levelData.video,
+    attackData: levelData.attackData,
+    attackIntervals: attackIntervalsObj,
+    attackSchedule: levelData.attackSchedule,
+    version: levelData.version
+  };
+
+  return JSON.stringify(serializable, null, 2);
+}
+
+export function parseLevelData(jsonString: string): LevelDataV0 {
+  const parsed = JSON.parse(jsonString);
+  
+  // Convert plain object back to Map
+  const attackIntervals = new Map<string, AttackInterval>();
+  if (parsed.attackIntervals) {
+    for (const [key, value] of Object.entries(parsed.attackIntervals)) {
+      attackIntervals.set(key, value as AttackInterval);
+    }
+  }
+
+  const levelData = new LevelDataV0();
+  levelData.video = parsed.video || null;
+  levelData.attackData = parsed.attackData || [];
+  levelData.attackIntervals = attackIntervals;
+  levelData.attackSchedule = parsed.attackSchedule || DEFAULT_ATTACK_SCHEDULE;
+  levelData.version = parsed.version || "0.0.0";
+
+  return levelData;
+}
 
 const FRAME_LENGTH = 0.05;
 const PLAYBACK_BAR_PADDING = 20;
