@@ -717,9 +717,13 @@ export class VideoSouls {
       this.fadingAlert('You Died', 90, "30%", "red", "Cormorant Unicase");
     }
 
-    if (this.battle.bossHealth <= 0) {
-      this.setGameMode(GameMode.BATTLE_END);
-      this.fadingAlert('You Won', 90, "30%", "green", "Cormorant Unicase");
+    // Check if boss is in death interval and it has ended (win condition)
+    if (this.battle.bossHealth <= 0 && this.battle.currentInterval === "death") {
+      const deathInterval = this.editor.level.attackIntervals.get("death");
+      if (deathInterval && currentTime >= deathInterval.end) {
+        this.setGameMode(GameMode.BATTLE_END);
+        this.fadingAlert('You Won', 90, "30%", "green", "Cormorant Unicase");
+      }
     }
 
     // check for when the video ends, loop it
