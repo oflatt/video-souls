@@ -1,8 +1,12 @@
 // main.ts
 
-import { Editor, levelDataFromVideo, validateLevelData } from './editor';
+import { Editor, levelDataFromVideo, LevelDataV0, validateLevelData, BossState, BossScheduleResult, AttackScheduleFunction } from './editor';
 import { Graphics } from './graphics';
+// typia json
+import typia from 'typia';
 
+// Load the interpreter from the local acorn_interpreter.js file
+declare const Interpreter: any;
 
 enum GameMode {
   MENU, PLAYING, BATTLE_END, EDITING
@@ -19,7 +23,6 @@ enum AttackAnimation {
   NONE, PARRYING, ATTACK_STARTING, ATTACKING, STAGGERING
 }
 
-
 const keyToDirection = new Map<string, InputDirection>([
   ['w', InputDirection.UP],
   ['a', InputDirection.LEFT],
@@ -29,7 +32,6 @@ const keyToDirection = new Map<string, InputDirection>([
 
 const parryKey = 'k';
 const attackKey = 'j';
-
 
 type BattleState = {
   anim: {
@@ -59,7 +61,9 @@ type BattleState = {
   lastBossHealth: number,
   lastBossHit: number, // the time the boss was last hit
   // the last time we checked for attacks
-  prevTime: number
+  prevTime: number,
+  // Boss AI state
+  currentInterval: string,
 };
 
 type AlertData = {
@@ -85,7 +89,6 @@ const COMBO_EXTEND_TIME = 3.0; // number of seconds before combo lapses
 const STAGGER_TIME = 0.4;
 
 const ATTACK_WARNING_ADVANCE = 0.5;
-
 
 function initialBattleState(): BattleState {
   return {
@@ -113,6 +116,7 @@ function initialBattleState(): BattleState {
     prevTime: 0,
     hitCombo: 0,
     hitComboTime: -10000000,
+    currentInterval: "intro",
   };
 }
 
@@ -123,7 +127,6 @@ class AudioPlayer {
   playerAttack: HTMLAudioElement;
   playerHit: HTMLAudioElement;
   parrySound: HTMLAudioElement;
-
 
   constructor() {
     for (let i = 1; i <= 3; i++) {
@@ -141,8 +144,6 @@ class AudioPlayer {
     sound.play();
   }
 }
-
-
 
 export class VideoSouls {
   elements;
@@ -185,7 +186,7 @@ export class VideoSouls {
     } as const;
 
     this.graphics = new Graphics(this.elements.canvas);
-    this.editor = new Editor(player, this.elements.recordingControls, this.elements.playbackBar, { video: null, attackData: [], attackIntervals: [], version: "0.0.0", attackSchedule: "" }, this.graphics);
+    this.editor = new Editor(player, this.elements.recordingControls, this.elements.playbackBar, new LevelDataV0(), this.graphics);
     this.gameMode = GameMode.MENU;
     this.battle = initialBattleState();
     this.alerts = [];
@@ -371,7 +372,8 @@ export class VideoSouls {
   }
 
   exportLevel() {
-    const json = JSON.stringify(this.editor.level);
+    // use the typia json stringify to ensure the level data is valid
+    const json = typia.json.stringify<LevelDataV0>(this.editor.level);
     // copy the link to the clipboard
     navigator.clipboard.writeText(json).then(() => {
       this.fadingAlert('Level data copied to clipboard.', 30, "20px");
@@ -530,6 +532,84 @@ export class VideoSouls {
     this.battle.anim.endXScale = 1.0;
   }
 
+  private evaluateAttackSchedule(): BossScheduleResult {
+    const currentTime = this.elements.player.getCurrentTime();
+    
+    try {
+      // Create available intervals map
+      const availableIntervals = new Map();
+      for (const [iname, interval] of this.editor.level.attackIntervals) {
+        availableIntervals.set(iname, interval);
+      }
+
+      // Calculate interval elapsed time
+      let intervalElapsedTime = 0;
+      const currentInterval = availableIntervals.get(this.battle.currentInterval);
+      if (currentInterval) {
+        intervalElapsedTime = currentTime - currentInterval.start;
+      }
+
+      // Create boss state
+      const bossState: BossState = {
+        healthPercentage: this.battle.bossHealth,
+        currentInterval: this.battle.currentInterval,
+        currentTime: currentTime,
+        intervalElapsedTime: intervalElapsedTime,
+        playerHealthPercentage: this.battle.playerHealth,
+        availableIntervals: availableIntervals
+      };
+
+      // Create the function code that returns the schedule result
+      const functionCode = `
+        var bossState = bossStateArg;
+        var result = (${this.editor.level.attackSchedule.toString()})(bossState);
+        result;
+      `;
+
+      // Create interpreter with initialization function
+      const interpreter = new Interpreter(functionCode, (interpreter: any, globalObject: any) => {
+        // Add bossState to global scope
+        interpreter.setProperty(globalObject, 'bossStateArg', interpreter.nativeToPseudo(bossState));
+        
+        // Add Map constructor and methods if needed
+        const mapConstructor = interpreter.createNativeFunction(() => {
+          return interpreter.nativeToPseudo(new Map());
+        });
+        interpreter.setProperty(globalObject, 'Map', mapConstructor);
+      });
+
+      // Run the interpreter
+      interpreter.run();
+      
+      // Get the result and convert back to native
+      const result = interpreter.pseudoToNative(interpreter.value);
+      return result as BossScheduleResult;
+    } catch (error) {
+      console.error('Error evaluating attack schedule:', error);
+      return { continueNormal: true };
+    }
+  }
+
+  private handleAttackSchedule() {
+    const currentTime = this.elements.player.getCurrentTime();
+
+    const scheduleResult = this.evaluateAttackSchedule();
+
+    // Handle schedule result
+    if (!scheduleResult.continueNormal && scheduleResult.transitionToInterval) {
+      const targetInterval = this.editor.level.attackIntervals.get(scheduleResult.transitionToInterval);
+      
+      if (targetInterval) {
+        this.battle.currentInterval = targetInterval.name;
+        
+        // Apply interval offset if specified
+        const offset = scheduleResult.intervalOffset || 0;
+        const seekTime = targetInterval.start + offset;
+        this.elements.player.seekTo(seekTime, true);
+      }
+    }
+  }
+
   updateState() {
     const currentTime = this.elements.player.getCurrentTime();
 
@@ -538,8 +618,10 @@ export class VideoSouls {
       this.editor!.update(keyJustPressed, currentTargetDir(), mouseX);
     }
 
-  
     if (this.gameMode == GameMode.PLAYING) {
+      // Evaluate attack schedule
+      this.handleAttackSchedule();
+
       if (keyJustPressed.has(attackKey) && this.battle.bufferedInput === null) {
         // buffer attack
         this.battle.bufferedInput = attackKey;
@@ -642,7 +724,7 @@ export class VideoSouls {
 
   setGameMode(mode: GameMode) {
     // always sync the custom level input with the level data
-    this.elements.customLevelInput.value = JSON.stringify(this.editor.level, null, 2);
+    this.elements.customLevelInput.value = typia.json.stringify<LevelDataV0>(this.editor.level);
     
     // clear validation errors
     this.elements.validationError.textContent = '';
@@ -686,7 +768,7 @@ export class VideoSouls {
     // if the new mode is menu, show the menu
     if  (mode === GameMode.MENU) {
       // show the export and play buttons if there is any recorded data
-      if (this.editor.level.attackData.length > 0) {
+      if (this.editor.level.video != null) {
         this.elements.exportButton.style.display = 'block';
         this.elements.customLevelPlayButton.style.display = 'block';
       } else {
@@ -867,7 +949,6 @@ export class VideoSouls {
   }
 }
 
-
 // Helper function to extract the video ID from a YouTube URL
 function extractVideoID(url: string) {
   const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/;
@@ -916,7 +997,6 @@ const directionNumToSwordAngle = new Map<number, number>([
   [8, 2 * Math.PI / 4],
 ]);
 
-
 // positions relative to center of screen
 const directionNumToSwordPos = new Map<number, [number, number]>([
   [0, [0.0, 0.2]],
@@ -937,11 +1017,9 @@ const attackEndPosition = [0.35, 0.2];
 const attackedPosition = [0.7, 0.4];
 const attackedAngle = Math.PI / 2;
 
-
 function currentTargetAngleRadians() {
   return directionNumToSwordAngle.get(currentTargetDir())!;
 }
-
 
 function currentTargetDir() {
   // find the target direction based on combination of keys pressed
@@ -953,8 +1031,6 @@ function currentTargetDir() {
   })
   return netDirection(directions);
 }
-
-
 
 function animateBossName(
   name: string,
@@ -1134,7 +1210,6 @@ function drawHealthBar(
   ctx.lineWidth = 2;
   ctx.strokeRect(xOffset + shakeOffsetX, yPos, barWidth, barHeight);
 }
-
 
 function normalize(vec: [number, number]) {
   const [x, y] = vec;

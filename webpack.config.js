@@ -9,7 +9,7 @@ module.exports = {
  
   // JUST KEEP THEM
   mode: "development",
-  target: "node",
+  target: "web",
   module: {
     rules: [
       {
