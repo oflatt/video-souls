@@ -65,11 +65,15 @@ const DEFAULT_ATTACK_SCHEDULE = `function(state) {
   
   // Get all attack intervals (not intro/death)
   var attackIntervals = [];
-  state.availableIntervals.forEach(function(interval, name) {
+  var mapIterator = state.availableIntervals.entries();
+  var entry = mapIterator.next();
+  while (!entry.done) {
+    var name = entry.value[0];
     if (name !== "intro" && name !== "death") {
       attackIntervals.push(name);
     }
-  });
+    entry = mapIterator.next();
+  }
   
   // If no attack intervals available, go to death
   if (attackIntervals.length === 0) {
@@ -80,13 +84,11 @@ const DEFAULT_ATTACK_SCHEDULE = `function(state) {
     };
   }
   
-  // Check if current interval is completed (100% through)
+  // Check if current interval is completed (reached the end time)
   var currentInterval = state.availableIntervals.get(state.currentInterval);
   if (currentInterval) {
-    var intervalDuration = currentInterval.end - currentInterval.start;
-    var progressRatio = state.intervalElapsedTime / intervalDuration;
-    
-    if (progressRatio >= 1.0) {
+    // Check if we've reached or passed the end time of the current interval
+    if (state.currentTime >= currentInterval.end) {
       // Pick a random attack interval
       var randomIndex = Math.floor(Math.random() * attackIntervals.length);
       var nextInterval = attackIntervals[randomIndex];
