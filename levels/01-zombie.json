@@ -3,17 +3,17 @@
   "attackData": [
     {
       "time": 6.653170117011701,
-      "direction": 8,
+      "direction": 0,
       "damage": 0.1
     },
     {
       "time": 11.0531701170117,
-      "direction": 8,
+      "direction": 0,
       "damage": 0.1
     },
     {
       "time": 11.953170117011712,
-      "direction": 8,
+      "direction": 0,
       "damage": 0.1
     },
     {
@@ -33,12 +33,12 @@
     },
     {
       "time": 27.353170117011782,
-      "direction": 8,
+      "direction": 0,
       "damage": 0.1
     },
     {
       "time": 28.40317011701179,
-      "direction": 8,
+      "direction": 0,
       "damage": 0.1
     },
     {
@@ -48,7 +48,7 @@
     },
     {
       "time": 32.803170117011774,
-      "direction": 8,
+      "direction": 0,
       "damage": 0.1
     }
   ],
