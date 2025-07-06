@@ -308,7 +308,6 @@ export class VideoSouls {
 
     if (this.gameMode == GameMode.PLAYING) {
       // Evaluate attack schedule
-      console.log(`[VideoSouls] Calling handleAttackSchedule at time ${currentTime.toFixed(2)}`);
       this.battleLogic.handleAttackSchedule(
         this.battle,
         currentTime,

@@ -319,7 +319,6 @@ export class Editor {
   }
 
   mouseReleased(event: MouseEvent) {
-    console.log("dragged: ", this.dragged);
     if (this.dragged != null) {
       // TODO evil hack with constructor name
       if (this.dragged.ty == "attack") {
@@ -619,7 +618,6 @@ export class Editor {
   }
 
   removeSelected() {
-    console.log("selected to remove: ", this.selected);
     if (this.selected != null) {
       if (this.selected.ty == "attack") {
         this.deleteAttack(this.selected.attack);
