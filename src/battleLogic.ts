@@ -139,6 +139,19 @@ export class BattleLogic {
     }
   }
 
+  currentClosestDir(battle: BattleState) {
+    var closestDir = 1;
+    var closestDist = 100000000;
+    for (let i = 0; i < 8; i++) {
+      const dist = Math.hypot(battle.anim.endPos[0] - (0.5 + directionNumToSwordPos.get(i)![0]), battle.anim.endPos[1] - (0.5 + directionNumToSwordPos.get(i)![1]));
+      if (dist < closestDist) {
+        closestDist = dist;
+        closestDir = i;
+      }
+    }
+    return closestDir;
+  }
+
   private successParry(battle: BattleState, currentTime: number) {
     this.audio.parrySound.play();
     battle.anim.lastParryTime = currentTime;
@@ -162,19 +175,6 @@ export class BattleLogic {
     ];
     battle.anim.startAngle = battle.anim.endAngle;
     battle.anim.endAngle = attackedAngle;
-  }
-
-  private currentClosestDir(battle: BattleState) {
-    var closestDir = 1;
-    var closestDist = 100000000;
-    for (let i = 0; i < 8; i++) {
-      const dist = Math.hypot(battle.anim.endPos[0] - (0.5 + directionNumToSwordPos.get(i)![0]), battle.anim.endPos[1] - (0.5 + directionNumToSwordPos.get(i)![1]));
-      if (dist < closestDist) {
-        closestDist = dist;
-        closestDir = i;
-      }
-    }
-    return closestDir;
   }
 
   private normalize(vec: [number, number]) {

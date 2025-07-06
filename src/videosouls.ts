@@ -276,20 +276,6 @@ export class VideoSouls {
     this.battle.anim.state = AttackAnimation.NONE;
   }
 
-  currentClosestDir() {
-    // first, find the sword position closest to the current sword pos
-    var closestDir = 1;
-    var closestDist = 100000000;
-    for (let i = 0; i < 8; i++) {
-      const dist = Math.hypot(this.battle.anim.endPos[0] - (0.5 + directionNumToSwordPos.get(i)![0]), this.battle.anim.endPos[1] - (0.5 + directionNumToSwordPos.get(i)![1]));
-      if (dist < closestDist) {
-        closestDist = dist;
-        closestDir = i;
-      }
-    }
-    return closestDir;
-  }
-
   handleBossAttacks() {
     const currentTime = this.elements.player.getCurrentTime();
     this.battleLogic.handleBossAttacks(
