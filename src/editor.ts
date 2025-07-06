@@ -64,7 +64,7 @@ const DEFAULT_ATTACK_SCHEDULE = `function(state) {
   
   // Get all attack intervals (not intro/death)
   var attackIntervals = [];
-  var intervalNames = ObjectKeys(state.availableIntervals);
+  var intervalNames = Object.keys(state.availableIntervals);
   for (var i = 0; i < intervalNames.length; i++) {
     var name = intervalNames[i];
     if (name !== "intro" && name !== "death") {

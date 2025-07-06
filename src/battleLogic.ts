@@ -289,35 +289,37 @@ export class BattleLogic {
         availableIntervalCount: Object.keys(bossState.availableIntervals).length
       });
 
-      // Create the function code that returns the schedule result
+      // Serialize boss state to JSON for the interpreter
+      const bossStateJson = JSON.stringify(bossState);
+
+      // Create the function code that wraps the schedule function and passes data as parameters
       const functionCode = `
-        var bossState = bossStateArg;
-        var result = (${attackSchedule.toString()})(bossState);
-        result;
+        function evaluateSchedule(bossStateJson) {
+          var bossState = JSON.parse(bossStateJson);
+          var result = (${attackSchedule.toString()})(bossState);
+          return JSON.stringify(result);
+        }
+        evaluateSchedule(bossStateJsonArg);
       `;
 
       // Create interpreter with initialization function
       const interpreter = new (window as any).Interpreter(functionCode, (interpreter: any, globalObject: any) => {
-        // Add bossState to global scope
-        interpreter.setProperty(globalObject, 'bossStateArg', interpreter.nativeToPseudo(bossState));
+        // Add bossState JSON as a parameter
+        interpreter.setProperty(globalObject, 'bossStateJsonArg', bossStateJson);
         
         // Add Math object and methods
         const mathObject = interpreter.createObjectProto(interpreter.OBJECT_PROTO);
         interpreter.setProperty(mathObject, 'floor', interpreter.createNativeFunction((x: number) => Math.floor(x)));
         interpreter.setProperty(mathObject, 'random', interpreter.createNativeFunction(() => Math.random()));
         interpreter.setProperty(globalObject, 'Math', mathObject);
-        
-        // Add Object.keys method directly to global scope
-        interpreter.setProperty(globalObject, 'ObjectKeys', interpreter.createNativeFunction((obj: any) => {
-          return interpreter.nativeToPseudo(Object.keys(interpreter.pseudoToNative(obj)));
-        }));
       });
 
       // Run the interpreter
       interpreter.run();
       
-      // Get the result and convert back to native
-      const result = interpreter.pseudoToNative(interpreter.value);
+      // Get the result and parse it back to native object
+      const resultJson = interpreter.value;
+      const result = JSON.parse(resultJson);
       console.log(`[AttackSchedule] Raw interpreter result:`, result);
       
       // Log debug information if available
