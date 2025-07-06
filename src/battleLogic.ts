@@ -1,6 +1,7 @@
 import { AttackAnimation, BattleState, directionNumToSwordPos, directionNumToSwordAngle } from './battle';
 import { AudioPlayer } from './audioPlayer';
 import { AttackSchedule } from './attackSchedule';
+import { AttackInterval } from './editor';
 
 const ATTACK_COMBO_STARTUP_TIMES = [0.2, 0.2, 0.3, 0.2, 0.4];
 const ATTACK_COMBO_DAMAGE_MULT = [1.0, 1.1, 1.3, 1.0, 2.2];

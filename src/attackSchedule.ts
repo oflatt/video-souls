@@ -93,12 +93,6 @@ export class AttackSchedule {
       const interpreter = new (window as any).Interpreter(functionCode, (interpreter: any, globalObject: any) => {
         // Add bossState JSON as a parameter
         interpreter.setProperty(globalObject, 'bossStateJsonArg', bossStateJson);
-        
-        // Add Math object and methods
-        const mathObject = interpreter.createObjectProto(interpreter.OBJECT_PROTO);
-        interpreter.setProperty(mathObject, 'floor', interpreter.createNativeFunction((x: number) => Math.floor(x)));
-        interpreter.setProperty(mathObject, 'random', interpreter.createNativeFunction(() => Math.random()));
-        interpreter.setProperty(globalObject, 'Math', mathObject);
       });
 
       // Run the interpreter
