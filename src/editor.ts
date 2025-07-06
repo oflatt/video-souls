@@ -280,6 +280,11 @@ export class Editor {
     this.addAttacks();
   }
 
+  private getCurrentTimeSafe(): number {
+    const currentTime = this.player.getCurrentTime();
+    return currentTime ?? 0;
+  }
+
   mouseReleased(event: MouseEvent) {
     console.log("dragged: ", this.dragged);
     if (this.dragged != null) {
@@ -397,7 +402,7 @@ export class Editor {
 
     // update the playback point
     const playbackPoint = document.querySelector<HTMLElement>("#playback-point")!;
-    const playbackPointLeft = this.timeToPx(this.player.getCurrentTime());
+    const playbackPointLeft = this.timeToPx(this.getCurrentTimeSafe());
     playbackPoint.style.left = `${playbackPointLeft}px`;
   }
 
@@ -462,10 +467,10 @@ export class Editor {
       this.seekForward(0.5);
     }
     if (keyJustPressed.has("Enter") || keyJustPressed.has("k")) {
-      this.createAttackAt(this.player.getCurrentTime(), currentTargetDir, Editor.defaults.attackDamage);
+      this.createAttackAt(this.getCurrentTimeSafe(), currentTargetDir, Editor.defaults.attackDamage);
     }
     if (keyJustPressed.has("i")) {
-      this.createIntervalAt(this.player.getCurrentTime());
+      this.createIntervalAt(this.getCurrentTimeSafe());
     }
     if (keyJustPressed.has("x") || keyJustPressed.has("Backspace") || keyJustPressed.has("Delete")) {
       this.removeSelected();
@@ -611,7 +616,7 @@ export class Editor {
   }
 
   seekForward(seconds: number) {
-    let targetTime = Math.min(Math.max(this.player.getCurrentTime() + seconds, 0), this.player.getDuration() - 0.05 * seconds);
+    let targetTime = Math.min(Math.max(this.getCurrentTimeSafe() + seconds, 0), this.player.getDuration() - 0.05 * seconds);
     this.player.seekTo(targetTime, true);
   }
 

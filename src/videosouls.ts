@@ -151,9 +151,14 @@ export class VideoSouls {
     });
   }
 
+  private getCurrentTimeSafe(): number {
+    const currentTime = this.elements.player.getCurrentTime();
+    return currentTime ?? 0;
+  }
+
   mainLoop(_time: DOMHighResTimeStamp) {
     // Debug
-    const currentTime = this.elements.player.getCurrentTime();
+    const currentTime = this.getCurrentTimeSafe();
     const timeInMilliseconds = Math.floor(currentTime * 1000);
     this.elements.currentTimeDebug.textContent = `Time: ${timeInMilliseconds} ms data: ${this.editor.level.attackData.length}`;
     
@@ -269,7 +274,7 @@ export class VideoSouls {
   }
 
   handleBossAttacks() {
-    const currentTime = this.elements.player.getCurrentTime();
+    const currentTime = this.getCurrentTimeSafe();
     this.battleLogic.handleBossAttacks(
       this.battle,
       currentTime,
@@ -279,22 +284,22 @@ export class VideoSouls {
   }
 
   doAttack() {
-    const currentTime = this.elements.player.getCurrentTime();
+    const currentTime = this.getCurrentTimeSafe();
     this.battleLogic.doAttack(this.battle, currentTime);
   }
 
   startAttack() {
-    const currentTime = this.elements.player.getCurrentTime();
+    const currentTime = this.getCurrentTimeSafe();
     this.battleLogic.startAttack(this.battle, currentTime);
   }
 
   doParry() {
-    const currentTime = this.elements.player.getCurrentTime();
+    const currentTime = this.getCurrentTimeSafe();
     this.battleLogic.doParry(this.battle, currentTime);
   }
 
   updateState() {
-    const currentTime = this.elements.player.getCurrentTime();
+    const currentTime = this.getCurrentTimeSafe();
 
     // if the game mode is editing, update the editor
     if (this.gameMode == GameMode.EDITING) {
@@ -303,6 +308,7 @@ export class VideoSouls {
 
     if (this.gameMode == GameMode.PLAYING) {
       // Evaluate attack schedule
+      console.log(`[VideoSouls] Calling handleAttackSchedule at time ${currentTime.toFixed(2)}`);
       this.battleLogic.handleAttackSchedule(
         this.battle,
         currentTime,
@@ -480,7 +486,7 @@ export class VideoSouls {
   }
 
   private drawCanvas() {
-    const currentTime = this.elements.player.getCurrentTime();
+    const currentTime = this.getCurrentTimeSafe();
     const youtubeVideoName = this.elements.player.getIframe().title;
     
     this.battleRenderer.drawCanvas(
@@ -494,7 +500,7 @@ export class VideoSouls {
   }
 
   private drawSword() {
-    const currentTime = this.elements.player.getCurrentTime();
+    const currentTime = this.getCurrentTimeSafe();
     this.battleRenderer.drawSword(
       currentTime, 
       this.battle, 

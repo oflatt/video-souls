@@ -197,10 +197,13 @@ export class BattleLogic {
     attackIntervals: Map<string, AttackInterval>,
     attackSchedule: string
   ) {
+    console.log(`[AttackSchedule] Current time: ${currentTime.toFixed(2)}, Current interval: ${battle.currentInterval}, Boss health: ${battle.bossHealth.toFixed(2)}`);
+    
     // Check if boss health is zero or lower and transition to death
     if (battle.bossHealth <= 0) {
       const deathInterval = attackIntervals.get("death");
       if (deathInterval && battle.currentInterval !== "death") {
+        console.log(`[AttackSchedule] Boss dead, transitioning to death interval`);
         battle.currentInterval = "death";
         player.seekTo(deathInterval.start, true);
         return;
@@ -214,18 +217,26 @@ export class BattleLogic {
       attackSchedule
     );
 
+    console.log(`[AttackSchedule] Schedule result:`, scheduleResult);
+
     // Handle schedule result
     if (!scheduleResult.continueNormal && scheduleResult.transitionToInterval) {
       const targetInterval = attackIntervals.get(scheduleResult.transitionToInterval);
       
       if (targetInterval) {
+        console.log(`[AttackSchedule] Transitioning from "${battle.currentInterval}" to "${targetInterval.name}" (${targetInterval.start.toFixed(2)}-${targetInterval.end.toFixed(2)})`);
         battle.currentInterval = targetInterval.name;
         
         // Apply interval offset if specified
         const offset = scheduleResult.intervalOffset || 0;
         const seekTime = targetInterval.start + offset;
+        console.log(`[AttackSchedule] Seeking to time: ${seekTime.toFixed(2)}`);
         player.seekTo(seekTime, true);
+      } else {
+        console.warn(`[AttackSchedule] Target interval "${scheduleResult.transitionToInterval}" not found`);
       }
+    } else {
+      console.log(`[AttackSchedule] Continuing normal behavior in interval "${battle.currentInterval}"`);
     }
   }
 
@@ -242,11 +253,16 @@ export class BattleLogic {
         availableIntervals.set(iname, interval);
       }
 
+      console.log(`[AttackSchedule] Available intervals:`, Array.from(availableIntervals.keys()));
+
       // Calculate interval elapsed time
       let intervalElapsedTime = 0;
       const currentInterval = availableIntervals.get(battle.currentInterval);
       if (currentInterval) {
         intervalElapsedTime = currentTime - currentInterval.start;
+        console.log(`[AttackSchedule] Current interval "${battle.currentInterval}": start=${currentInterval.start.toFixed(2)}, end=${currentInterval.end.toFixed(2)}, elapsed=${intervalElapsedTime.toFixed(2)}`);
+      } else {
+        console.log(`[AttackSchedule] Current interval "${battle.currentInterval}" not found in available intervals`);
       }
 
       // Create boss state
@@ -258,6 +274,15 @@ export class BattleLogic {
         playerHealthPercentage: battle.playerHealth,
         availableIntervals: availableIntervals
       };
+
+      console.log(`[AttackSchedule] Boss state:`, {
+        healthPercentage: bossState.healthPercentage,
+        currentInterval: bossState.currentInterval,
+        currentTime: bossState.currentTime.toFixed(2),
+        intervalElapsedTime: bossState.intervalElapsedTime.toFixed(2),
+        playerHealthPercentage: bossState.playerHealthPercentage,
+        availableIntervalCount: bossState.availableIntervals.size
+      });
 
       // Create the function code that returns the schedule result
       const functionCode = `
@@ -283,9 +308,11 @@ export class BattleLogic {
       
       // Get the result and convert back to native
       const result = interpreter.pseudoToNative(interpreter.value);
+      console.log(`[AttackSchedule] Raw interpreter result:`, result);
       return result as BossScheduleResult;
     } catch (error) {
       console.error('Error evaluating attack schedule:', error);
+      console.error('Attack schedule code:', attackSchedule);
       return { continueNormal: true };
     }
   }
