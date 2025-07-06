@@ -124,9 +124,9 @@ export class LevelDataV0 {
   attackIntervals: Map<string, AttackInterval>;
   // JavaScript string that evaluates to a function controlling boss AI behavior
   // The function should have signature: (state: BossState) => BossScheduleResult
-  attackSchedule: String;
+  attackSchedule: string;
   // version number for backwards compatibility, list changes here
-  version: String;
+  version: string;
 
   constructor() {
     this.video = null;

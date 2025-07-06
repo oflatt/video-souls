@@ -293,94 +293,6 @@ export class VideoSouls {
     this.battleLogic.doParry(this.battle, currentTime);
   }
 
-  private evaluateAttackSchedule(): BossScheduleResult {
-    const currentTime = this.elements.player.getCurrentTime();
-    
-    try {
-      // Create available intervals map
-      const availableIntervals = new Map();
-      for (const [iname, interval] of this.editor.level.attackIntervals) {
-        availableIntervals.set(iname, interval);
-      }
-
-      // Calculate interval elapsed time
-      let intervalElapsedTime = 0;
-      const currentInterval = availableIntervals.get(this.battle.currentInterval);
-      if (currentInterval) {
-        intervalElapsedTime = currentTime - currentInterval.start;
-      }
-
-      // Create boss state
-      const bossState: BossState = {
-        healthPercentage: this.battle.bossHealth,
-        currentInterval: this.battle.currentInterval,
-        currentTime: currentTime,
-        intervalElapsedTime: intervalElapsedTime,
-        playerHealthPercentage: this.battle.playerHealth,
-        availableIntervals: availableIntervals
-      };
-
-      // Create the function code that returns the schedule result
-      const functionCode = `
-        var bossState = bossStateArg;
-        var result = (${this.editor.level.attackSchedule.toString()})(bossState);
-        result;
-      `;
-
-      // Create interpreter with initialization function
-      const interpreter = new Interpreter(functionCode, (interpreter: any, globalObject: any) => {
-        // Add bossState to global scope
-        interpreter.setProperty(globalObject, 'bossStateArg', interpreter.nativeToPseudo(bossState));
-        
-        // Add Map constructor and methods if needed
-        const mapConstructor = interpreter.createNativeFunction(() => {
-          return interpreter.nativeToPseudo(new Map());
-        });
-        interpreter.setProperty(globalObject, 'Map', mapConstructor);
-      });
-
-      // Run the interpreter
-      interpreter.run();
-      
-      // Get the result and convert back to native
-      const result = interpreter.pseudoToNative(interpreter.value);
-      return result as BossScheduleResult;
-    } catch (error) {
-      console.error('Error evaluating attack schedule:', error);
-      return { continueNormal: true };
-    }
-  }
-
-  private handleAttackSchedule() {
-    const currentTime = this.elements.player.getCurrentTime();
-
-    // Check if boss health is zero or lower and transition to death
-    if (this.battle.bossHealth <= 0) {
-      const deathInterval = this.editor.level.attackIntervals.get("death");
-      if (deathInterval && this.battle.currentInterval !== "death") {
-        this.battle.currentInterval = "death";
-        this.elements.player.seekTo(deathInterval.start, true);
-        return;
-      }
-    }
-
-    const scheduleResult = this.evaluateAttackSchedule();
-
-    // Handle schedule result
-    if (!scheduleResult.continueNormal && scheduleResult.transitionToInterval) {
-      const targetInterval = this.editor.level.attackIntervals.get(scheduleResult.transitionToInterval);
-      
-      if (targetInterval) {
-        this.battle.currentInterval = targetInterval.name;
-        
-        // Apply interval offset if specified
-        const offset = scheduleResult.intervalOffset || 0;
-        const seekTime = targetInterval.start + offset;
-        this.elements.player.seekTo(seekTime, true);
-      }
-    }
-  }
-
   updateState() {
     const currentTime = this.elements.player.getCurrentTime();
 
@@ -391,7 +303,13 @@ export class VideoSouls {
 
     if (this.gameMode == GameMode.PLAYING) {
       // Evaluate attack schedule
-      this.handleAttackSchedule();
+      this.battleLogic.handleAttackSchedule(
+        this.battle,
+        currentTime,
+        this.elements.player,
+        this.editor.level.attackIntervals,
+        this.editor.level.attackSchedule
+      );
 
       if (this.inputManager.wasKeyJustPressed(this.inputManager.attackKey) && this.battle.bufferedInput === null) {
         // buffer attack

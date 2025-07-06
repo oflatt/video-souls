@@ -1,5 +1,6 @@
 import { AttackAnimation, BattleState, directionNumToSwordPos, directionNumToSwordAngle } from './battle';
 import { AudioPlayer } from './audioPlayer';
+import { BossState, BossScheduleResult, AttackInterval } from './editor';
 
 const ATTACK_COMBO_STARTUP_TIMES = [0.2, 0.2, 0.3, 0.2, 0.4];
 const ATTACK_COMBO_DAMAGE_MULT = [1.0, 1.1, 1.3, 1.0, 2.2];
@@ -187,5 +188,105 @@ export class BattleLogic {
     const [x, y] = vec;
     const length = Math.sqrt(x * x + y * y);
     return [x / length, y / length];
+  }
+
+  handleAttackSchedule(
+    battle: BattleState,
+    currentTime: number,
+    player: YT.Player,
+    attackIntervals: Map<string, AttackInterval>,
+    attackSchedule: string
+  ) {
+    // Check if boss health is zero or lower and transition to death
+    if (battle.bossHealth <= 0) {
+      const deathInterval = attackIntervals.get("death");
+      if (deathInterval && battle.currentInterval !== "death") {
+        battle.currentInterval = "death";
+        player.seekTo(deathInterval.start, true);
+        return;
+      }
+    }
+
+    const scheduleResult = this.evaluateAttackSchedule(
+      battle,
+      currentTime,
+      attackIntervals,
+      attackSchedule
+    );
+
+    // Handle schedule result
+    if (!scheduleResult.continueNormal && scheduleResult.transitionToInterval) {
+      const targetInterval = attackIntervals.get(scheduleResult.transitionToInterval);
+      
+      if (targetInterval) {
+        battle.currentInterval = targetInterval.name;
+        
+        // Apply interval offset if specified
+        const offset = scheduleResult.intervalOffset || 0;
+        const seekTime = targetInterval.start + offset;
+        player.seekTo(seekTime, true);
+      }
+    }
+  }
+
+  private evaluateAttackSchedule(
+    battle: BattleState,
+    currentTime: number,
+    attackIntervals: Map<string, AttackInterval>,
+    attackSchedule: string
+  ): BossScheduleResult {
+    try {
+      // Create available intervals map
+      const availableIntervals = new Map();
+      for (const [iname, interval] of attackIntervals) {
+        availableIntervals.set(iname, interval);
+      }
+
+      // Calculate interval elapsed time
+      let intervalElapsedTime = 0;
+      const currentInterval = availableIntervals.get(battle.currentInterval);
+      if (currentInterval) {
+        intervalElapsedTime = currentTime - currentInterval.start;
+      }
+
+      // Create boss state
+      const bossState: BossState = {
+        healthPercentage: battle.bossHealth,
+        currentInterval: battle.currentInterval,
+        currentTime: currentTime,
+        intervalElapsedTime: intervalElapsedTime,
+        playerHealthPercentage: battle.playerHealth,
+        availableIntervals: availableIntervals
+      };
+
+      // Create the function code that returns the schedule result
+      const functionCode = `
+        var bossState = bossStateArg;
+        var result = (${attackSchedule.toString()})(bossState);
+        result;
+      `;
+
+      // Create interpreter with initialization function
+      const interpreter = new (window as any).Interpreter(functionCode, (interpreter: any, globalObject: any) => {
+        // Add bossState to global scope
+        interpreter.setProperty(globalObject, 'bossStateArg', interpreter.nativeToPseudo(bossState));
+        
+        // Add Map constructor and methods if needed
+        const mapConstructor = interpreter.createNativeFunction(() => {
+          return interpreter.nativeToPseudo(new Map());
+        });
+        interpreter.setProperty(globalObject, 'Map', mapConstructor);
+      });
+
+      // Run the interpreter
+      interpreter.run();
+      
+      // Get the result and convert back to native
+      const result = interpreter.pseudoToNative(interpreter.value);
+      return result as BossScheduleResult;
+    } catch (error) {
+      console.error('Error evaluating attack schedule:', error);
+      return { continueNormal: true };
+    }
   }
 }
