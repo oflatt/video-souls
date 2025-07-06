@@ -1,6 +1,61 @@
 import { BattleState } from './battle';
 import { BossState, BossScheduleResult, AttackInterval } from './editor';
 
+export const DEFAULT_ATTACK_SCHEDULE = `function(state) {
+  // Get all attack intervals (not intro/death)
+  var attackIntervals = [];
+  var intervalNames = Object.keys(state.availableIntervals);
+  for (var i = 0; i < intervalNames.length; i++) {
+    var name = intervalNames[i];
+    if (name !== "intro" && name !== "death") {
+      attackIntervals.push(name);
+    }
+  }
+  
+  // If we're in the death interval, continue normally
+  if (state.currentInterval === "death") {
+    return { continueNormal: true };
+  }
+  
+  // If we're not in any interval, start with intro
+  if (!state.currentInterval || state.currentInterval === "") {
+    return {
+      continueNormal: false,
+      transitionToInterval: "intro",
+      intervalOffset: 0
+    };
+  }
+  
+  // If no attack intervals available, go to death
+  if (attackIntervals.length === 0) {
+    return {
+      continueNormal: false,
+      transitionToInterval: "death",
+      intervalOffset: 0
+    };
+  }
+  
+  // Check if current interval is completed (reached the end time)
+  var currentInterval = state.availableIntervals[state.currentInterval];
+  if (currentInterval) {
+    // Check if we've reached or passed the end time of the current interval
+    if (state.currentTime >= currentInterval.end) {
+      // Pick a random attack interval
+      var randomIndex = Math.floor(Math.random() * attackIntervals.length);
+      var nextInterval = attackIntervals[randomIndex];
+      
+      return {
+        continueNormal: false,
+        transitionToInterval: nextInterval,
+        intervalOffset: 0
+      };
+    }
+  }
+  
+  // Continue with current behavior
+  return { continueNormal: true };
+}`;
+
 export class AttackSchedule {
   handleAttackSchedule(
     battle: BattleState,
@@ -105,7 +160,6 @@ export class AttackSchedule {
       return result as BossScheduleResult;
     } catch (error) {
       console.error('Error evaluating attack schedule:', error);
-      console.error('Attack schedule code:', attackSchedule);
       return { continueNormal: true };
     }
   }
