@@ -265,14 +265,19 @@ export class BattleLogic {
         console.log(`[AttackSchedule] Current interval "${battle.currentInterval}" not found in available intervals`);
       }
 
-      // Create boss state
-      const bossState: BossState = {
+      // Create boss state - convert Map to plain object for the interpreter
+      const availableIntervalsObj: Record<string, AttackInterval> = {};
+      for (const [key, value] of availableIntervals) {
+        availableIntervalsObj[key] = value;
+      }
+
+      const bossState = {
         healthPercentage: battle.bossHealth,
         currentInterval: battle.currentInterval,
         currentTime: currentTime,
         intervalElapsedTime: intervalElapsedTime,
         playerHealthPercentage: battle.playerHealth,
-        availableIntervals: availableIntervals
+        availableIntervals: availableIntervalsObj
       };
 
       console.log(`[AttackSchedule] Boss state:`, {
@@ -281,7 +286,7 @@ export class BattleLogic {
         currentTime: bossState.currentTime.toFixed(2),
         intervalElapsedTime: bossState.intervalElapsedTime.toFixed(2),
         playerHealthPercentage: bossState.playerHealthPercentage,
-        availableIntervalCount: bossState.availableIntervals.size
+        availableIntervalCount: Object.keys(bossState.availableIntervals).length
       });
 
       // Create the function code that returns the schedule result
@@ -296,11 +301,16 @@ export class BattleLogic {
         // Add bossState to global scope
         interpreter.setProperty(globalObject, 'bossStateArg', interpreter.nativeToPseudo(bossState));
         
-        // Add Map constructor and methods if needed
-        const mapConstructor = interpreter.createNativeFunction(() => {
-          return interpreter.nativeToPseudo(new Map());
-        });
-        interpreter.setProperty(globalObject, 'Map', mapConstructor);
+        // Add Math object and methods
+        const mathObject = interpreter.createObjectProto(interpreter.OBJECT_PROTO);
+        interpreter.setProperty(mathObject, 'floor', interpreter.createNativeFunction((x: number) => Math.floor(x)));
+        interpreter.setProperty(mathObject, 'random', interpreter.createNativeFunction(() => Math.random()));
+        interpreter.setProperty(globalObject, 'Math', mathObject);
+        
+        // Add Object.keys method directly to global scope
+        interpreter.setProperty(globalObject, 'ObjectKeys', interpreter.createNativeFunction((obj: any) => {
+          return interpreter.nativeToPseudo(Object.keys(interpreter.pseudoToNative(obj)));
+        }));
       });
 
       // Run the interpreter
@@ -309,6 +319,22 @@ export class BattleLogic {
       // Get the result and convert back to native
       const result = interpreter.pseudoToNative(interpreter.value);
       console.log(`[AttackSchedule] Raw interpreter result:`, result);
+      
+      // Log debug information if available
+      if (result.debug) {
+        console.log(`[AttackSchedule] DEBUG - Reason: ${result.debug.reason}`);
+        console.log(`[AttackSchedule] DEBUG - Current Interval: ${result.debug.currentInterval}`);
+        console.log(`[AttackSchedule] DEBUG - Available Attack Intervals: [${result.debug.availableAttackIntervals.join(', ')}]`);
+        console.log(`[AttackSchedule] DEBUG - Boss Health: ${result.debug.bossHealth.toFixed(3)}`);
+        console.log(`[AttackSchedule] DEBUG - Current Time: ${result.debug.currentTime.toFixed(2)}`);
+        if (result.debug.intervalEndTime !== undefined) {
+          console.log(`[AttackSchedule] DEBUG - Interval End Time: ${result.debug.intervalEndTime.toFixed(2)}`);
+        }
+        if (result.debug.randomChoice) {
+          console.log(`[AttackSchedule] DEBUG - Random Choice: ${result.debug.randomChoice}`);
+        }
+      }
+      
       return result as BossScheduleResult;
     } catch (error) {
       console.error('Error evaluating attack schedule:', error);

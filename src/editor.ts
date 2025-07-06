@@ -26,8 +26,8 @@ type BossState = {
   // Player health as a percentage (0.0 to 1.0)
   playerHealthPercentage: number;
   // TODO add information about the player to allow smarter AI? Like if they are attacking or not
-  // Map from interval name to interval data
-  availableIntervals: Map<string, AttackInterval>;
+  // Object from interval name to interval data (changed from Map for JS interpreter compatibility)
+  availableIntervals: Record<string, AttackInterval>;
 };
 
 // Output interface for controlling boss behavior
@@ -38,71 +38,104 @@ type BossScheduleResult = {
   transitionToInterval?: string; // interval name
   // Optional: offset into the interval to start at
   intervalOffset?: number;
+  // Optional: debug information for troubleshooting
+  debug?: {
+    reason: string;
+    currentInterval: string;
+    availableAttackIntervals: string[];
+    bossHealth: number;
+    currentTime: number;
+    intervalEndTime?: number;
+    randomChoice?: string;
+  };
 };
 
 // Type definition for the attack schedule function
 type AttackScheduleFunction = (state: BossState) => BossScheduleResult;
 
 const DEFAULT_ATTACK_SCHEDULE = `function(state) {
-  // If we're in the intro interval, continue normally
-  if (state.currentInterval === "intro") {
-    return { continueNormal: true };
+  var debug = {
+    reason: "",
+    currentInterval: state.currentInterval || "none",
+    availableAttackIntervals: [],
+    bossHealth: state.healthPercentage,
+    currentTime: state.currentTime
+  };
+  
+  // Get all attack intervals (not intro/death)
+  var attackIntervals = [];
+  var intervalNames = ObjectKeys(state.availableIntervals);
+  for (var i = 0; i < intervalNames.length; i++) {
+    var name = intervalNames[i];
+    if (name !== "intro" && name !== "death") {
+      attackIntervals.push(name);
+    }
   }
+  debug.availableAttackIntervals = attackIntervals;
   
   // If we're in the death interval, continue normally
   if (state.currentInterval === "death") {
-    return { continueNormal: true };
+    debug.reason = "In death interval, continuing normally";
+    return { 
+      continueNormal: true,
+      debug: debug
+    };
   }
   
   // If we're not in any interval, start with intro
   if (!state.currentInterval || state.currentInterval === "") {
+    debug.reason = "No current interval, transitioning to intro";
     return {
       continueNormal: false,
       transitionToInterval: "intro",
-      intervalOffset: 0
+      intervalOffset: 0,
+      debug: debug
     };
-  }
-  
-  // Get all attack intervals (not intro/death)
-  var attackIntervals = [];
-  var mapIterator = state.availableIntervals.entries();
-  var entry = mapIterator.next();
-  while (!entry.done) {
-    var name = entry.value[0];
-    if (name !== "intro" && name !== "death") {
-      attackIntervals.push(name);
-    }
-    entry = mapIterator.next();
   }
   
   // If no attack intervals available, go to death
   if (attackIntervals.length === 0) {
+    debug.reason = "No attack intervals available, transitioning to death";
     return {
       continueNormal: false,
       transitionToInterval: "death",
-      intervalOffset: 0
+      intervalOffset: 0,
+      debug: debug
     };
   }
   
   // Check if current interval is completed (reached the end time)
-  var currentInterval = state.availableIntervals.get(state.currentInterval);
+  var currentInterval = state.availableIntervals[state.currentInterval];
   if (currentInterval) {
+    debug.intervalEndTime = currentInterval.end;
+    
     // Check if we've reached or passed the end time of the current interval
     if (state.currentTime >= currentInterval.end) {
       // Pick a random attack interval
       var randomIndex = Math.floor(Math.random() * attackIntervals.length);
       var nextInterval = attackIntervals[randomIndex];
+      debug.reason = "Current interval completed, transitioning to random attack interval";
+      debug.randomChoice = nextInterval;
       
       return {
         continueNormal: false,
         transitionToInterval: nextInterval,
-        intervalOffset: 0
+        intervalOffset: 0,
+        debug: debug
       };
     }
+  } else {
+    debug.reason = "Current interval not found in available intervals, continuing normally";
   }
   
   // Continue with current behavior
-  return { continueNormal: true };
+  if (!debug.reason) {
+    debug.reason = "No transition conditions met, continuing normally";
+  }
+  return { 
+    continueNormal: true,
+    debug: debug
+  };
 }`;
 
 type AttackData = {
