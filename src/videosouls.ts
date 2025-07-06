@@ -2,6 +2,8 @@
 
 import { Editor, levelDataFromVideo, LevelDataV0, validateLevelData, BossState, BossScheduleResult, AttackScheduleFunction, stringifyWithMaps, parseWithMaps } from './editor';
 import { Graphics } from './graphics';
+import { InputManager, InputDirection } from './inputmanager';
+import { AudioPlayer } from './audioPlayer';
 
 // Load the interpreter from the local acorn_interpreter.js file
 declare const Interpreter: any;
@@ -10,26 +12,22 @@ enum GameMode {
   MENU, PLAYING, BATTLE_END, EDITING
 }
 
-enum InputDirection {
-  LEFT = 0b0001,
-  UP = 0b0010,
-  RIGHT = 0b0100,
-  DOWN = 0b1000
-}
-
 enum AttackAnimation {
   NONE, PARRYING, ATTACK_STARTING, ATTACKING, STAGGERING
 }
 
-const keyToDirection = new Map<string, InputDirection>([
-  ['w', InputDirection.UP],
-  ['a', InputDirection.LEFT],
-  ['s', InputDirection.DOWN],
-  ['d', InputDirection.RIGHT],
-]);
+const PARRY_WINDOW = 0.2;
+const PARRY_END_LAG = 0.2;
+const SUCCESS_PARRY_ANIM_FADE = 0.2;
 
-const parryKey = 'k';
-const attackKey = 'j';
+const ATTACK_COMBO_STARTUP_TIMES = [0.2, 0.2, 0.3, 0.2, 0.4];
+const ATTACK_COMBO_DAMAGE_MULT = [1.0, 1.1, 1.3, 1.0, 2.2];
+const ATTACK_END_LAG = 0.15;
+const COMBO_EXTEND_TIME = 3.0; // number of seconds before combo lapses
+
+const STAGGER_TIME = 0.4;
+
+const ATTACK_WARNING_ADVANCE = 0.5;
 
 type BattleState = {
   anim: {
@@ -70,78 +68,34 @@ type AlertData = {
   lifetime: number
 };
 
-const keyPressed = new Set<string>();
-const keyJustPressed = new Set<string>();
-var mouseX = 0;
-var mouseY = 0;
+const directionNumToSwordAngle = new Map<number, number>([
+  [0, 4 * Math.PI / 4],
+  [1, 3 * Math.PI / 4],
+  [2, 2 * Math.PI / 4],
+  [3, 1 * Math.PI / 4],
+  [4, 4 * Math.PI / 4],
+  [5, 3 * Math.PI / 4],
+  [6, 2 * Math.PI / 4],
+  [7, 5 * Math.PI / 4],
+  [8, 2 * Math.PI / 4],
+]);
 
-const PARRY_WINDOW = 0.2;
-const PARRY_END_LAG = 0.2;
-const SUCCESS_PARRY_ANIM_FADE = 0.2;
+// positions relative to center of screen
+const directionNumToSwordPos = new Map<number, [number, number]>([
+  [0, [0.0, 0.2]],
+  [1, [0.2, 0.2]],
+  [2, [0.2, 0.0]],
+  [3, [0.2, -0.2]],
+  [4, [0.0, -0.2]],
+  [5, [-0.2, -0.2]],
+  [6, [-0.2, 0.0]],
+  [7, [-0.2, 0.2]],
+  [8, [0.0, 0.0]],
+]);
 
-const ATTACK_COMBO_STARTUP_TIMES = [0.2, 0.2, 0.3, 0.2, 0.4];
-const ATTACK_COMBO_DAMAGE_MULT = [1.0, 1.1, 1.3, 1.0, 2.2];
-const ATTACK_END_LAG = 0.15;
-const COMBO_EXTEND_TIME = 3.0; // number of seconds before combo lapses
-
-const STAGGER_TIME = 0.4;
-
-const ATTACK_WARNING_ADVANCE = 0.5;
-
-function initialBattleState(): BattleState {
-  return {
-    anim: {
-      state: AttackAnimation.NONE,
-      startTime: 0,
-      endTime: 0,
-      startPos: [0.5, 0.5],
-      endPos: [0.5, 0.5],
-      startAngle: 0,
-      endAngle: 0,
-      lastParryTime: -100,
-      startYScale: 1.0,
-      endYScale: 1.0,
-      startXScale: 1.0,
-      endXScale: 1.0,
-    },
-    bufferedInput: null,
-    playerHealth: 1.0,
-    lastPlayerHealth: 1.0,
-    lastPlayerHit: -100000000,
-    bossHealth: 1.0,
-    lastBossHealth: 1.0,
-    lastBossHit: -100000000,
-    prevTime: 0,
-    hitCombo: 0,
-    hitComboTime: -10000000,
-    currentInterval: "intro",
-  };
-}
-
-class AudioPlayer {
-  // warning sound for incoming attacks
-  warnings: HTMLAudioElement[] = [];
-  enemyHit: HTMLAudioElement;
-  playerAttack: HTMLAudioElement;
-  playerHit: HTMLAudioElement;
-  parrySound: HTMLAudioElement;
-
-  constructor() {
-    for (let i = 1; i <= 3; i++) {
-      const audio = new Audio(`audio/warning${i}.wav`);
-      this.warnings.push(audio);
-    }
-    this.enemyHit = new Audio('audio/enemyHit.wav');
-    this.playerAttack = new Audio('audio/playerAttack.wav');
-    this.playerHit = new Audio('audio/playerHit.wav');
-    this.parrySound = new Audio('audio/parry.wav');
-  }
-
-  playWarningSound() {
-    const sound = this.warnings[Math.floor(Math.random() * this.warnings.length)];
-    sound.play();
-  }
-}
+// position relative to bottom left of screen
+const attackedPosition = [0.7, 0.4];
+const attackedAngle = Math.PI / 2;
 
 export class VideoSouls {
   elements;
@@ -150,11 +104,13 @@ export class VideoSouls {
   alerts: AlertData[];
   graphics: Graphics;
   audio: AudioPlayer;
+  inputManager: InputManager;
   // only defined when in editing mode
   editor: Editor;
 
   constructor(player: YT.Player) {
     this.audio = new AudioPlayer();
+    this.inputManager = new InputManager();
 
     this.elements = {
       player: player,
@@ -193,11 +149,6 @@ export class VideoSouls {
   }
 
   private initializeEventListeners() {
-    document.body.addEventListener('mousemove', (event) => {
-      mouseX = event.clientX;
-      mouseY = event.clientY;
-    });
-
     this.elements.canvas.width = window.innerWidth;
     this.elements.canvas.height = window.innerHeight;
   
@@ -239,16 +190,6 @@ export class VideoSouls {
       this.setGameMode(GameMode.EDITING);
     });
 
-    document.addEventListener('keydown', event => {
-      if (!keyPressed.has(event.key)) {
-        keyPressed.add(event.key);
-        keyJustPressed.add(event.key);
-      }
-    });
-    document.addEventListener('keyup', event => {
-      keyPressed.delete(event.key);
-    });
-
     this.elements.recordingControls.addEventListener("mousewheel", (event) => { this.recordingMouseWheel(event) }, { passive: false});
     // Firefox
     this.elements.recordingControls.addEventListener("DOMMouseScroll", (event) => { this.recordingMouseWheel(event) }, { passive: false});
@@ -287,12 +228,10 @@ export class VideoSouls {
     if (this.gameMode === GameMode.EDITING) {
       this.drawSword();
       // draw the editor
-      this.editor.draw(mouseX, mouseY);
+      this.editor.draw(this.inputManager.mouseX, this.inputManager.mouseY);
     }
 
     this.fadeOutAlerts();
-
-    keyJustPressed.clear();
 
     this.battle.prevTime = currentTime;
 
@@ -306,7 +245,7 @@ export class VideoSouls {
     }
 
     // if the control key is pressed, prevent the default behavior
-    if (keyPressed.has('Control')) {
+    if (this.inputManager.isKeyPressed('Control')) {
       event.preventDefault();
       // increase the zoom in the editor
       this.editor.changeZoom(event);
@@ -416,7 +355,7 @@ export class VideoSouls {
       // get the first attack (only one attack per frame allowed)
       const attack = attacks[0];
       // if the player is not parrying, take damage
-      if (this.battle.anim.state === AttackAnimation.PARRYING && currentTargetDir() == attack.direction) {
+      if (this.battle.anim.state === AttackAnimation.PARRYING && this.inputManager.getCurrentTargetDirection() == attack.direction) {
         this.successParry();
       } else {
         this.audio.playerHit.play();
@@ -623,22 +562,22 @@ export class VideoSouls {
 
     // if the game mode is editing, update the editor
     if (this.gameMode == GameMode.EDITING) {
-      this.editor!.update(keyJustPressed, currentTargetDir(), mouseX);
+      this.editor!.update(this.inputManager.getJustPressedKeys(), this.inputManager.getCurrentTargetDirection(), this.inputManager.mouseX);
     }
 
     if (this.gameMode == GameMode.PLAYING) {
       // Evaluate attack schedule
       this.handleAttackSchedule();
 
-      if (keyJustPressed.has(attackKey) && this.battle.bufferedInput === null) {
+      if (this.inputManager.wasKeyJustPressed(this.inputManager.attackKey) && this.battle.bufferedInput === null) {
         // buffer attack
-        this.battle.bufferedInput = attackKey;
+        this.battle.bufferedInput = this.inputManager.attackKey;
       }
 
       // check if parry button pressed
-      if (keyJustPressed.has(parryKey) && this.battle.bufferedInput === null) {
+      if (this.inputManager.wasKeyJustPressed(this.inputManager.parryKey) && this.battle.bufferedInput === null) {
         // buffer the parry
-        this.battle.bufferedInput = parryKey;
+        this.battle.bufferedInput = this.inputManager.parryKey;
       }
 
       // check if we finished an animation
@@ -654,11 +593,11 @@ export class VideoSouls {
 
       // ready for new buffered action
       if (this.battle.bufferedInput !== null && this.battle.anim.state === AttackAnimation.NONE) {
-        if (this.battle.bufferedInput === parryKey) {
+        if (this.battle.bufferedInput === this.inputManager.parryKey) {
           // in recording, do a successful parry
           this.doParry();
           this.battle.bufferedInput = null;
-        } else if (this.battle.bufferedInput === attackKey) {
+        } else if (this.battle.bufferedInput === this.inputManager.attackKey) {
           this.startAttack();
           this.battle.bufferedInput = null;
         }
@@ -672,14 +611,10 @@ export class VideoSouls {
   
     // if the sword is not in an animation, move towards user input dir
     if (this.battle.anim.state === AttackAnimation.NONE) {
-      const targetAngle = currentTargetAngleRadians();
+      const targetAngle = this.currentTargetAngleRadians();
   
       // clone the target position so we don't mutate it!
-      var targetPos = [...directionNumToSwordPos.get(currentTargetDir())!];
-  
-      // offset the target position to center of screen
-      targetPos[0] += 0.5;
-      targetPos[1] += 0.5;
+      var targetPos = [...directionNumToSwordPos.get(this.inputManager.getCurrentTargetDirection())!];
   
       // if the position is some epsilon close to the target position, set the position to the target position
       if (Math.abs(this.battle.anim.endPos[0] - targetPos[0]) < 0.01 && Math.abs(this.battle.anim.endPos[1] - targetPos[1]) < 0.01) {
@@ -706,7 +641,7 @@ export class VideoSouls {
     }
   
     // check for the escape key
-    if (keyJustPressed.has('Escape')) {
+    if (this.inputManager.wasKeyJustPressed('Escape')) {
       // set game mode to menu
       this.setGameMode(GameMode.MENU);
     }
@@ -732,6 +667,8 @@ export class VideoSouls {
       this.elements.player.seekTo(0.0, true);
       this.elements.player.playVideo();
     }
+
+    this.inputManager.clearJustPressed();
   }
 
   setGameMode(mode: GameMode) {
@@ -959,6 +896,10 @@ export class VideoSouls {
     ctx.drawImage(image, -image.width / 2, -image.height / 2);
     ctx.restore();
   }
+
+  currentTargetAngleRadians() {
+    return directionNumToSwordAngle.get(this.inputManager.getCurrentTargetDirection())!;
+  }
 }
 
 // Helper function to extract the video ID from a YouTube URL
@@ -966,82 +907,6 @@ function extractVideoID(url: string) {
   const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/;
   const match = url.match(regex);
   return match ? match[1] : null;
-}
-
-// Directions
-
-function netDirection(directionsArr: InputDirection[]) {
-  const directions = new Set(directionsArr);
-  // Cancel out opposites
-  if (directions.has(InputDirection.LEFT) && directions.has(InputDirection.RIGHT)) {
-    directions.delete(InputDirection.LEFT);
-    directions.delete(InputDirection.RIGHT);
-  }
-  if (directions.has(InputDirection.UP) && directions.has(InputDirection.DOWN)) {
-    directions.delete(InputDirection.UP);
-    directions.delete(InputDirection.DOWN);
-  }
-  // Get combined direction
-  let combinedDirection = 0;
-  directions.forEach(dir => combinedDirection |= dir);
-  return [
-    InputDirection.UP,
-    InputDirection.UP | InputDirection.RIGHT,
-    InputDirection.RIGHT,
-    InputDirection.DOWN | InputDirection.RIGHT,
-    InputDirection.DOWN,
-    InputDirection.DOWN | InputDirection.LEFT,
-    InputDirection.LEFT,
-    InputDirection.UP | InputDirection.LEFT,
-    0
-  ].indexOf(combinedDirection);
-}
-  
-const directionNumToSwordAngle = new Map<number, number>([
-  [0, 4 * Math.PI / 4],
-  [1, 3 * Math.PI / 4],
-  [2, 2 * Math.PI / 4],
-  [3, 1 * Math.PI / 4],
-  [4, 4 * Math.PI / 4],
-  [5, 3 * Math.PI / 4],
-  [6, 2 * Math.PI / 4],
-  [7, 5 * Math.PI / 4],
-  [8, 2 * Math.PI / 4],
-]);
-
-// positions relative to center of screen
-const directionNumToSwordPos = new Map<number, [number, number]>([
-  [0, [0.0, 0.2]],
-  [1, [0.2, 0.2]],
-  [2, [0.2, 0.0]],
-  [3, [0.2, -0.2]],
-  [4, [0.0, -0.2]],
-  [5, [-0.2, -0.2]],
-  [6, [-0.2, 0.0]],
-  [7, [-0.2, 0.2]],
-  [8, [0.0, 0.0]],
-]);
-
-const attackStartPosition = [0.65, 0.7];
-const attackEndPosition = [0.35, 0.2];
-
-// position relative to bottom left of screen
-const attackedPosition = [0.7, 0.4];
-const attackedAngle = Math.PI / 2;
-
-function currentTargetAngleRadians() {
-  return directionNumToSwordAngle.get(currentTargetDir())!;
-}
-
-function currentTargetDir() {
-  // find the target direction based on combination of keys pressed
-  var directions: InputDirection[] = [];
-  keyToDirection.forEach((dir, key) => {
-    if (keyPressed.has(key)) {
-      directions.push(dir);
-    }
-  })
-  return netDirection(directions);
 }
 
 function animateBossName(
@@ -1227,4 +1092,34 @@ function normalize(vec: [number, number]) {
   const [x, y] = vec;
   const length = Math.sqrt(x * x + y * y);
   return [x / length, y / length];
+}
+
+function initialBattleState(): BattleState {
+  return {
+    anim: {
+      state: AttackAnimation.NONE,
+      startTime: 0,
+      endTime: 0,
+      startPos: [0.5, 0.5],
+      endPos: [0.5, 0.5],
+      startAngle: 0,
+      endAngle: 0,
+      lastParryTime: -100,
+      startYScale: 1.0,
+      endYScale: 1.0,
+      startXScale: 1.0,
+      endXScale: 1.0,
+    },
+    bufferedInput: null,
+    playerHealth: 1.0,
+    lastPlayerHealth: 1.0,
+    lastPlayerHit: -100000000,
+    bossHealth: 1.0,
+    lastBossHealth: 1.0,
+    lastBossHit: -100000000,
+    prevTime: 0,
+    hitCombo: 0,
+    hitComboTime: -10000000,
+    currentInterval: "intro",
+  };
 }
