@@ -22,10 +22,10 @@ export class BattleLogic {
   handleBossAttacks(
     battle: BattleState, 
     currentTime: number, 
-    getAttacksInInterval: (start: number, end: number) => any[],
+    attackData: any[],
     getCurrentTargetDirection: () => number
   ) {
-    const attacks = getAttacksInInterval(battle.prevTime, currentTime);
+    const attacks = this.getAttacksInInterval(attackData, battle.prevTime, currentTime);
     if (attacks.length > 0) {
       const attack = attacks[0];
       if (battle.anim.state === AttackAnimation.PARRYING && getCurrentTargetDirection() === attack.direction) {
@@ -34,6 +34,12 @@ export class BattleLogic {
         this.playerTakeDamage(battle, currentTime);
       }
     }
+  }
+
+  // gets the attack direction, if any, for this time period
+  // starttime exclusive, endtime inclusive
+  getAttacksInInterval(attackData: any[], startTime: number, endTime: number) {
+    return attackData.filter(attack => attack.time > startTime && attack.time <= endTime);
   }
 
   doAttack(battle: BattleState, currentTime: number) {

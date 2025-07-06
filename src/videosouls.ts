@@ -268,20 +268,12 @@ export class VideoSouls {
     return this.editor.level.attackData.filter(attack => attack.time > startTime && attack.time <= endTime);
   }
 
-  successParry() {
-    this.audio.parrySound.play();
-    const currentTime = this.elements.player.getCurrentTime();
-    // successful parry
-    this.battle.anim.lastParryTime = currentTime;
-    this.battle.anim.state = AttackAnimation.NONE;
-  }
-
   handleBossAttacks() {
     const currentTime = this.elements.player.getCurrentTime();
     this.battleLogic.handleBossAttacks(
       this.battle,
       currentTime,
-      this.getAttacksInInterval.bind(this),
+      this.editor.level.attackData,
       this.inputManager.getCurrentTargetDirection.bind(this.inputManager)
     );
   }
