@@ -1,0 +1,67 @@
+{
+  "video": "xi6fSPv7M18",
+  "attackData": [],
+  "attackIntervals": {
+    "__type": "Map",
+    "entries": [
+      [
+        "intro",
+        {
+          "start": 0,
+          "end": 5.949016201620163,
+          "name": "intro"
+        }
+      ],
+      [
+        "1",
+        {
+          "start": 5.579303330333034,
+          "end": 8.570616561656166,
+          "name": "1"
+        }
+      ],
+      [
+        "2",
+        {
+          "start": 8.570616561656166,
+          "end": 15.897653465346536,
+          "name": "2"
+        }
+      ],
+      [
+        "3",
+        {
+          "start": 15.897653465346536,
+          "end": 21.140854185418544,
+          "name": "3"
+        }
+      ],
+      [
+        "4",
+        {
+          "start": 21.140854185418544,
+          "end": 25.812680468046807,
+          "name": "4"
+        }
+      ],
+      [
+        "death",
+        {
+          "start": 34.719399639964,
+          "end": 37.40822052205221,
+          "name": "death"
+        }
+      ],
+      [
+        "5",
+        {
+          "start": 25.879900990099014,
+          "end": 34.58495859585959,
+          "name": "5"
+        }
+      ]
+    ]
+  },
+  "attackSchedule": "function(state) {\n  var debug = {\n    reason: \"\",\n    currentInterval: state.currentInterval || \"none\",\n    availableAttackIntervals: [],\n    bossHealth: state.healthPercentage,\n    currentTime: state.currentTime\n  };\n  \n  // Get all attack intervals (not intro/death)\n  var attackIntervals = [];\n  var intervalNames = Object.keys(state.availableIntervals);\n  for (var i = 0; i < intervalNames.length; i++) {\n    var name = intervalNames[i];\n    if (name !== \"intro\" && name !== \"death\") {\n      attackIntervals.push(name);\n    }\n  }\n  debug.availableAttackIntervals = attackIntervals;\n  \n  // If we're in the death interval, continue normally\n  if (state.currentInterval === \"death\") {\n    debug.reason = \"In death interval, continuing normally\";\n    return { \n      continueNormal: true,\n      debug: debug\n    };\n  }\n  \n  // If we're not in any interval, start with intro\n  if (!state.currentInterval || state.currentInterval === \"\") {\n    debug.reason = \"No current interval, transitioning to intro\";\n    return {\n      continueNormal: false,\n      transitionToInterval: \"intro\",\n      intervalOffset: 0,\n      debug: debug\n    };\n  }\n  \n  // If no attack intervals available, go to death\n  if (attackIntervals.length === 0) {\n    debug.reason = \"No attack intervals available, transitioning to death\";\n    return {\n      continueNormal: false,\n      transitionToInterval: \"death\",\n      intervalOffset: 0,\n      debug: debug\n    };\n  }\n  \n  // Check if current interval is completed (reached the end time)\n  var currentInterval = state.availableIntervals[state.currentInterval];\n  if (currentInterval) {\n    debug.intervalEndTime = currentInterval.end;\n    \n    // Check if we've reached or passed the end time of the current interval\n    if (state.currentTime >= currentInterval.end) {\n      // Pick a random attack interval\n      var randomIndex = Math.floor(Math.random() * attackIntervals.length);\n      var nextInterval = attackIntervals[randomIndex];\n      debug.reason = \"Current interval completed, transitioning to random attack interval\";\n      debug.randomChoice = nextInterval;\n      \n      return {\n        continueNormal: false,\n        transitionToInterval: nextInterval,\n        intervalOffset: 0,\n        debug: debug\n      };\n    }\n  } else {\n    debug.reason = \"Current interval not found in available intervals, continuing normally\";\n  }\n  \n  // Continue with current behavior\n  if (!debug.reason) {\n    debug.reason = \"No transition conditions met, continuing normally\";\n  }\n  return { \n    continueNormal: true,\n    debug: debug\n  };\n}",
+  "version": "0.0.0"
+}

@@ -71,12 +71,12 @@ export class VideoSouls {
       recordButton: document.querySelector<HTMLButtonElement>("#record-button")!,
       customLevelPlayButton: document.querySelector<HTMLButtonElement>("#custom-level-play-button")!,
       exportButton: document.querySelector<HTMLButtonElement>("#export-button")!,
-      level1Button: document.querySelector<HTMLButtonElement>("#lv1-button")!,
       playbackBar: document.querySelector<HTMLInputElement>("#playback-bar")!,
       recordingControls: document.querySelector<HTMLInputElement>("#recording-controls")!,
       customLevelInput: document.querySelector<HTMLInputElement>("#custom-level-input")!,
       customLevelEditButton: document.querySelector<HTMLInputElement>("#custom-level-edit-button")!,
       validationError: document.querySelector<HTMLInputElement>("#validation-error")!,
+      levelsContainer: document.querySelector<HTMLDivElement>("#levels-container")!,
     } as const;
 
     this.graphics = new Graphics(this.elements.canvas);
@@ -88,6 +88,89 @@ export class VideoSouls {
     this.alerts = [];
 
     this.initializeEventListeners();
+    this.loadLevelButtons();
+  }
+
+  private async loadLevelButtons() {
+    try {
+      // Load level files from the levels directory
+      const levelFiles = await this.getLevelFiles();
+      
+      // Clear existing level buttons
+      this.elements.levelsContainer.innerHTML = '';
+      
+      // Create a button for each level file
+      levelFiles.forEach(levelFile => {
+        const button = document.createElement('button');
+        button.textContent = this.getLevelDisplayName(levelFile);
+        button.className = 'level-button';
+        button.addEventListener('click', () => {
+          this.loadAndPlayLevel(levelFile);
+        });
+        this.elements.levelsContainer.appendChild(button);
+      });
+    } catch (error) {
+      console.error('Failed to load level files:', error);
+      this.fadingAlert('Failed to load level files', 30, "20px");
+    }
+  }
+
+  private async getLevelFiles(): Promise<string[]> {
+    try {
+      // Try to fetch the levels directory listing
+      const response = await fetch('/levels/');
+      if (!response.ok) {
+        throw new Error('Failed to fetch levels directory');
+      }
+      
+      const html = await response.text();
+      
+      // Parse HTML to extract .json files
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      const links = Array.from(doc.querySelectorAll('a'));
+      
+      return links
+        .map(link => link.getAttribute('href'))
+        .filter(href => href && href.endsWith('.json'))
+        .map(href => href!) as string[];
+    } catch (error) {
+      // Fallback: return hardcoded level files if directory listing fails
+      console.warn('Directory listing failed, using fallback levels:', error);
+      return ['level1.json']; // Add more default levels as needed
+    }
+  }
+
+  private getLevelDisplayName(filename: string): string {
+    // Convert filename to display name (e.g., "level1.json" -> "Level 1")
+    return filename
+      .replace('.json', '')
+      .replace(/([a-z])([A-Z])/g, '$1 $2')
+      .replace(/^./, str => str.toUpperCase());
+  }
+
+  private async loadAndPlayLevel(levelFile: string) {
+    try {
+      const response = await fetch(`/levels/${levelFile}`);
+      if (!response.ok) {
+        throw new Error(`Failed to load level: ${levelFile}`);
+      }
+      
+      const levelData = await response.text();
+      const level = parseWithMaps(levelData);
+      const validation = await validateLevelData(level);
+      
+      if (validation === null) {
+        this.editor.level = level;
+        this.setGameMode(GameMode.PLAYING);
+      } else {
+        this.fadingAlert(`Invalid level file: ${levelFile}`, 30, "20px");
+        console.error('Level validation failed:', validation);
+      }
+    } catch (error) {
+      this.fadingAlert(`Failed to load level: ${levelFile}`, 30, "20px");
+      console.error('Error loading level:', error);
+    }
   }
 
   private initializeEventListeners() {
@@ -119,11 +202,6 @@ export class VideoSouls {
   
     this.elements.exportButton.addEventListener('click', () => {
       this.exportLevel();
-    });
-
-    this.elements.level1Button.addEventListener('click', () => {
-      const videoUrl = 'https://www.youtube.com/watch?v=xi6fSPv7M18';
-      this.recordVideo(videoUrl);
     });
 
     this.elements.customLevelEditButton.addEventListener('click', () => {
