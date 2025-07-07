@@ -11,21 +11,21 @@ export type BattleState = {
     endPos: [number, number],
     startAngle: number,
     endAngle: number,
-    lastParryTime: number,
+    timeSinceLastParry: number,
     startYScale: number,
     endYScale: number,
     startXScale: number,
     endXScale: number,
   },
   hitCombo: number,
-  hitComboTime: number,
+  timeSinceLastHit: number, 
   bufferedInput: string | null,
   playerHealth: number,
   lastPlayerHealth: number,
-  lastPlayerHit: number,
+  timeSincePlayerHit: number,
   bossHealth: number,
   lastBossHealth: number,
-  lastBossHit: number,
+  timeSinceBossHit: number,
   prevTime: number,
   currentInterval: string,
 };
@@ -64,7 +64,7 @@ export function initialBattleState(): BattleState {
       endPos: [0.5, 0.5],
       startAngle: 0,
       endAngle: 0,
-      lastParryTime: -100,
+      timeSinceLastParry: 1000,  // Large initial value
       startYScale: 1.0,
       endYScale: 1.0,
       startXScale: 1.0,
@@ -73,15 +73,28 @@ export function initialBattleState(): BattleState {
     bufferedInput: null,
     playerHealth: 1.0,
     lastPlayerHealth: 1.0,
-    lastPlayerHit: -100000000,
+    timeSincePlayerHit: 1000,  // Large initial value
     bossHealth: 1.0,
     lastBossHealth: 1.0,
-    lastBossHit: -100000000,
+    timeSinceBossHit: 1000,  // Large initial value
     prevTime: 0,
     hitCombo: 0,
-    hitComboTime: -10000000,
+    timeSinceLastHit: 1000,  // Large initial value
     currentInterval: "intro",
   };
+}
+
+// Helper function to update time and handle time jumps
+export function updateBattleTime(battle: BattleState, newTime: number) {
+  const deltaTime = newTime - battle.prevTime;
+  
+
+  battle.anim.timeSinceLastParry += deltaTime;
+  battle.timeSinceLastHit += deltaTime;
+  battle.timeSincePlayerHit += deltaTime;
+  battle.timeSinceBossHit += deltaTime;
+  
+  battle.prevTime = newTime;
 }
 
 export { directionNumToSwordPos, directionNumToSwordAngle };

@@ -215,6 +215,29 @@ export class Editor {
     this.addAttacks();
   }
 
+  cleanup() {
+    // Remove all attack elements
+    for (let [attack, element] of this.elements) {
+      element.remove();
+    }
+    this.elements.clear();
+
+    // Remove all interval elements
+    for (let [interval, elements] of this.intervalElements) {
+      elements.startElement.remove();
+      elements.endElement.remove();
+      elements.nameElement.remove();
+    }
+    this.intervalElements.clear();
+
+    // Clear other maps
+    this.frameToAttack.clear();
+    
+    // Reset state
+    this.selected = null;
+    this.dragged = null;
+  }
+
   private getCurrentTimeSafe(): number {
     const currentTime = this.player.getCurrentTime();
     return currentTime ?? 0;
@@ -787,4 +810,4 @@ export function validateLevelData(levelData: unknown): null | string {
   }
 }
 
-export type { AttackInterval, BossState, BossScheduleResult, AttackScheduleFunction };
+export type { AttackInterval, BossState, BossScheduleResult };

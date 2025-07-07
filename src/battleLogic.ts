@@ -49,7 +49,7 @@ export class BattleLogic {
   doAttack(battle: BattleState, currentTime: number) {
     battle.lastBossHealth = battle.bossHealth;
     battle.bossHealth -= 0.1 * ATTACK_COMBO_DAMAGE_MULT[battle.hitCombo % ATTACK_COMBO_DAMAGE_MULT.length];
-    battle.lastBossHit = currentTime;
+    battle.timeSinceBossHit = 0;  // Reset duration
 
     battle.anim.state = AttackAnimation.ATTACKING;
     battle.anim.startTime = currentTime;
@@ -76,13 +76,13 @@ export class BattleLogic {
 
   startAttack(battle: BattleState, currentTime: number) {
     var currentCombo = 0;
-    if (currentTime - battle.hitComboTime > COMBO_EXTEND_TIME) {
+    if (battle.timeSinceLastHit > COMBO_EXTEND_TIME) {  // Use duration instead of time comparison
       battle.hitCombo = 1;
     } else {
       currentCombo = battle.hitCombo;
       battle.hitCombo += 1;
     }
-    battle.hitComboTime = currentTime;
+    battle.timeSinceLastHit = 0;  // Reset duration
 
     battle.anim.state = AttackAnimation.ATTACK_STARTING;
     battle.anim.startTime = currentTime;
@@ -164,7 +164,7 @@ export class BattleLogic {
 
   private successParry(battle: BattleState, currentTime: number) {
     this.audio.parrySound.play();
-    battle.anim.lastParryTime = currentTime;
+    battle.anim.timeSinceLastParry = 0;  // Reset duration
     battle.anim.state = AttackAnimation.NONE;
   }
 
@@ -172,7 +172,7 @@ export class BattleLogic {
     this.audio.playerHit.play();
     battle.lastPlayerHealth = battle.playerHealth;
     battle.playerHealth -= 0.1;
-    battle.lastPlayerHit = currentTime;
+    battle.timeSincePlayerHit = 0;  // Reset duration
     battle.hitCombo = 0;
 
     battle.anim.state = AttackAnimation.STAGGERING;

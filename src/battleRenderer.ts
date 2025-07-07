@@ -102,8 +102,8 @@ export class BattleRenderer {
       yscale = battle.anim.startYScale + (battle.anim.endYScale - battle.anim.startYScale) * slowExponentialAnimProgress;
     }
 
-    if (currentTime - battle.anim.lastParryTime < SUCCESS_PARRY_ANIM_FADE) {
-      greenSwordOutlineStrength = Math.sqrt(1.0 - ((currentTime - battle.anim.lastParryTime) / SUCCESS_PARRY_ANIM_FADE));
+    if (battle.anim.timeSinceLastParry < SUCCESS_PARRY_ANIM_FADE) {
+      greenSwordOutlineStrength = Math.sqrt(1.0 - (battle.anim.timeSinceLastParry / SUCCESS_PARRY_ANIM_FADE));
     }
 
     const topLeftX = this.canvas.width * swordPos[0];
@@ -129,8 +129,8 @@ export class BattleRenderer {
 
     animateBossName(youtubeVideoName, this.canvas, currentTime, 0.15);
 
-    drawHealthBar(this.canvas, 0.05, { r: 255, g: 0, b: 0 }, battle.bossHealth, battle.lastBossHit, battle.lastBossHealth, currentTime);
-    drawHealthBar(this.canvas, 0.9, { r: 0, g: 255, b: 0 }, battle.playerHealth, battle.lastPlayerHit, battle.lastPlayerHealth, currentTime);
+    drawHealthBar(this.canvas, 0.05, { r: 255, g: 0, b: 0 }, battle.bossHealth, battle.timeSinceBossHit, battle.lastBossHealth, currentTime);
+    drawHealthBar(this.canvas, 0.9, { r: 0, g: 255, b: 0 }, battle.playerHealth, battle.timeSincePlayerHit, battle.lastPlayerHealth, currentTime);
   }
 
   private drawCenteredRotated(image: HTMLImageElement | HTMLCanvasElement, xpos: number, ypos: number, angle: number, alpha: number, xscale: number, yscale: number) {
@@ -235,7 +235,7 @@ function drawHealthBar(
   yPosition: number,
   color: Color, 
   currentHealth: number,
-  lastHealthChangeTime: number,
+  timeSinceHealthChange: number,
   lastHealth: number,
   currentTime: number
 ) {
@@ -248,18 +248,17 @@ function drawHealthBar(
 
   const yPos = yPosition * canvas.height;
   const lostHealth = lastHealth - currentHealth;
-  const timeSinceChange = currentTime - lastHealthChangeTime;
 
   let shakeOffsetX = 0;
-  if (timeSinceChange < shakeDuration) {
-    shakeOffsetX = Math.sin((timeSinceChange / shakeDuration) * Math.PI) * shakeMagnitude;
+  if (timeSinceHealthChange < shakeDuration) {
+    shakeOffsetX = Math.sin((timeSinceHealthChange / shakeDuration) * Math.PI) * shakeMagnitude;
   }
 
   if (lostHealth > 0) {
     const delay = 0.5;
     let animatedLastHealth = lastHealth;
-    if (timeSinceChange > delay) {
-      const decrementAmount = (timeSinceChange - delay) / 5;
+    if (timeSinceHealthChange > delay) {
+      const decrementAmount = (timeSinceHealthChange - delay) / 5;
       animatedLastHealth = Math.max(currentHealth, lastHealth - decrementAmount);
     }
     const lostHealthWidth = barWidth * animatedLastHealth;

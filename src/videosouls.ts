@@ -1,12 +1,12 @@
 // main.ts
 
-import { Editor, levelDataFromVideo, LevelDataV0, validateLevelData, BossState, BossScheduleResult, AttackScheduleFunction, stringifyWithMaps, parseWithMaps } from './editor';
+import { Editor, levelDataFromVideo, LevelDataV0, validateLevelData, BossState, BossScheduleResult, stringifyWithMaps, parseWithMaps } from './editor';
 import { Graphics } from './graphics';
 import { InputManager, InputDirection } from './inputmanager';
 import { AudioPlayer } from './audioPlayer';
 import { BattleRenderer } from './battleRenderer';
 import { BattleLogic } from './battleLogic';
-import { AttackAnimation, BattleState, initialBattleState, directionNumToSwordAngle } from './battle';
+import { AttackAnimation, BattleState, initialBattleState, directionNumToSwordAngle, updateBattleTime } from './battle';
 
 // Load the interpreter from the local acorn_interpreter.js file
 declare const Interpreter: any;
@@ -258,7 +258,8 @@ export class VideoSouls {
 
     this.fadeOutAlerts();
 
-    this.battle.prevTime = currentTime;
+    // Update battle time using the helper
+    updateBattleTime(this.battle, currentTime);
 
     requestAnimationFrame(this.mainLoop.bind(this));
   }
@@ -394,6 +395,7 @@ export class VideoSouls {
         this.editor.level.attackSchedule
       );
 
+      // TODO move key handling input to battle logic file
       if (this.inputManager.wasKeyJustPressed(this.inputManager.attackKey) && this.battle.bufferedInput === null) {
         // buffer attack
         this.battle.bufferedInput = this.inputManager.attackKey;
@@ -419,7 +421,6 @@ export class VideoSouls {
       // ready for new buffered action
       if (this.battle.bufferedInput !== null && this.battle.anim.state === AttackAnimation.NONE) {
         if (this.battle.bufferedInput === this.inputManager.parryKey) {
-          // in recording, do a successful parry
           this.doParry();
           this.battle.bufferedInput = null;
         } else if (this.battle.bufferedInput === this.inputManager.attackKey) {
@@ -458,17 +459,15 @@ export class VideoSouls {
       }
     }
 
-    // check for when the video ends, loop it
-    if (this.gameMode === GameMode.PLAYING && this.elements.player.getPlayerState() === YT.PlayerState.ENDED) {
-      // loop the video
-      this.elements.player.seekTo(0.0, true);
-      this.elements.player.playVideo();
-    }
-
     this.inputManager.clearJustPressed();
   }
 
   setGameMode(mode: GameMode) {
+    // Clean up editor elements before switching modes
+    if (this.gameMode === GameMode.EDITING && this.editor) {
+      this.editor.cleanup();
+    }
+
     // always sync the custom level input with the level data using generic stringify
     this.elements.customLevelInput.value = stringifyWithMaps(this.editor.level);
     
