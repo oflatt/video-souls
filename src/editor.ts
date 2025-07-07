@@ -180,7 +180,6 @@ export class Editor {
   elements: Map<AttackData, HTMLElement>;
   intervalElements: Map<AttackInterval, IntervalElements>;
   selected: DraggedAttack | null | DraggedInterval;
-  videoPlayer: VideoPlayer;
   playbackBar: HTMLElement;
   recordingControls: HTMLElement;
   playbackWrapper: HTMLElement;
@@ -190,8 +189,7 @@ export class Editor {
   freshName: number;
   graphics: Graphics;
 
-  constructor(player: YT.Player, recordingControls: HTMLElement, playbackBar: HTMLElement, level: LevelDataV0, graphics: Graphics) {
-    this.videoPlayer = new VideoPlayer(player);
+  constructor(recordingControls: HTMLElement, playbackBar: HTMLElement, level: LevelDataV0, graphics: Graphics) {
     this.graphics = graphics;
     this.frameToAttack = new Map<number, AttackData>();
     this.elements = new Map<AttackData, HTMLElement>();
@@ -239,8 +237,8 @@ export class Editor {
     this.dragged = null;
   }
 
-  private getCurrentTimeSafe(): number {
-    return this.videoPlayer.getCurrentTime();
+  private getCurrentTimeSafe(videoPlayer: VideoPlayer): number {
+    return videoPlayer.getCurrentTime();
   }
 
   mouseReleased(event: MouseEvent) {
@@ -300,10 +298,10 @@ export class Editor {
   }
 
   // update all the elements
-  draw(mouseX: number, mouseY: number) {
+  draw(mouseX: number, mouseY: number, videoPlayer: VideoPlayer) {
     const clientWidth = this.recordingControls.clientWidth - PLAYBACK_BAR_PADDING*2;
 
-    let duration = this.videoPlayer.getDuration();
+    let duration = videoPlayer.getDuration();
     let possibleW = this.timeToPx(duration);
     // if we are zoomed out too far, set zoom to a larger number
     if (possibleW < clientWidth && !Number.isNaN(duration) && duration != 0) {
@@ -359,7 +357,7 @@ export class Editor {
 
     // update the playback point
     const playbackPoint = document.querySelector<HTMLElement>("#playback-point")!;
-    const playbackPointLeft = this.timeToPx(this.getCurrentTimeSafe());
+    const playbackPointLeft = this.timeToPx(this.getCurrentTimeSafe(videoPlayer));
     playbackPoint.style.left = `${playbackPointLeft}px`;
   }
 
@@ -397,37 +395,40 @@ export class Editor {
   }
   
 
-  update(keyJustPressed: Set<string>, currentTargetDir: AttackDirection, mouseX: number) {
+  update(keyJustPressed: Set<string>, currentTargetDir: AttackDirection, mouseX: number, videoPlayer: VideoPlayer) {
+    videoPlayer.updateTime();
+
+
     if (keyJustPressed.has(" ")) {
-      if (this.videoPlayer.getPlayerState() == YT.PlayerState.PLAYING) {
-        this.videoPlayer.pauseVideo();
+      if (videoPlayer.getPlayerState() == YT.PlayerState.PLAYING) {
+        videoPlayer.pauseVideo();
       } else {
-        this.videoPlayer.playVideo();
+        videoPlayer.playVideo();
       }
     }
     if (keyJustPressed.has("ArrowLeft")) {
-      this.seekForward(-10);
+      this.seekForward(-10, videoPlayer);
     }
     if (keyJustPressed.has("ArrowRight")) {
-      this.seekForward(10);
+      this.seekForward(10, videoPlayer);
     }
     if (keyJustPressed.has("m")) {
-      this.seekForward(-0.05);
+      this.seekForward(-0.05, videoPlayer);
     }
     if (keyJustPressed.has(".")) {
-      this.seekForward(0.05);
+      this.seekForward(0.05, videoPlayer);
     }
     if (keyJustPressed.has("j")) {
-      this.seekForward(-0.5);
+      this.seekForward(-0.5, videoPlayer);
     }
     if (keyJustPressed.has("l")) {
-      this.seekForward(0.5);
+      this.seekForward(0.5, videoPlayer);
     }
     if (keyJustPressed.has("Enter") || keyJustPressed.has("k")) {
-      this.createAttackAt(this.getCurrentTimeSafe(), currentTargetDir, Editor.defaults.attackDamage);
+      this.createAttackAt(this.getCurrentTimeSafe(videoPlayer), currentTargetDir, Editor.defaults.attackDamage);
     }
     if (keyJustPressed.has("i")) {
-      this.createIntervalAt(this.getCurrentTimeSafe());
+      this.createIntervalAt(this.getCurrentTimeSafe(videoPlayer), videoPlayer);
     }
     if (keyJustPressed.has("x") || keyJustPressed.has("Backspace") || keyJustPressed.has("Delete")) {
       this.removeSelected();
@@ -438,7 +439,7 @@ export class Editor {
     if (this.dragged != null) {
       let posRelative = mouseX - this.playbackBar.getBoundingClientRect().left;
       let time = this.pxToTime(posRelative);
-      this.seek(time);
+      this.seek(time, videoPlayer);
     }
 
     // now check if there is a "death" attack interval, if not, add one
@@ -452,12 +453,12 @@ export class Editor {
       }
     }
     
-    let playerReady = (this.videoPlayer.getPlayerState() == YT.PlayerState.PAUSED || this.videoPlayer.getPlayerState() == YT.PlayerState.PLAYING);
+    let playerReady = (videoPlayer.getPlayerState() == YT.PlayerState.PAUSED || videoPlayer.getPlayerState() == YT.PlayerState.PLAYING);
 
     // check the state of the player so duration is valid
     if (!deathInterval && playerReady) {
-      let startTime = Math.max(this.videoPlayer.getDuration() - 2, 0);
-      let endTime = this.videoPlayer.getDuration();
+      let startTime = Math.max(videoPlayer.getDuration() - 2, 0);
+      let endTime = videoPlayer.getDuration();
       let newDeathInterval = {
         start: startTime,
         end: endTime,
@@ -468,7 +469,7 @@ export class Editor {
     
     if (!introInterval && playerReady) {
       let startTime = 0;
-      let endTime = Math.min(2, this.videoPlayer.getDuration());
+      let endTime = Math.min(2, videoPlayer.getDuration());
       let newIntroInterval = {
         start: startTime,
         end: endTime,
@@ -479,8 +480,8 @@ export class Editor {
 
     // if there's no non-special intervals, add a default one
     if (!hasNonSpecialInterval && playerReady) {
-      let startTime = Math.min(2, this.videoPlayer.getDuration());
-      let endTime = Math.max(this.videoPlayer.getDuration() - 2, startTime + 1);
+      let startTime = Math.min(2, videoPlayer.getDuration());
+      let endTime = Math.max(videoPlayer.getDuration() - 2, startTime + 1);
       let defaultInterval = {
         start: startTime,
         end: endTime,
@@ -489,8 +490,6 @@ export class Editor {
       this.freshName += 1;
       this.createInterval(defaultInterval);
     }
-
-    this.videoPlayer.updateTime();
   }
 
   createAttackAtMousePosition(pos: number, targetDir: AttackDirection, damage: number) {
@@ -520,8 +519,8 @@ export class Editor {
     this.selectAttack(newAttack);
   }
 
-  createIntervalAt(timestamp: DOMHighResTimeStamp) {
-    let endTime = Math.min(timestamp + 2, this.videoPlayer.getDuration());
+  createIntervalAt(timestamp: DOMHighResTimeStamp, videoPlayer: VideoPlayer) {
+    let endTime = Math.min(timestamp + 2, videoPlayer.getDuration());
     // if the end time is the same as the start time, don't create
     if (endTime == timestamp) {
       return;
@@ -564,18 +563,18 @@ export class Editor {
       // deselect the current attack
       this.selectAttack(null);
       // seek to that time
-      this.seek(time);
+      this.seek(time, null as any);
     }
   }
 
-  seek(seconds: number) {
-    let targetTime = Math.min(Math.max(seconds, 0), this.videoPlayer.getDuration());
-    this.videoPlayer.seekTo(targetTime, true);
+  seek(seconds: number, videoPlayer: VideoPlayer) {
+    let targetTime = Math.min(Math.max(seconds, 0), videoPlayer.getDuration());
+    videoPlayer.seekTo(targetTime, true);
   }
 
-  seekForward(seconds: number) {
-    let targetTime = Math.min(Math.max(this.getCurrentTimeSafe() + seconds, 0), this.videoPlayer.getDuration() - 0.05 * seconds);
-    this.videoPlayer.seekTo(targetTime, true);
+  seekForward(seconds: number, videoPlayer: VideoPlayer) {
+    let targetTime = Math.min(Math.max(this.getCurrentTimeSafe(videoPlayer) + seconds, 0), videoPlayer.getDuration() - 0.05 * seconds);
+    videoPlayer.seekTo(targetTime, true);
   }
 
   private addIntervalElements(interval: AttackInterval) {   
@@ -735,7 +734,7 @@ export class Editor {
     }
   }
 
-  private selectInterval(interval: AttackInterval, isStart: boolean) {
+  private selectInterval(interval: AttackInterval, isStart: boolean, videoPlayer?: VideoPlayer) {
     this.selected = null;
     this.clearSelectClass();
     if (interval != null) {
@@ -743,21 +742,25 @@ export class Editor {
       this.intervalElements.get(interval)!.startElement.classList.add("selected");
       this.intervalElements.get(interval)!.endElement.classList.add("selected");
       this.intervalElements.get(interval)!.nameElement.classList.add("selected");
-      if (isStart) {
-        this.seek(interval.start);
-      } else {
-        this.seek(interval.end);
+      if (videoPlayer) {
+        if (isStart) {
+          this.seek(interval.start, videoPlayer);
+        } else {
+          this.seek(interval.end, videoPlayer);
+        }
       }
     }
   }
 
-  private selectAttack(attack: AttackData | null) {
+  private selectAttack(attack: AttackData | null, videoPlayer?: VideoPlayer) {
     this.selected = null;
     this.clearSelectClass();
     if (attack != null) {
       this.selected = new DraggedAttack(attack);
       this.elements.get(attack)!.classList.add("selected");
-      this.seek(attack.time);
+      if (videoPlayer) {
+        this.seek(attack.time, videoPlayer);
+      }
     }
   }
 

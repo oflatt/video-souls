@@ -49,8 +49,10 @@ export class VideoPlayer {
     return this._prevTime;
   }
 
-  updateTime() {
+  updateTime(): number {
     this._prevTime = this.getCurrentTime();
     this._currentTime = this.player.getCurrentTime() ?? 0;
+    const deltaTime = this._currentTime - this._prevTime;
+    return deltaTime;
   }
 }

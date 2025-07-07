@@ -85,7 +85,7 @@ export class VideoSouls {
     this.graphics = new Graphics(this.elements.canvas);
     this.battleRenderer = new BattleRenderer(this.graphics, this.elements.canvas);
     this.battleLogic = new BattleLogic(this.audio);
-    this.editor = new Editor(player, this.elements.recordingControls, this.elements.playbackBar, new LevelDataV0(), this.graphics);
+    this.editor = new Editor(this.elements.recordingControls, this.elements.playbackBar, new LevelDataV0(), this.graphics);
     this.gameMode = GameMode.MENU;
     this.battle = initialBattleState();
     this.alerts = [];
@@ -237,6 +237,10 @@ export class VideoSouls {
   }
 
   mainLoop(_time: DOMHighResTimeStamp) {
+    // Update battle time using the helper
+    const deltaTime = this.videoPlayer.updateTime();
+    updateBattleTime(this.battle, deltaTime);
+
     // Debug
     const currentTime = this.getCurrentTimeSafe();
     const timeInMilliseconds = Math.floor(currentTime * 1000);
@@ -255,14 +259,10 @@ export class VideoSouls {
     if (this.gameMode === GameMode.EDITING) {
       this.drawSword();
       // draw the editor
-      this.editor.draw(this.inputManager.mouseX, this.inputManager.mouseY);
+      this.editor.draw(this.inputManager.mouseX, this.inputManager.mouseY, this.videoPlayer);
     }
 
     this.fadeOutAlerts();
-
-    // Update battle time using the helper
-    const deltaTime = this.videoPlayer.updateTime();
-    updateBattleTime(this.battle, deltaTime);
 
     requestAnimationFrame(this.mainLoop.bind(this));
   }
@@ -386,7 +386,7 @@ export class VideoSouls {
 
     // if the game mode is editing, update the editor
     if (this.gameMode == GameMode.EDITING) {
-      this.editor!.update(this.inputManager.getJustPressedKeys(), this.inputManager.getCurrentTargetDirection(), this.inputManager.mouseX);
+      this.editor!.update(this.inputManager.getJustPressedKeys(), this.inputManager.getCurrentTargetDirection(), this.inputManager.mouseX, this.videoPlayer);
     }
 
     if (this.gameMode == GameMode.PLAYING) {
@@ -533,7 +533,7 @@ export class VideoSouls {
       }
 
       // in the editing mode, create a new editor
-      this.editor = new Editor(this.elements.player, this.elements.recordingControls, this.elements.playbackBar, this.editor.level, this.graphics);
+      this.editor = new Editor(this.elements.recordingControls, this.elements.playbackBar, this.editor.level, this.graphics);
     }
 
     // load the video for playing
