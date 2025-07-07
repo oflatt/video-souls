@@ -2,6 +2,7 @@ import typia from "typia";
 
 import { Graphics } from './graphics';
 import { DEFAULT_ATTACK_SCHEDULE } from './attackSchedule';
+import { VideoPlayer } from './videoPlayer';
 
 enum AttackDirection {
   UP, UP_RIGHT, RIGHT, DOWN_RIGHT, DOWN, DOWN_LEFT, LEFT, UP_LEFT, CENTER
@@ -179,7 +180,7 @@ export class Editor {
   elements: Map<AttackData, HTMLElement>;
   intervalElements: Map<AttackInterval, IntervalElements>;
   selected: DraggedAttack | null | DraggedInterval;
-  player: YT.Player;
+  videoPlayer: VideoPlayer;
   playbackBar: HTMLElement;
   recordingControls: HTMLElement;
   playbackWrapper: HTMLElement;
@@ -190,12 +191,12 @@ export class Editor {
   graphics: Graphics;
 
   constructor(player: YT.Player, recordingControls: HTMLElement, playbackBar: HTMLElement, level: LevelDataV0, graphics: Graphics) {
+    this.videoPlayer = new VideoPlayer(player);
     this.graphics = graphics;
     this.frameToAttack = new Map<number, AttackData>();
     this.elements = new Map<AttackData, HTMLElement>();
     this.intervalElements = new Map<AttackInterval, IntervalElements>();
     this.selected = null;
-    this.player = player;
     this.playbackBar = playbackBar;
     this.recordingControls = recordingControls;
     this.playbackWrapper = recordingControls.querySelector<HTMLElement>("#playback-bar-wrapper")!;
@@ -239,8 +240,7 @@ export class Editor {
   }
 
   private getCurrentTimeSafe(): number {
-    const currentTime = this.player.getCurrentTime();
-    return currentTime ?? 0;
+    return this.videoPlayer.getCurrentTime();
   }
 
   mouseReleased(event: MouseEvent) {
@@ -303,7 +303,7 @@ export class Editor {
   draw(mouseX: number, mouseY: number) {
     const clientWidth = this.recordingControls.clientWidth - PLAYBACK_BAR_PADDING*2;
 
-    let duration = this.player.getDuration();
+    let duration = this.videoPlayer.getDuration();
     let possibleW = this.timeToPx(duration);
     // if we are zoomed out too far, set zoom to a larger number
     if (possibleW < clientWidth && !Number.isNaN(duration) && duration != 0) {
@@ -399,10 +399,10 @@ export class Editor {
 
   update(keyJustPressed: Set<string>, currentTargetDir: AttackDirection, mouseX: number) {
     if (keyJustPressed.has(" ")) {
-      if (this.player.getPlayerState() == YT.PlayerState.PLAYING) {
-        this.player.pauseVideo();
+      if (this.videoPlayer.getPlayerState() == YT.PlayerState.PLAYING) {
+        this.videoPlayer.pauseVideo();
       } else {
-        this.player.playVideo();
+        this.videoPlayer.playVideo();
       }
     }
     if (keyJustPressed.has("ArrowLeft")) {
@@ -452,12 +452,12 @@ export class Editor {
       }
     }
     
-    let playerReady = (this.player.getPlayerState() == YT.PlayerState.PAUSED || this.player.getPlayerState() == YT.PlayerState.PLAYING);
+    let playerReady = (this.videoPlayer.getPlayerState() == YT.PlayerState.PAUSED || this.videoPlayer.getPlayerState() == YT.PlayerState.PLAYING);
 
     // check the state of the player so duration is valid
     if (!deathInterval && playerReady) {
-      let startTime = Math.max(this.player.getDuration() - 2, 0);
-      let endTime = this.player.getDuration();
+      let startTime = Math.max(this.videoPlayer.getDuration() - 2, 0);
+      let endTime = this.videoPlayer.getDuration();
       let newDeathInterval = {
         start: startTime,
         end: endTime,
@@ -468,7 +468,7 @@ export class Editor {
     
     if (!introInterval && playerReady) {
       let startTime = 0;
-      let endTime = Math.min(2, this.player.getDuration());
+      let endTime = Math.min(2, this.videoPlayer.getDuration());
       let newIntroInterval = {
         start: startTime,
         end: endTime,
@@ -479,8 +479,8 @@ export class Editor {
 
     // if there's no non-special intervals, add a default one
     if (!hasNonSpecialInterval && playerReady) {
-      let startTime = Math.min(2, this.player.getDuration());
-      let endTime = Math.max(this.player.getDuration() - 2, startTime + 1);
+      let startTime = Math.min(2, this.videoPlayer.getDuration());
+      let endTime = Math.max(this.videoPlayer.getDuration() - 2, startTime + 1);
       let defaultInterval = {
         start: startTime,
         end: endTime,
@@ -489,6 +489,8 @@ export class Editor {
       this.freshName += 1;
       this.createInterval(defaultInterval);
     }
+
+    this.videoPlayer.updateTime();
   }
 
   createAttackAtMousePosition(pos: number, targetDir: AttackDirection, damage: number) {
@@ -519,7 +521,7 @@ export class Editor {
   }
 
   createIntervalAt(timestamp: DOMHighResTimeStamp) {
-    let endTime = Math.min(timestamp + 2, this.player.getDuration());
+    let endTime = Math.min(timestamp + 2, this.videoPlayer.getDuration());
     // if the end time is the same as the start time, don't create
     if (endTime == timestamp) {
       return;
@@ -567,13 +569,13 @@ export class Editor {
   }
 
   seek(seconds: number) {
-    let targetTime = Math.min(Math.max(seconds, 0), this.player.getDuration());
-    this.player.seekTo(targetTime, true);
+    let targetTime = Math.min(Math.max(seconds, 0), this.videoPlayer.getDuration());
+    this.videoPlayer.seekTo(targetTime, true);
   }
 
   seekForward(seconds: number) {
-    let targetTime = Math.min(Math.max(this.getCurrentTimeSafe() + seconds, 0), this.player.getDuration() - 0.05 * seconds);
-    this.player.seekTo(targetTime, true);
+    let targetTime = Math.min(Math.max(this.getCurrentTimeSafe() + seconds, 0), this.videoPlayer.getDuration() - 0.05 * seconds);
+    this.videoPlayer.seekTo(targetTime, true);
   }
 
   private addIntervalElements(interval: AttackInterval) {   

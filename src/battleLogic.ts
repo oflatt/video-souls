@@ -2,6 +2,7 @@ import { AttackAnimation, BattleState, directionNumToSwordPos, directionNumToSwo
 import { AudioPlayer } from './audioPlayer';
 import { AttackSchedule } from './attackSchedule';
 import { AttackInterval } from './editor';
+import { VideoPlayer } from './videoPlayer';
 
 const ATTACK_COMBO_STARTUP_TIMES = [0.2, 0.2, 0.3, 0.2, 0.4];
 const ATTACK_COMBO_DAMAGE_MULT = [1.0, 1.1, 1.3, 1.0, 2.2];
@@ -25,11 +26,12 @@ export class BattleLogic {
 
   handleBossAttacks(
     battle: BattleState, 
-    currentTime: number, 
+    currentTime: number,
+    prevTime: number,
     attackData: any[],
     getCurrentTargetDirection: () => number
   ) {
-    const attacks = this.getAttacksInInterval(attackData, battle.prevTime, currentTime);
+    const attacks = this.getAttacksInInterval(attackData, prevTime, currentTime);
     if (attacks.length > 0) {
       const attack = attacks[0];
       if (battle.anim.state === AttackAnimation.PARRYING && getCurrentTargetDirection() === attack.direction) {
@@ -196,14 +198,14 @@ export class BattleLogic {
   handleAttackSchedule(
     battle: BattleState,
     currentTime: number,
-    player: YT.Player,
+    videoPlayer: VideoPlayer,
     attackIntervals: Map<string, AttackInterval>,
     attackSchedule: string
   ) {
     this.attackSchedule.handleAttackSchedule(
       battle,
       currentTime,
-      player,
+      videoPlayer,
       attackIntervals,
       attackSchedule
     );

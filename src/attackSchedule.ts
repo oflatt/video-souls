@@ -1,5 +1,6 @@
 import { BattleState } from './battle';
 import { BossState, BossScheduleResult, AttackInterval } from './editor';
+import { VideoPlayer } from './videoPlayer';
 
 export const DEFAULT_ATTACK_SCHEDULE = `function(state) {
   // Get all attack intervals (not intro/death)
@@ -60,7 +61,7 @@ export class AttackSchedule {
   handleAttackSchedule(
     battle: BattleState,
     currentTime: number,
-    player: YT.Player,
+    videoPlayer: VideoPlayer,
     attackIntervals: Map<string, AttackInterval>,
     attackSchedule: string
   ) {
@@ -69,7 +70,7 @@ export class AttackSchedule {
       const deathInterval = attackIntervals.get("death");
       if (deathInterval && battle.currentInterval !== "death") {
         battle.currentInterval = "death";
-        player.seekTo(deathInterval.start, true);
+        videoPlayer.seekTo(deathInterval.start, true);
         return;
       }
     }
@@ -91,7 +92,7 @@ export class AttackSchedule {
         // Apply interval offset if specified
         const offset = scheduleResult.intervalOffset || 0;
         const seekTime = targetInterval.start + offset;
-        player.seekTo(seekTime, true);
+        videoPlayer.seekTo(seekTime, true);
       }
     }
   }

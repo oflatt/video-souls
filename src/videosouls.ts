@@ -7,6 +7,7 @@ import { AudioPlayer } from './audioPlayer';
 import { BattleRenderer } from './battleRenderer';
 import { BattleLogic } from './battleLogic';
 import { AttackAnimation, BattleState, initialBattleState, directionNumToSwordAngle, updateBattleTime } from './battle';
+import { VideoPlayer } from './videoPlayer';
 
 // Load the interpreter from the local acorn_interpreter.js file
 declare const Interpreter: any;
@@ -45,10 +46,12 @@ export class VideoSouls {
   inputManager: InputManager;
   battleRenderer: BattleRenderer;
   battleLogic: BattleLogic;
+  videoPlayer: VideoPlayer;
   // only defined when in editing mode
   editor: Editor;
 
   constructor(player: YT.Player) {
+    this.videoPlayer = new VideoPlayer(player);
     this.audio = new AudioPlayer();
     this.inputManager = new InputManager();
 
@@ -230,8 +233,7 @@ export class VideoSouls {
   }
 
   private getCurrentTimeSafe(): number {
-    const currentTime = this.elements.player.getCurrentTime();
-    return currentTime ?? 0;
+    return this.videoPlayer.getCurrentTime();
   }
 
   mainLoop(_time: DOMHighResTimeStamp) {
@@ -259,7 +261,8 @@ export class VideoSouls {
     this.fadeOutAlerts();
 
     // Update battle time using the helper
-    updateBattleTime(this.battle, currentTime);
+    const deltaTime = this.videoPlayer.updateTime();
+    updateBattleTime(this.battle, deltaTime);
 
     requestAnimationFrame(this.mainLoop.bind(this));
   }
@@ -357,6 +360,7 @@ export class VideoSouls {
     this.battleLogic.handleBossAttacks(
       this.battle,
       currentTime,
+      this.videoPlayer.prevTime,
       this.editor.level.attackData,
       this.inputManager.getCurrentTargetDirection.bind(this.inputManager)
     );
@@ -390,7 +394,7 @@ export class VideoSouls {
       this.battleLogic.handleAttackSchedule(
         this.battle,
         currentTime,
-        this.elements.player,
+        this.videoPlayer,
         this.editor.level.attackIntervals,
         this.editor.level.attackSchedule
       );
@@ -477,7 +481,7 @@ export class VideoSouls {
 
 
     // if the video is valid, load it
-    this.elements.player.pauseVideo();
+    this.videoPlayer.pauseVideo();
   
     // reset the sword state
     this.battle = initialBattleState();
@@ -525,7 +529,7 @@ export class VideoSouls {
     // load the video for editing, make new editor
     if (mode === GameMode.EDITING) {
       if (this.editor.level.video != null) {
-        this.elements.player.loadVideoById(this.editor.level.video);
+        this.videoPlayer.loadVideoById(this.editor.level.video);
       }
 
       // in the editing mode, create a new editor
@@ -535,12 +539,12 @@ export class VideoSouls {
     // load the video for playing
     if (mode === GameMode.PLAYING) {
       if (this.editor.level.video != null) {
-        this.elements.player.loadVideoById(this.editor.level.video);
+        this.videoPlayer.loadVideoById(this.editor.level.video);
       }
-      this.elements.player.pauseVideo();
-      this.elements.player.setPlaybackRate(1.0);
+      this.videoPlayer.pauseVideo();
+      this.videoPlayer.setPlaybackRate(1.0);
   
-      this.elements.player.playVideo();
+      this.videoPlayer.playVideo();
     }
   
     this.gameMode = mode;
@@ -567,6 +571,7 @@ export class VideoSouls {
     
     this.battleRenderer.drawCanvas(
       currentTime,
+      this.videoPlayer.prevTime,
       this.battle,
       this.getAttacksInInterval.bind(this),
       this.audio.playWarningSound.bind(this.audio),

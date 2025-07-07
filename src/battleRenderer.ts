@@ -117,14 +117,15 @@ export class BattleRenderer {
   }
 
   drawCanvas(
-    currentTime: number, 
+    currentTime: number,
+    prevTime: number,
     battle: BattleState, 
     getAttacksInInterval: (start: number, end: number) => any[], 
     playWarningSound: () => void,
     getCurrentTargetDirection: () => number,
     youtubeVideoName: string
   ) {
-    this.drawAttackWarning(currentTime, battle.prevTime, getAttacksInInterval, playWarningSound);
+    this.drawAttackWarning(currentTime, prevTime, getAttacksInInterval, playWarningSound);
     this.drawSword(currentTime, battle, getCurrentTargetDirection);
 
     animateBossName(youtubeVideoName, this.canvas, currentTime, 0.15);

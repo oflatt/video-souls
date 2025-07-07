@@ -26,7 +26,6 @@ export type BattleState = {
   bossHealth: number,
   lastBossHealth: number,
   timeSinceBossHit: number,
-  prevTime: number,
   currentInterval: string,
 };
 
@@ -77,7 +76,6 @@ export function initialBattleState(): BattleState {
     bossHealth: 1.0,
     lastBossHealth: 1.0,
     timeSinceBossHit: 1000,  // Large initial value
-    prevTime: 0,
     hitCombo: 0,
     timeSinceLastHit: 1000,  // Large initial value
     currentInterval: "intro",
@@ -85,16 +83,11 @@ export function initialBattleState(): BattleState {
 }
 
 // Helper function to update time and handle time jumps
-export function updateBattleTime(battle: BattleState, newTime: number) {
-  const deltaTime = newTime - battle.prevTime;
-  
-
+export function updateBattleTime(battle: BattleState, deltaTime: number) {
   battle.anim.timeSinceLastParry += deltaTime;
   battle.timeSinceLastHit += deltaTime;
   battle.timeSincePlayerHit += deltaTime;
   battle.timeSinceBossHit += deltaTime;
-  
-  battle.prevTime = newTime;
 }
 
 export { directionNumToSwordPos, directionNumToSwordAngle };
