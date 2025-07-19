@@ -8,6 +8,7 @@ import { BattleRenderer } from './battleRenderer';
 import { BattleLogic } from './battleLogic';
 import { AttackAnimation, BattleState, initialBattleState, directionNumToSwordAngle, updateBattleTime } from './battle';
 import { VideoPlayer } from './videoPlayer';
+import { Settings } from './settings';
 
 // Load the interpreter from the local acorn_interpreter.js file
 declare const Interpreter: any;
@@ -49,6 +50,8 @@ export class VideoSouls {
   videoPlayer: VideoPlayer;
   // only defined when in editing mode
   editor: Editor;
+  settings: Settings;
+  volumeSlider: HTMLInputElement;
 
   constructor(player: YT.Player) {
     this.videoPlayer = new VideoPlayer(player);
@@ -89,6 +92,77 @@ export class VideoSouls {
     this.gameMode = GameMode.MENU;
     this.battle = initialBattleState();
     this.alerts = [];
+    this.settings = Settings.load();
+
+    // Add volume slider to a new settings section at the bottom of the floating menu
+    this.volumeSlider = document.createElement("input");
+    this.volumeSlider.type = "range";
+    this.volumeSlider.min = "0";
+    this.volumeSlider.max = "100";
+    this.volumeSlider.value = String(this.settings.volume);
+    this.volumeSlider.style.width = "200px";
+    this.volumeSlider.style.marginBottom = "10px";
+    this.volumeSlider.title = "Volume";
+    this.volumeSlider.id = "main-menu-volume-slider";
+
+    const volumeLabel = document.createElement("label");
+    volumeLabel.textContent = "Volume";
+    volumeLabel.htmlFor = "main-menu-volume-slider";
+    volumeLabel.style.marginRight = "10px";
+    volumeLabel.style.color = "#fff";
+    volumeLabel.style.fontSize = "18px";
+
+    // Create a settings section at the bottom
+    const settingsSection = document.createElement("div");
+    settingsSection.id = "main-menu-settings-section";
+    settingsSection.style.display = "flex";
+    settingsSection.style.alignItems = "center";
+    settingsSection.style.marginTop = "30px";
+    settingsSection.style.justifyContent = "center";
+    settingsSection.style.width = "100%";
+    settingsSection.style.position = "absolute";
+    settingsSection.style.bottom = "20px";
+    settingsSection.style.left = "0";
+    settingsSection.style.right = "0";
+
+    const volumeContainer = document.createElement("div");
+    volumeContainer.style.display = "flex";
+    volumeContainer.style.alignItems = "center";
+    volumeContainer.style.marginBottom = "10px";
+    volumeContainer.appendChild(volumeLabel);
+    volumeContainer.appendChild(this.volumeSlider);
+
+    settingsSection.appendChild(volumeContainer);
+
+    // Insert settings section at the end of floating menu
+    this.elements.floatingMenu.appendChild(settingsSection);
+
+    // Set initial YouTube player volume
+    player.setVolume(this.settings.volume);
+
+    // Set initial sound effect volume
+    this.audio.setVolume(this.settings.getNormalizedVolume());
+
+    // Listen for slider changes
+    this.volumeSlider.addEventListener("input", () => {
+      const vol = Number(this.volumeSlider.value);
+      this.settings.volume = vol;
+      this.settings.save();
+      player.setVolume(vol);
+      this.audio.setVolume(this.settings.getNormalizedVolume());
+    });
+
+    // Listen for YouTube player volume changes (if user changes via YouTube UI)
+    // This requires polling since YT.Player doesn't emit volume change events
+    setInterval(() => {
+      const ytVol = player.getVolume();
+      if (ytVol !== this.settings.volume) {
+        this.settings.volume = ytVol;
+        this.volumeSlider.value = String(ytVol);
+        this.settings.save();
+        this.audio.setVolume(this.settings.getNormalizedVolume());
+      }
+    }, 500);
 
     this.initializeEventListeners();
     this.loadLevelButtons();
@@ -98,10 +172,10 @@ export class VideoSouls {
     try {
       // Load level files from the levels directory
       const levelFiles = await this.getLevelFiles();
-      
+
       // Clear existing level buttons
       this.elements.levelsContainer.innerHTML = '';
-      
+
       // Create a button for each level file
       levelFiles.forEach(levelFile => {
         const button = document.createElement('button');
@@ -125,14 +199,14 @@ export class VideoSouls {
       if (!response.ok) {
         throw new Error('Failed to fetch levels directory');
       }
-      
+
       const html = await response.text();
-      
+
       // Parse HTML to extract .json files
       const parser = new DOMParser();
       const doc = parser.parseFromString(html, 'text/html');
       const links = Array.from(doc.querySelectorAll('a'));
-      
+
       return links
         .map(link => link.getAttribute('href'))
         .filter(href => href && href.endsWith('.json'))
@@ -158,11 +232,11 @@ export class VideoSouls {
       if (!response.ok) {
         throw new Error(`Failed to load level: ${levelFile}`);
       }
-      
+
       const levelData = await response.text();
       const level = parseWithMaps(levelData);
       const validation = await validateLevelData(level);
-      
+
       if (validation === null) {
         this.editor.level = level;
         this.setGameMode(GameMode.PLAYING);
@@ -179,14 +253,14 @@ export class VideoSouls {
   private initializeEventListeners() {
     this.elements.canvas.width = window.innerWidth;
     this.elements.canvas.height = window.innerHeight;
-  
+
     this.elements.recordButton.addEventListener('click', () => {
-        const videoUrl = this.elements.videoUrlInput.value;
-        if (videoUrl) {
-          this.recordVideo(videoUrl);
-        } else {
-          this.fadingAlert('Please enter a valid YouTube URL.', 30, "20px");
-        }
+      const videoUrl = this.elements.videoUrlInput.value;
+      if (videoUrl) {
+        this.recordVideo(videoUrl);
+      } else {
+        this.fadingAlert('Please enter a valid YouTube URL.', 30, "20px");
+      }
     });
 
     this.elements.retryButton.addEventListener('click', () => {
@@ -202,7 +276,7 @@ export class VideoSouls {
         this.setGameMode(GameMode.PLAYING);
       }
     });
-  
+
     this.elements.exportButton.addEventListener('click', () => {
       this.exportLevel();
     });
@@ -213,9 +287,9 @@ export class VideoSouls {
       this.setGameMode(GameMode.EDITING);
     });
 
-    this.elements.recordingControls.addEventListener("mousewheel", (event) => { this.recordingMouseWheel(event) }, { passive: false});
+    this.elements.recordingControls.addEventListener("mousewheel", (event) => { this.recordingMouseWheel(event) }, { passive: false });
     // Firefox
-    this.elements.recordingControls.addEventListener("DOMMouseScroll", (event) => { this.recordingMouseWheel(event) }, { passive: false});
+    this.elements.recordingControls.addEventListener("DOMMouseScroll", (event) => { this.recordingMouseWheel(event) }, { passive: false });
 
     // when mouse is released, send this event to the editor
     document.addEventListener('mouseup', (event) => {
@@ -233,7 +307,7 @@ export class VideoSouls {
     });
   }
 
-  private getCurrentTimeSafe(): number {
+  private currentTime(): number {
     return this.videoPlayer.getCurrentTime();
   }
 
@@ -243,10 +317,10 @@ export class VideoSouls {
     updateBattleTime(this.battle, deltaTime);
 
     // Debug
-    const currentTime = this.getCurrentTimeSafe();
+    const currentTime = this.currentTime();
     const timeInMilliseconds = Math.floor(currentTime * 1000);
     this.elements.currentTimeDebug.textContent = `Time: ${timeInMilliseconds} ms data: ${this.editor.level.attackData.length}`;
-    
+
     this.updateState();
 
     const ctx = this.elements.canvas.getContext('2d')!;
@@ -357,33 +431,34 @@ export class VideoSouls {
   }
 
   handleBossAttacks() {
-    const currentTime = this.getCurrentTimeSafe();
+    const currentTime = this.currentTime();
+    const prevTime = this.videoPlayer.prevTime;
     this.battleLogic.handleBossAttacks(
       this.battle,
       currentTime,
-      this.videoPlayer.prevTime,
+      prevTime,
       this.editor.level.attackData,
       this.inputManager.getCurrentTargetDirection.bind(this.inputManager)
     );
   }
 
   doAttack() {
-    const currentTime = this.getCurrentTimeSafe();
+    const currentTime = this.currentTime();
     this.battleLogic.doAttack(this.battle, currentTime);
   }
 
   startAttack() {
-    const currentTime = this.getCurrentTimeSafe();
+    const currentTime = this.currentTime();
     this.battleLogic.startAttack(this.battle, currentTime);
   }
 
   doParry() {
-    const currentTime = this.getCurrentTimeSafe();
+    const currentTime = this.currentTime();
     this.battleLogic.doParry(this.battle, currentTime);
   }
 
   updateState() {
-    const currentTime = this.getCurrentTimeSafe();
+    const currentTime = this.currentTime();
 
     // if the game mode is editing, update the editor
     if (this.gameMode == GameMode.EDITING) {
@@ -433,16 +508,16 @@ export class VideoSouls {
           this.battle.bufferedInput = null;
         }
       }
-  
+
       // check if we were attacked in playing mode
       if (this.gameMode === GameMode.PLAYING) {
         this.handleBossAttacks();
       }
     }
-  
+
     // if the sword is not in an animation, move towards user input dir
     this.battleLogic.updateSwordPosition(this.battle, this.inputManager.getCurrentTargetDirection.bind(this.inputManager));
-  
+
     // check for the escape key
     if (this.inputManager.wasKeyJustPressed('Escape')) {
       // set game mode to menu
@@ -475,7 +550,7 @@ export class VideoSouls {
 
     // always sync the custom level input with the level data using generic stringify
     this.elements.customLevelInput.value = stringifyWithMaps(this.editor.level);
-    
+
     // clear validation errors
     this.elements.validationError.textContent = '';
     this.elements.validationError.style.display = 'none';
@@ -483,10 +558,10 @@ export class VideoSouls {
 
     // if the video is valid, load it
     this.videoPlayer.pauseVideo();
-  
+
     // reset the sword state
     this.battle = initialBattleState();
-   
+
     // if the new mode is battle end, show the battle end hud
     if (mode === GameMode.BATTLE_END) {
       this.elements.battleEndHUD.style.display = 'flex';
@@ -516,7 +591,7 @@ export class VideoSouls {
     }
 
     // if the new mode is menu, show the menu
-    if  (mode === GameMode.MENU) {
+    if (mode === GameMode.MENU) {
       // show the export and play buttons if there is any recorded data
       if (this.editor.level.video != null) {
         this.elements.exportButton.style.display = 'block';
@@ -544,13 +619,17 @@ export class VideoSouls {
       }
       this.videoPlayer.pauseVideo();
       this.videoPlayer.setPlaybackRate(1.0);
-  
+
       this.videoPlayer.playVideo();
     }
-  
+
     this.gameMode = mode;
+
+    // Always keep YouTube player volume in sync with settings
+    this.elements.player.setVolume(this.settings.volume);
+    this.audio.setVolume(this.settings.getNormalizedVolume());
   }
-  
+
   setCurrentVideo(videoId: string) {
     this.editor.level = levelDataFromVideo(videoId);
   }
@@ -567,9 +646,9 @@ export class VideoSouls {
   }
 
   private drawCanvas() {
-    const currentTime = this.getCurrentTimeSafe();
+    const currentTime = this.currentTime();
     const youtubeVideoName = this.elements.player.getIframe().title;
-    
+
     this.battleRenderer.drawCanvas(
       currentTime,
       this.videoPlayer.prevTime,
@@ -582,10 +661,10 @@ export class VideoSouls {
   }
 
   private drawSword() {
-    const currentTime = this.getCurrentTimeSafe();
+    const currentTime = this.currentTime();
     this.battleRenderer.drawSword(
-      currentTime, 
-      this.battle, 
+      currentTime,
+      this.battle,
       this.inputManager.getCurrentTargetDirection.bind(this.inputManager)
     );
   }

@@ -572,8 +572,7 @@ export class Editor {
  }
 
   seek(seconds: number, videoPlayer: VideoPlayer) {
-    let targetTime = Math.min(Math.max(seconds, 0), videoPlayer.getDuration());
-    videoPlayer.seekTo(targetTime, true);
+    videoPlayer.seekTo(seconds, true);
   }
 
   seekForward(seconds: number, videoPlayer: VideoPlayer) {

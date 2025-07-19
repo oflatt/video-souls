@@ -34,7 +34,6 @@ export class BattleLogic {
     const attacks = this.getAttacksInInterval(attackData, prevTime, currentTime);
     if (attacks.length > 0) {
       const attack = attacks[0];
-      console.log(`Handling attack at time ${attack.time} with direction ${attack.direction}`);
       if (battle.anim.state === AttackAnimation.PARRYING && getCurrentTargetDirection() === attack.direction) {
         this.successParry(battle, currentTime);
       } else {

@@ -21,4 +21,14 @@ export class AudioPlayer {
     const sound = this.warnings[Math.floor(Math.random() * this.warnings.length)];
     sound.play();
   }
+
+  setVolume(normalizedVolume: number) {
+    // Set volume for all sound effects (assuming they are HTMLAudioElement)
+    this.playerAttack.volume = normalizedVolume;
+    this.enemyHit.volume = normalizedVolume;
+    this.playerHit.volume = normalizedVolume;
+    this.parrySound.volume = normalizedVolume;
+    this.warnings.forEach(warning => warning.volume = normalizedVolume);
+    // Add any other sound effects here
+  }
 }

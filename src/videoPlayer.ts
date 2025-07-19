@@ -15,9 +15,12 @@ export class VideoPlayer {
     return this.player.getDuration();
   }
 
-  seekTo(seconds: number, allowSeekAhead: boolean): void {
+  seekTo(inputs: number, allowSeekAhead: boolean): void {
+    console.log(`Seeking to ${inputs} seconds`);
+    let seconds = Math.min(Math.max(inputs, 0), this.getDuration());
     this.player.seekTo(seconds, allowSeekAhead);
     this._prevTime = seconds; // Update previous time when seeking
+    this._currentTime = seconds; // Update current time to match seek
   }
 
   loadVideoById(videoId: string, startSeconds?: number, suggestedQuality?: YT.SuggestedVideoQuality): void {
@@ -46,13 +49,25 @@ export class VideoPlayer {
 
   // Time management methods
   get prevTime(): number {
+    console.log(`Previous time: ${this._prevTime}`);
     return this._prevTime;
   }
 
   updateTime(): number {
-    this._prevTime = this.getCurrentTime();
+    this._prevTime = this._currentTime;
     this._currentTime = this.player.getCurrentTime() ?? 0;
     const deltaTime = this._currentTime - this._prevTime;
+
+    // ensure prevTime is less than or equal to currentTime
+    if (this._prevTime > this._currentTime) {
+      this._prevTime = this._currentTime;
+    }
+
+    // HACK: youtube player seeking is async, so for big jumps we want prevTime to track with currentTime
+    if (Math.abs(deltaTime) > 0.15) {
+      this._prevTime = this._currentTime;
+    }
+
     return deltaTime;
   }
 }

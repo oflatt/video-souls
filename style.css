@@ -46,6 +46,21 @@ body {
   overflow-y: auto;
   height: 100%;
 }
+
+#main-menu-settings-section {
+  position: absolute;
+  bottom: 20px;
+  left: 0;
+  right: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: none;
+  z-index: 10;
+  pointer-events: auto;
+}
+
 /* game HUD style */
 #game-hud, #battle-end-hud, #record-hud {
   position: absolute;
