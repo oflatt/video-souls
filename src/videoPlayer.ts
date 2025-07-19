@@ -16,7 +16,6 @@ export class VideoPlayer {
   }
 
   seekTo(inputs: number, allowSeekAhead: boolean): void {
-    console.log(`Seeking to ${inputs} seconds`);
     let seconds = Math.min(Math.max(inputs, 0), this.getDuration());
     this.player.seekTo(seconds, allowSeekAhead);
     this._prevTime = seconds; // Update previous time when seeking
@@ -49,7 +48,6 @@ export class VideoPlayer {
 
   // Time management methods
   get prevTime(): number {
-    console.log(`Previous time: ${this._prevTime}`);
     return this._prevTime;
   }
 

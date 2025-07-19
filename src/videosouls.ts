@@ -251,8 +251,9 @@ export class VideoSouls {
   }
 
   private initializeEventListeners() {
-    this.elements.canvas.width = window.innerWidth;
-    this.elements.canvas.height = window.innerHeight;
+    // Set canvas size dynamically
+    this.resizeCanvas();
+    window.addEventListener('resize', () => this.resizeCanvas());
 
     this.elements.recordButton.addEventListener('click', () => {
       const videoUrl = this.elements.videoUrlInput.value;
@@ -293,7 +294,6 @@ export class VideoSouls {
 
     // when mouse is released, send this event to the editor
     document.addEventListener('mouseup', (event) => {
-      console.log("mouse up in main");
       if (this.gameMode === GameMode.EDITING) {
         this.editor.mouseReleased(event);
       }
@@ -307,8 +307,10 @@ export class VideoSouls {
     });
   }
 
-  private currentTime(): number {
-    return this.videoPlayer.getCurrentTime();
+  private resizeCanvas() {
+    console.log("Resizing canvas to window size");
+    this.elements.canvas.width = window.innerWidth;
+    this.elements.canvas.height = window.innerHeight;
   }
 
   mainLoop(_time: DOMHighResTimeStamp) {
@@ -316,7 +318,6 @@ export class VideoSouls {
     const deltaTime = this.videoPlayer.updateTime();
     updateBattleTime(this.battle, deltaTime);
 
-    // Debug
     const currentTime = this.currentTime();
     const timeInMilliseconds = Math.floor(currentTime * 1000);
     this.elements.currentTimeDebug.textContent = `Time: ${timeInMilliseconds} ms data: ${this.editor.level.attackData.length}`;
@@ -428,6 +429,10 @@ export class VideoSouls {
   // starttime exclusive, endtime inclusive
   getAttacksInInterval(startTime: number, endTime: number) {
     return this.editor.level.attackData.filter(attack => attack.time > startTime && attack.time <= endTime);
+  }
+
+  currentTime(): number {
+    return this.videoPlayer.getCurrentTime();
   }
 
   handleBossAttacks() {
