@@ -219,6 +219,7 @@ export class VideoSouls {
 
     // when mouse is released, send this event to the editor
     document.addEventListener('mouseup', (event) => {
+      console.log("mouse up in main");
       if (this.gameMode === GameMode.EDITING) {
         this.editor.mouseReleased(event);
       }
@@ -227,7 +228,7 @@ export class VideoSouls {
     // when the playback bar is clicked, seek to that time
     this.elements.playbackBar.addEventListener('click', (event) => {
       if (this.gameMode === GameMode.EDITING) {
-        this.editor.playbackBarClicked(event);
+        this.editor.playbackBarClicked(event, this.videoPlayer);
       }
     });
   }

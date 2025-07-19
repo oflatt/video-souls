@@ -1,4 +1,3 @@
-
 #recording-controls {
   overflow-x: auto;
   overflow-y: visible;
@@ -61,10 +60,7 @@
   --height: 35px;
   --marker-color: hsl(210, 70%, 40%);
   --highlight-color: hsl(210, 55%, 60%);
-  --warning-color: hsl(45, 75%, 50%);
   --damage-color: hsl(5, 75%, 60%);
-  /* Parameters */
-  --warning-offset: 20px;
   --damage-offset: 10px;
 }
 
@@ -94,28 +90,6 @@
   border-color: lightgray;
 }
 
-.attack-marker .marker-handle .warning-line {
-  position: absolute;
-  bottom: 50%;
-  left: 50%;
-  transform: translateX(-100%) translateY(50%);
-  width: var(--warning-offset);
-  height: 2px;
-  background-color: var(--warning-color);
-  z-index: -10;
-}
-.attack-marker .marker-handle .warning-handle {
-  position: absolute;
-  top: -4px;
-  left: -5px;
-  width: 10px;
-  height: 10px;
-  box-sizing: border-box;
-  background-color: var(--warning-color);
-  border-radius: 25%;
-  cursor: ew-resize;
-}
-
 .attack-marker .marker-handle .damage-line {
   position: absolute;
   bottom: 50%;
@@ -137,7 +111,7 @@
   border-radius: 25%;
   cursor: ew-resize;
 }
-.attack-marker:not(.selected) .marker-handle .warning-line,
+
 .attack-marker:not(.selected) .marker-handle .damage-line {
   display: none;
 }
@@ -147,6 +121,7 @@
   --marker-color: hsl(130, 70%, 35%);
   --highlight-color: hsl(130, 55%, 50%);
 }
+
 
 /* Intervals */
 

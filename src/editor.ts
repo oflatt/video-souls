@@ -174,7 +174,8 @@ class DraggedAttack {
 
 export class Editor {
   static defaults = {
-    attackDamage: 0.1
+    attackDamage: 0.1,
+    minAttackDistance: 0.1  // minimum seconds between attacks
   } as const;
   frameToAttack: Map<number, AttackData>;
   elements: Map<AttackData, HTMLElement>;
@@ -359,6 +360,9 @@ export class Editor {
     const playbackPoint = document.querySelector<HTMLElement>("#playback-point")!;
     const playbackPointLeft = this.timeToPx(this.getCurrentTimeSafe(videoPlayer));
     playbackPoint.style.left = `${playbackPointLeft}px`;
+
+    // Update attack warnings every frame
+    this.updateAttackWarnings();
   }
 
   timeToPx(time: number) {
@@ -554,7 +558,7 @@ export class Editor {
   }
 
   /// get a mouse event relative to the playback bar's coordinates
-  playbackBarClicked(event: MouseEvent) {
+  playbackBarClicked(event: MouseEvent, videoPlayer: VideoPlayer) {
     // check the mouse event is left click
     if (event.button == 0) {
       let mouseX = event.offsetX;
@@ -563,9 +567,9 @@ export class Editor {
       // deselect the current attack
       this.selectAttack(null);
       // seek to that time
-      this.seek(time, null as any);
+      this.seek(time, videoPlayer);
     }
-  }
+ }
 
   seek(seconds: number, videoPlayer: VideoPlayer) {
     let targetTime = Math.min(Math.max(seconds, 0), videoPlayer.getDuration());
@@ -598,10 +602,12 @@ export class Editor {
 
     startElement.addEventListener("mousedown", event => {
       event.stopPropagation();
+      event.preventDefault();
       this.intervalMouseDown(interval, true);
     });
     endElement.addEventListener("mousedown", event => {
       event.stopPropagation();
+      event.preventDefault();
       this.intervalMouseDown(interval, false);
     });
 
@@ -618,6 +624,7 @@ export class Editor {
     attackElement.classList.remove("template");
     attackElement.querySelector(".marker-handle")!.addEventListener("mousedown", event => {
       event.stopPropagation();
+      event.preventDefault();
       this.attackMouseDown(attack);
     });
     this.elements.set(attack, attackElement);
@@ -760,6 +767,43 @@ export class Editor {
       this.elements.get(attack)!.classList.add("selected");
       if (videoPlayer) {
         this.seek(attack.time, videoPlayer);
+      }
+    }
+  }
+
+  private updateAttackWarnings() {
+    // Remove all existing warning elements
+    for (let [attack, element] of this.elements) {
+      const oldWarning = element.querySelector('.attack-warning');
+      if (oldWarning) oldWarning.remove();
+    }
+
+    // Sort attacks by time to make comparison easier
+    const sortedAttacks = [...this.level.attackData].sort((a, b) => a.time - b.time);
+
+    // Only mark the later attack in each close pair
+    for (let i = 1; i < sortedAttacks.length; i++) {
+      const prevAttack = sortedAttacks[i - 1];
+      const currAttack = sortedAttacks[i];
+      const timeDiff = Math.abs(currAttack.time - prevAttack.time);
+
+      if (timeDiff < Editor.defaults.minAttackDistance) {
+        const element = this.elements.get(currAttack);
+        if (element) {
+          // Create warning element
+          const warning = document.createElement('div');
+          warning.className = 'attack-warning';
+          warning.textContent = '!';
+
+          // Tooltip
+          const tooltip = document.createElement('div');
+          tooltip.className = 'attack-warning-tooltip';
+          tooltip.textContent = 'Attack too close to another (< 0.1s apart)';
+
+          warning.appendChild(tooltip);
+
+          element.appendChild(warning);
+        }
       }
     }
   }
