@@ -51,7 +51,7 @@ export class VideoSouls {
   videoPlayer: VideoPlayer;
   // only defined when in editing mode
   editor: Editor;
-    settings: Settings;
+  settings: Settings;
   volumeSlider: HTMLInputElement;
 
   constructor(player: YT.Player) {
@@ -414,6 +414,9 @@ export class VideoSouls {
   updateState() {
     const currentTime = this.currentTime();
 
+    // if the sword is not in an animation, move towards user input dir
+    this.battleLogic.updateSwordPosition(this.battle, this.inputManager.getCurrentTargetDirection.bind(this.inputManager));
+
     // if the game mode is editing, update the editor
     if (this.gameMode == GameMode.EDITING) {
       this.editor!.update(this.inputManager.getJustPressedKeys(), this.inputManager.getCurrentTargetDirection(), this.inputManager.mouseX);
@@ -467,30 +470,26 @@ export class VideoSouls {
       if (this.gameMode === GameMode.PLAYING) {
         this.handleBossAttacks();
       }
+
+      // check for player death or win condition
+      if (this.battle.playerHealth <= 0) {
+        this.setGameMode(GameMode.BATTLE_END);
+        this.fadingAlert('You Died', 90, "30%", "red", "Cormorant Unicase");
+        // Check if boss is in death interval and it has ended (win condition)
+      } else if (this.battle.bossHealth <= 0 && this.battle.currentInterval === "death") {
+        const deathInterval = this.editor.level.attackIntervals.get("death");
+        if (deathInterval && currentTime >= deathInterval.end || this.videoPlayer.getPlayerState() === YT.PlayerState.ENDED) {
+          this.setGameMode(GameMode.BATTLE_END);
+          this.fadingAlert('You Won', 90, "30%", "green", "Cormorant Unicase");
+        }
+      }
     }
 
-    // if the sword is not in an animation, move towards user input dir
-    this.battleLogic.updateSwordPosition(this.battle, this.inputManager.getCurrentTargetDirection.bind(this.inputManager));
-
+    
     // check for the escape key
     if (this.inputManager.wasKeyJustPressed('Escape')) {
       // set game mode to menu
       this.setGameMode(GameMode.MENU);
-    }
-
-    // check if the player died
-    if (this.battle.playerHealth <= 0) {
-      this.setGameMode(GameMode.BATTLE_END);
-      this.fadingAlert('You Died', 90, "30%", "red", "Cormorant Unicase");
-    }
-
-    // Check if boss is in death interval and it has ended (win condition)
-    if (this.battle.bossHealth <= 0 && this.battle.currentInterval === "death") {
-      const deathInterval = this.editor.level.attackIntervals.get("death");
-      if (deathInterval && currentTime >= deathInterval.end) {
-        this.setGameMode(GameMode.BATTLE_END);
-        this.fadingAlert('You Won', 90, "30%", "green", "Cormorant Unicase");
-      }
     }
 
     this.inputManager.clearJustPressed();
