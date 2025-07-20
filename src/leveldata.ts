@@ -40,7 +40,9 @@ export class LevelDataV0 {
   attackSchedule: string;
   version: string;
   title: string | null;
-  arrowless: boolean; // <-- Now mandatory
+  arrowless: boolean;
+  bossDamageMultiplier: number; 
+  bossHealth: number;
 
   constructor() {
     this.video = null;
@@ -49,7 +51,9 @@ export class LevelDataV0 {
     this.attackSchedule = DEFAULT_ATTACK_SCHEDULE;
     this.version = "0.0.0";
     this.title = null;
-    this.arrowless = false; // <-- Default value
+    this.arrowless = false;
+    this.bossDamageMultiplier = 1.0; 
+    this.bossHealth = 1.0;
   }
 }
 
@@ -57,6 +61,8 @@ export function levelDataFromVideo(videoId: string): LevelDataV0 {
   const level = new LevelDataV0();
   level.video = videoId;
   level.arrowless = false; // <-- Always set
+  level.bossDamageMultiplier = 1.0; // <-- always set
+  level.bossHealth = 1.0; // <-- always set
   return level;
 }
 
@@ -94,7 +100,9 @@ export function stringifyLevelData(levelData: LevelDataV0): string {
     attackSchedule: levelData.attackSchedule,
     version: levelData.version,
     title: levelData.title,
-    arrowless: levelData.arrowless // <-- Always present
+    arrowless: levelData.arrowless, // <-- Always present
+    bossDamageMultiplier: levelData.bossDamageMultiplier, // <-- new field
+    bossHealth: levelData.bossHealth // <-- new field
   };
   return JSON.stringify(serializable, null, 2);
 }
@@ -115,6 +123,8 @@ export function parseLevelData(jsonString: string): LevelDataV0 {
   levelData.version = parsed.version || "0.0.0";
   levelData.title = parsed.title || null;
   levelData.arrowless = !!parsed.arrowless; // <-- Always set, fallback to false
+  levelData.bossDamageMultiplier = typeof parsed.bossDamageMultiplier === "number" ? parsed.bossDamageMultiplier : 1.0; // <-- parse
+  levelData.bossHealth = typeof parsed.bossHealth === "number" ? parsed.bossHealth : 1.0; // <-- parse
   return levelData;
 }
 
@@ -131,6 +141,13 @@ export function validateLevelData(levelData: unknown): null | string {
   }
   const res = typia.validate<LevelDataV0>(levelData);
   if (res.success) {
+    // Additional manual checks for new fields
+    if (typeof (levelData as any).bossDamageMultiplier !== "number") {
+      return "Expected bossDamageMultiplier to be a number";
+    }
+    if (typeof (levelData as any).bossHealth !== "number") {
+      return "Expected bossHealth to be a number";
+    }
     return null;
   } else {
     return res.errors.map(function (error) {

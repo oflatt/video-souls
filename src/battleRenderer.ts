@@ -1,5 +1,6 @@
 import { Graphics } from './graphics';
 import { AttackAnimation, BattleState, directionNumToSwordPos, directionNumToSwordAngle } from './battle';
+import { LevelDataV0 } from './leveldata';
 
 const PARRY_WINDOW = 0.2;
 const PARRY_END_LAG = 0.2;
@@ -25,10 +26,12 @@ function adjustColorOpacity(color: Color, opacity: number): Color {
 export class BattleRenderer {
   private graphics: Graphics;
   private canvas: HTMLCanvasElement;
+  private level: LevelDataV0; // <-- Add level reference
 
-  constructor(graphics: Graphics, canvas: HTMLCanvasElement) {
+  constructor(graphics: Graphics, canvas: HTMLCanvasElement, level: LevelDataV0) {
     this.graphics = graphics;
     this.canvas = canvas;
+    this.level = level;
   }
 
   drawAttackWarning(
@@ -138,8 +141,25 @@ export class BattleRenderer {
 
     animateBossName(youtubeVideoName, this.canvas, currentTime, 0.15);
 
-    drawHealthBar(this.canvas, 0.05, { r: 255, g: 0, b: 0 }, battle.bossHealth, battle.timeSinceBossHit, battle.lastBossHealth, currentTime);
-    drawHealthBar(this.canvas, 0.9, { r: 0, g: 255, b: 0 }, battle.playerHealth, battle.timeSincePlayerHit, battle.lastPlayerHealth, currentTime);
+    // Use level.bossHealth for max health
+    drawHealthBar(
+      this.canvas,
+      0.05,
+      { r: 255, g: 0, b: 0 },
+      battle.bossHealth,
+      battle.timeSinceBossHit,
+      battle.lastBossHealth,
+      this.level.bossHealth
+    );
+    drawHealthBar(
+      this.canvas,
+      0.9,
+      { r: 0, g: 255, b: 0 },
+      battle.playerHealth,
+      battle.timeSincePlayerHit,
+      battle.lastPlayerHealth,
+      1.0
+    );
   }
 
   private drawCenteredRotated(image: HTMLImageElement | HTMLCanvasElement, xpos: number, ypos: number, angle: number, alpha: number, xscale: number, yscale: number) {
@@ -246,7 +266,7 @@ function drawHealthBar(
   currentHealth: number,
   timeSinceHealthChange: number,
   lastHealth: number,
-  currentTime: number
+  maxHealth: number = 1.0 // <-- new param
 ) {
   const ctx = canvas.getContext('2d')!;
   const barWidth = canvas.width * 0.8;
@@ -263,19 +283,23 @@ function drawHealthBar(
     shakeOffsetX = Math.sin((timeSinceHealthChange / shakeDuration) * Math.PI) * shakeMagnitude;
   }
 
+  // Calculate health percentage
+  const healthPercent = Math.max(0, Math.min(1, currentHealth / maxHealth));
+  const lastHealthPercent = Math.max(0, Math.min(1, lastHealth / maxHealth));
+
   if (lostHealth > 0) {
     const delay = 0.5;
-    let animatedLastHealth = lastHealth;
+    let animatedLastHealth = lastHealthPercent;
     if (timeSinceHealthChange > delay) {
-      const decrementAmount = (timeSinceHealthChange - delay) / 5;
-      animatedLastHealth = Math.max(currentHealth, lastHealth - decrementAmount);
+      const decrementAmount = (timeSinceHealthChange - delay) / 5 / maxHealth;
+      animatedLastHealth = Math.max(healthPercent, lastHealthPercent - decrementAmount);
     }
     const lostHealthWidth = barWidth * animatedLastHealth;
     ctx.fillStyle = colorToString(adjustColorOpacity(color, 0.5));
     ctx.fillRect(xOffset + shakeOffsetX, yPos, lostHealthWidth, barHeight);
   }
 
-  const currentHealthWidth = barWidth * currentHealth;
+  const currentHealthWidth = barWidth * healthPercent;
   ctx.fillStyle = colorToString(color);
   ctx.fillRect(xOffset + shakeOffsetX, yPos, currentHealthWidth, barHeight);
 

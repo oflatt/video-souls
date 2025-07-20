@@ -2,6 +2,8 @@
   "video": "xi6fSPv7M18",
   "title": "Zombie",
   "arrowless": false,
+  "bossDamageMultiplier": 1.0,
+  "bossHealth": 2.5,
   "attackData": [
     {
       "time": 6.653170117011701,

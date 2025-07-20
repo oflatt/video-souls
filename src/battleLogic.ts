@@ -3,6 +3,7 @@ import { AudioPlayer } from './audioPlayer';
 import { AttackSchedule } from './attackSchedule';
 import { AttackInterval } from './editor';
 import { VideoPlayer } from './videoPlayer';
+import { LevelDataV0 } from './leveldata';
 
 const ATTACK_COMBO_STARTUP_TIMES = [0.2, 0.2, 0.3, 0.2, 0.4];
 const ATTACK_COMBO_DAMAGE_MULT = [1.0, 1.1, 1.3, 1.0, 2.2];
@@ -18,10 +19,12 @@ const attackedAngle = Math.PI / 2;
 export class BattleLogic {
   private audio: AudioPlayer;
   private attackSchedule: AttackSchedule;
+  private level: LevelDataV0;
 
-  constructor(audio: AudioPlayer) {
+  constructor(audio: AudioPlayer, level: LevelDataV0) {
     this.audio = audio;
     this.attackSchedule = new AttackSchedule();
+    this.level = level;
   }
 
   handleBossAttacks(
@@ -173,7 +176,8 @@ export class BattleLogic {
   private playerTakeDamage(battle: BattleState, currentTime: number) {
     this.audio.playerHit.play();
     battle.lastPlayerHealth = battle.playerHealth;
-    battle.playerHealth -= 0.1;
+    // Use bossDamageMultiplier from level data
+    battle.playerHealth -= 0.1 * this.level.bossDamageMultiplier;
     battle.timeSincePlayerHit = 0;  // Reset duration
     battle.hitCombo = 0;
 

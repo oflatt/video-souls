@@ -87,9 +87,9 @@ export class VideoSouls {
     } as const;
 
     this.graphics = new Graphics(this.elements.canvas);
-    this.battleRenderer = new BattleRenderer(this.graphics, this.elements.canvas);
-    this.battleLogic = new BattleLogic(this.audio);
     this.editor = new Editor(new LevelDataV0(), this.graphics, this.videoPlayer);
+    this.battleRenderer = new BattleRenderer(this.graphics, this.elements.canvas, this.editor.level);
+    this.battleLogic = new BattleLogic(this.audio, this.editor.level);
     this.gameMode = GameMode.MENU;
     this.battle = initialBattleState();
     this.alerts = [];
@@ -182,6 +182,10 @@ export class VideoSouls {
       const level = await this.fetchAndParseLevelFile(levelFile);
       if (level) {
         this.editor.level = level;
+        // Recreate battleLogic with new level
+        this.battleLogic = new BattleLogic(this.audio, level);
+        // Recreate battleRenderer with new level
+        this.battleRenderer = new BattleRenderer(this.graphics, this.elements.canvas, level);
         this.setGameMode(GameMode.PLAYING);
       } else {
         this.fadingAlert(`Invalid or failed to load level file: ${levelFile}`, 30, "20px");
@@ -340,6 +344,10 @@ export class VideoSouls {
       const validation = await validateLevelData(level);
       if (validation === null) {
         this.editor.level = level;
+        // Recreate battleLogic with new level
+        this.battleLogic = new BattleLogic(this.audio, level);
+        // Recreate battleRenderer with new level
+        this.battleRenderer = new BattleRenderer(this.graphics, this.elements.canvas, level);
         return true;
       } else {
         this.fadingAlert("Invalid Level- see validation error below", 30, "20px");
@@ -502,6 +510,9 @@ export class VideoSouls {
 
     // reset the sword state
     this.battle = initialBattleState();
+    // Set bossHealth from level data
+    this.battle.bossHealth = this.editor.level.bossHealth;
+    this.battle.lastBossHealth = this.editor.level.bossHealth;
 
     // if the new mode is battle end, show the battle end hud
     if (mode === GameMode.BATTLE_END) {
@@ -569,6 +580,10 @@ export class VideoSouls {
 
   setCurrentVideo(videoId: string) {
     this.editor.level = levelDataFromVideo(videoId);
+    // Recreate battleLogic with new level
+    this.battleLogic = new BattleLogic(this.audio, this.editor.level);
+    // Recreate battleRenderer with new level
+    this.battleRenderer = new BattleRenderer(this.graphics, this.elements.canvas, this.editor.level);
   }
 
   // Function to play a YouTube video by extracting the video ID from the URL
