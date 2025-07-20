@@ -39,6 +39,7 @@ export class LevelDataV0 {
   attackIntervals: Map<string, AttackInterval>;
   attackSchedule: string;
   version: string;
+  title: string | null; 
 
   constructor() {
     this.video = null;
@@ -46,6 +47,7 @@ export class LevelDataV0 {
     this.attackIntervals = new Map<string, AttackInterval>();
     this.attackSchedule = DEFAULT_ATTACK_SCHEDULE;
     this.version = "0.0.0";
+    this.title = null;
   }
 }
 
@@ -87,7 +89,8 @@ export function stringifyLevelData(levelData: LevelDataV0): string {
     attackData: levelData.attackData,
     attackIntervals: attackIntervalsObj,
     attackSchedule: levelData.attackSchedule,
-    version: levelData.version
+    version: levelData.version,
+    title: levelData.title // <-- Add title to serialization
   };
   return JSON.stringify(serializable, null, 2);
 }
@@ -106,6 +109,7 @@ export function parseLevelData(jsonString: string): LevelDataV0 {
   levelData.attackIntervals = attackIntervals;
   levelData.attackSchedule = parsed.attackSchedule || DEFAULT_ATTACK_SCHEDULE;
   levelData.version = parsed.version || "0.0.0";
+  levelData.title = parsed.title || null; // <-- Parse title
   return levelData;
 }
 

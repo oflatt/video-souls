@@ -223,12 +223,14 @@ export class VideoSouls {
 
   private async loadAndPlayLevel(levelFile: string) {
     try {
+      console.log(`Loading level from file: ${levelFile}`);
       const response = await fetch(`/levels/${levelFile}`);
       if (!response.ok) {
         throw new Error(`Failed to load level: ${levelFile}`);
       }
 
       const levelData = await response.text();
+      console.log(`Level data loaded: ${levelData.slice(0, 100)}...`); // Log first 100 chars for brevity
       const level = parseWithMaps(levelData);
       const validation = await validateLevelData(level);
 
