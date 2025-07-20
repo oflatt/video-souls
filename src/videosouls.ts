@@ -51,7 +51,7 @@ export class VideoSouls {
   videoPlayer: VideoPlayer;
   // only defined when in editing mode
   editor: Editor;
-  settings: Settings;
+    settings: Settings;
   volumeSlider: HTMLInputElement;
   exitToMenuButton: HTMLButtonElement;
 
@@ -90,7 +90,7 @@ export class VideoSouls {
     this.graphics = new Graphics(this.elements.canvas);
     this.battleRenderer = new BattleRenderer(this.graphics, this.elements.canvas);
     this.battleLogic = new BattleLogic(this.audio);
-    this.editor = new Editor(this.elements.recordingControls, this.elements.playbackBar, new LevelDataV0(), this.graphics);
+    this.editor = new Editor(new LevelDataV0(), this.graphics);
     this.gameMode = GameMode.MENU;
     this.battle = initialBattleState();
     this.alerts = [];
@@ -570,41 +570,19 @@ export class VideoSouls {
       this.elements.floatingMenu.style.display = 'none';
     }
 
-    // if the new mode is editing, show the editing hud
-    if (mode === GameMode.EDITING) {
-      this.elements.recordHUD.style.display = 'flex';
-      this.exitToMenuButton.style.display = 'block';
-    } else {
-      this.elements.recordHUD.style.display = 'none';
-      this.exitToMenuButton.style.display = 'none';
-    }
-
-    // if the new mode is menu, show the menu
-    if (mode === GameMode.MENU) {
-      // show the export and play buttons if there is any recorded data
-      if (this.editor.level.video != null) {
-        this.elements.exportButton.style.display = 'block';
-        this.elements.customLevelPlayButton.style.display = 'block';
-      } else {
-        this.elements.exportButton.style.display = 'none';
-        this.elements.customLevelPlayButton.style.display = 'none';
-      }
-    }
-
     // load the video for editing, make new editor
     if (mode === GameMode.EDITING) {
       if (this.editor.level.video != null) {
         this.videoPlayer.cueVideoById(this.editor.level.video);
       }
 
-      // in the editing mode, create a new editor
-      this.editor = new Editor(this.elements.recordingControls, this.elements.playbackBar, this.editor.level, this.graphics);
+      // Create new Editor, which now creates HUD itself
+      this.editor = new Editor(this.editor.level, this.graphics);
 
       // Set the editor title input to the level's title
       const title = this.editor.level.title ?? "";
-      const titleInput = document.getElementById("editor-title-input") as HTMLInputElement;
-      if (titleInput) {
-        titleInput.value = title;
+      if (this.editor.hud && this.editor.hud.titleInput) {
+        this.editor.hud.titleInput.value = title;
       }
     }
 

@@ -43,6 +43,7 @@
   border-radius: 8px 8px 15px 15px / 15px 15px 8px 8px;
   z-index: 10;
   transform: translateX(-50%);
+  pointer-events: none; /* <-- add this line */
 }
 
 /* --- Attack Marker --- */

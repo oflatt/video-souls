@@ -77,16 +77,14 @@ export class Editor {
   controlsInfoPanel: HTMLElement | null = null;
   controlsInfoVisible: boolean = true;
   hud: EditorHud;
+  hudElement: HTMLElement; // <-- Store the HUD element
 
-  constructor(recordingControls: HTMLElement, playbackBar: HTMLElement, level: LevelDataV0, graphics: Graphics) {
+  constructor(level: LevelDataV0, graphics: Graphics) {
     this.graphics = graphics;
     this.frameToAttack = new Map<number, AttackData>();
     this.elements = new Map<AttackData, HTMLElement>();
     this.intervalElements = new Map<AttackInterval, IntervalElements>();
     this.selected = null;
-    this.playbackBar = playbackBar;
-    this.recordingControls = recordingControls;
-    this.playbackWrapper = recordingControls.querySelector<HTMLElement>("#playback-bar-wrapper")!;
     this.level = level;
     this.zoom = 1.0;
     this.dragged = null;
@@ -99,6 +97,18 @@ export class Editor {
       }
     }
 
+    // Clone HUD template and insert into DOM
+    const template = document.getElementById("record-hud-template") as HTMLTemplateElement;
+    if (!template || !template.content) throw new Error("Missing record-hud-template");
+    const hudClone = template.content.firstElementChild!.cloneNode(true) as HTMLElement;
+    document.body.appendChild(hudClone);
+    this.hudElement = hudClone;
+
+    // Wire up controls
+    this.recordingControls = hudClone.querySelector<HTMLElement>("#recording-controls")!;
+    this.playbackBar = hudClone.querySelector<HTMLElement>("#playback-bar")!;
+    this.playbackWrapper = this.recordingControls.querySelector<HTMLElement>("#playback-bar-wrapper")!;
+
     // now add all existing attacks to UI
     this.addAttacks();
 
@@ -106,6 +116,7 @@ export class Editor {
   }
 
   cleanup() {
+    console.log("Cleaning up editor state...");
     // Remove all attack elements
     for (let [attack, element] of this.elements) {
       element.remove();
@@ -126,6 +137,11 @@ export class Editor {
     // Reset state
     this.selected = null;
     this.dragged = null;
+
+    // Remove the entire HUD from DOM
+    if (this.hudElement && this.hudElement.parentNode) {
+      this.hudElement.parentNode.removeChild(this.hudElement);
+    }
 
     // Reset HUD panels
     this.hud.reset();
@@ -259,7 +275,7 @@ export class Editor {
     }
 
     // Update attack warnings every frame
-    this.updateAttackWarnings();
+    this.updateCloseWarning();
   }
 
   timeToPx(time: number) {
@@ -665,7 +681,7 @@ export class Editor {
     }
   }
 
-  private updateAttackWarnings() {
+  private updateCloseWarning() {
     // Track which attacks should have warnings
     const shouldWarn = new Set<AttackData>();
 
@@ -682,8 +698,6 @@ export class Editor {
         shouldWarn.add(currAttack);
       }
     }
-
-    console.log("Attack warnings:", shouldWarn);
 
     // Add missing warnings and remove obsolete ones
     for (let [attack, element] of this.elements) {
