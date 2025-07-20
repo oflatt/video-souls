@@ -666,11 +666,8 @@ export class Editor {
   }
 
   private updateAttackWarnings() {
-    // Remove all existing warning elements
-    for (let [attack, element] of this.elements) {
-      const oldWarning = element.querySelector('.attack-warning');
-      if (oldWarning) oldWarning.remove();
-    }
+    // Track which attacks should have warnings
+    const shouldWarn = new Set<AttackData>();
 
     // Sort attacks by time to make comparison easier
     const sortedAttacks = [...this.level.attackData].sort((a, b) => a.time - b.time);
@@ -682,9 +679,18 @@ export class Editor {
       const timeDiff = Math.abs(currAttack.time - prevAttack.time);
 
       if (timeDiff < Editor.defaults.minAttackDistance) {
-        const element = this.elements.get(currAttack);
-        if (element) {
-          // Create warning element
+        shouldWarn.add(currAttack);
+      }
+    }
+
+    console.log("Attack warnings:", shouldWarn);
+
+    // Add missing warnings and remove obsolete ones
+    for (let [attack, element] of this.elements) {
+      const existingWarning = element.querySelector('.attack-warning');
+      if (shouldWarn.has(attack)) {
+        // Add warning if missing
+        if (!existingWarning) {
           const warning = document.createElement('div');
           warning.className = 'attack-warning';
           warning.textContent = '!';
@@ -697,6 +703,11 @@ export class Editor {
           warning.appendChild(tooltip);
 
           element.appendChild(warning);
+        }
+      } else {
+        // Remove warning if present but not needed
+        if (existingWarning) {
+          existingWarning.remove();
         }
       }
     }

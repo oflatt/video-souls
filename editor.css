@@ -275,12 +275,15 @@ div::-webkit-scrollbar-thumb {
   white-space: nowrap;
   z-index: 1001;
   opacity: 0;
-  pointer-events: none;
+  pointer-events: none; /* <-- allow clicks through by default */
   transition: opacity 0.2s;
 }
 
-.attack-warning:hover .attack-warning-tooltip {
+/* Show tooltip when either warning or tooltip is hovered */
+.attack-warning:hover .attack-warning-tooltip,
+.attack-warning .attack-warning-tooltip:hover {
   opacity: 1;
+  pointer-events: auto; /* <-- only interactable when hovered */
 }
 
 #editor-exit-to-menu-button {
