@@ -2,7 +2,7 @@
   "video": "xi6fSPv7M18",
   "title": "Zombie",
   "arrowless": false,
-  "bossDamageMultiplier": 1.0,
+  "bossDamageMultiplier": 1,
   "bossHealth": 2.5,
   "attackData": [
     {
@@ -60,14 +60,6 @@
     "__type": "Map",
     "entries": [
       [
-        "2",
-        {
-          "start": 8.570616561656166,
-          "end": 15.897653465346536,
-          "name": "2"
-        }
-      ],
-      [
         "3",
         {
           "start": 15.897653465346536,
@@ -113,6 +105,14 @@
           "start": 5.579303330333034,
           "end": 8.570616561656166,
           "name": "1"
+        }
+      ],
+      [
+        "2",
+        {
+          "start": 8.570616561656166,
+          "end": 14.248181157689332,
+          "name": "2"
         }
       ]
     ]
