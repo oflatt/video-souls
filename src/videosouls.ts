@@ -1,6 +1,7 @@
 // main.ts
 
-import { Editor, levelDataFromVideo, LevelDataV0, validateLevelData, BossState, BossScheduleResult, stringifyWithMaps, parseWithMaps } from './editor';
+import { Editor } from './editor';
+import { levelDataFromVideo, LevelDataV0, validateLevelData, BossState, BossScheduleResult, stringifyWithMaps, parseWithMaps } from './leveldata';
 import { Graphics } from './graphics';
 import { InputManager, InputDirection } from './inputmanager';
 import { AudioPlayer } from './audioPlayer';
@@ -605,6 +606,8 @@ export class VideoSouls {
     if (mode === GameMode.EDITING) {
       if (this.editor.level.video != null) {
         this.videoPlayer.loadVideoById(this.editor.level.video);
+        // Do NOT play the video automatically in editor mode
+        this.videoPlayer.pauseVideo();
       }
 
       // in the editing mode, create a new editor

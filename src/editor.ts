@@ -3,140 +3,23 @@ import typia from "typia";
 import { Graphics } from './graphics';
 import { DEFAULT_ATTACK_SCHEDULE } from './attackSchedule';
 import { VideoPlayer } from './videoPlayer';
-
-enum AttackDirection {
-  UP, UP_RIGHT, RIGHT, DOWN_RIGHT, DOWN, DOWN_LEFT, LEFT, UP_LEFT, CENTER
-}
-
-type AttackInterval = {
-  start: number,
-  end: number,
-  name: string
-};
-
-// Input interface for the attack schedule function
-type BossState = {
-  // Boss health as a percentage (0.0 to 1.0)
-  healthPercentage: number;
-  // Current attack interval the boss is in (null if not in any interval)
-  currentInterval: string;
-  // Current video playback time in seconds
-  currentTime: number;
-  // Time elapsed since the current interval started (0 if not in interval)
-  intervalElapsedTime: number;
-  // Player health as a percentage (0.0 to 1.0)
-  playerHealthPercentage: number;
-  // TODO add information about the player to allow smarter AI? Like if they are attacking or not
-  // Object from interval name to interval data (changed from Map for JS interpreter compatibility)
-  availableIntervals: Record<string, AttackInterval>;
-};
-
-// Output interface for controlling boss behavior
-type BossScheduleResult = {
-  // Whether to continue with the current behavior
-  continueNormal: boolean;
-  // If not continuing normal, transition to this interval immediately
-  transitionToInterval?: string; // interval name
-  // Optional: offset into the interval to start at
-  intervalOffset?: number;
-};
-
-type AttackData = {
-  time: number,
-  direction: AttackDirection,
-  // currently unused attributes
-  damage: number,
-};
-
-export function levelDataFromVideo(videoId: string): LevelDataV0 {
-  const level = new LevelDataV0();
-  level.video = videoId;
-  return level;
-}
-
-export class LevelDataV0 {
-  video: string | null;
-  attackData: AttackData[];
-  attackIntervals: Map<string, AttackInterval>;
-  // JavaScript string that evaluates to a function controlling boss AI behavior
-  // The function should have signature: (state: BossState) => BossScheduleResult
-  attackSchedule: string;
-  // version number for backwards compatibility, list changes here
-  version: string;
-
-  constructor() {
-    this.video = null;
-    this.attackData = [];
-    this.attackIntervals = new Map<string, AttackInterval>();
-    this.attackSchedule = DEFAULT_ATTACK_SCHEDULE;
-    this.version = "0.0.0";
-  }
-};
-
-// Generic JSON utilities for handling Maps and other non-serializable types
-export function stringifyWithMaps(obj: any): string {
-  return JSON.stringify(obj, (key, value) => {
-    if (value instanceof Map) {
-      return {
-        __type: 'Map',
-        entries: Array.from(value.entries())
-      };
-    }
-    return value;
-  }, 2);
-}
-
-export function parseWithMaps(jsonString: string): any {
-  return JSON.parse(jsonString, (key, value) => {
-    if (value && typeof value === 'object' && value.__type === 'Map') {
-      return new Map(value.entries);
-    }
-    return value;
-  });
-}
-
-export function stringifyLevelData(levelData: LevelDataV0): string {
-  // Convert Map to a plain object for serialization
-  const attackIntervalsObj: Record<string, AttackInterval> = {};
-  for (const [key, value] of levelData.attackIntervals) {
-    attackIntervalsObj[key] = value;
-  }
-
-  const serializable = {
-    video: levelData.video,
-    attackData: levelData.attackData,
-    attackIntervals: attackIntervalsObj,
-    attackSchedule: levelData.attackSchedule,
-    version: levelData.version
-  };
-
-  return JSON.stringify(serializable, null, 2);
-}
-
-export function parseLevelData(jsonString: string): LevelDataV0 {
-  const parsed = JSON.parse(jsonString);
-  
-  // Convert plain object back to Map
-  const attackIntervals = new Map<string, AttackInterval>();
-  if (parsed.attackIntervals) {
-    for (const [key, value] of Object.entries(parsed.attackIntervals)) {
-      attackIntervals.set(key, value as AttackInterval);
-    }
-  }
-
-  const levelData = new LevelDataV0();
-  levelData.video = parsed.video || null;
-  levelData.attackData = parsed.attackData || [];
-  levelData.attackIntervals = attackIntervals;
-  levelData.attackSchedule = parsed.attackSchedule || DEFAULT_ATTACK_SCHEDULE;
-  levelData.version = parsed.version || "0.0.0";
-
-  return levelData;
-}
+import {
+  LevelDataV0,
+  AttackInterval,
+  BossState,
+  BossScheduleResult,
+  AttackData,
+  AttackDirection,
+  levelDataFromVideo,
+  stringifyWithMaps,
+  parseWithMaps,
+  stringifyLevelData,
+  parseLevelData,
+  validateLevelData
+} from './leveldata';
 
 const FRAME_LENGTH = 0.05;
 const PLAYBACK_BAR_PADDING = 20;
-
 
 class IntervalElements {
   startElement: HTMLElement;
@@ -826,36 +709,6 @@ function roatate_vec2(vec: [number, number], clockwise_angle: number): [number, 
   let rotated_x = x * Math.cos(angle) - y * Math.sin(angle);
   let rotated_y = x * Math.sin(angle) + y * Math.cos(angle);
   return [rotated_x, rotated_y];
-}
-
-
-
-// Returns null if the level data is valid, otherwise returns an error message
-export function validateLevelData(levelData: unknown): null | string {
-  // check that it's an object
-  if (typeof levelData !== "object" || levelData === null) {
-    return "Expected an object";
-  }
-
-  // check that it has a version field
-  if (!("version" in levelData)) {
-    return "Expected a version field";
-  }
-
-  // check that the version number is "0.0.0"
-  if (levelData.version !== "0.0.0") {
-    return "Expected version number to be 0.0.0";
-  }
-
-
-  const res = typia.validate<LevelDataV0>(levelData);
-  if (res.success) {
-    return null;
-  } else {
-    return res.errors.map(function (error) {
-      return `Error at ${error.path}: expected ${error.expected} but got ${error.value}`;
-    }).join("\n");
-  }
 }
 
 export type { AttackInterval, BossState, BossScheduleResult };
