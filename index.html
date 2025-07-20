@@ -114,6 +114,24 @@
             </div>
         </div>
     </template>
+    <template id="battle-end-hud-win-template">
+        <div id="battle-end-hud" style="position:fixed;top:0;left:0;width:100vw;height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;background:rgba(34,34,34,0.7);z-index:9999;">
+            <h1 style="font-size:90px;color:green;font-family:'Cormorant Unicase',serif;">You Won</h1>
+            <div style="margin-top:40px;">
+                <button id="back-button" style="font-size:30px;margin-right:30px;">Back</button>
+                <button id="retry-button" style="font-size:30px;">Retry</button>
+            </div>
+        </div>
+    </template>
+    <template id="battle-end-hud-lose-template">
+        <div id="battle-end-hud" style="position:fixed;top:0;left:0;width:100vw;height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;background:rgba(34,34,34,0.7);z-index:9999;">
+            <h1 style="font-size:90px;color:red;font-family:'Cormorant Unicase',serif;">You Died</h1>
+            <div style="margin-top:40px;">
+                <button id="back-button" style="font-size:30px;margin-right:30px;">Back</button>
+                <button id="retry-button" style="font-size:30px;">Retry</button>
+            </div>
+        </div>
+    </template>
     <canvas id="game-canvas"></canvas>
 
     <script src="src/acorn_interpreter.js"></script>

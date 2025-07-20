@@ -53,6 +53,7 @@ export class VideoSouls {
   editor: Editor;
   settings: Settings;
   volumeSlider: HTMLInputElement;
+  battleEndHudElement: HTMLElement | null = null;
 
   constructor(player: YT.Player) {
     this.videoPlayer = new VideoPlayer(player);
@@ -474,13 +475,10 @@ export class VideoSouls {
       // check for player death or win condition
       if (this.battle.playerHealth <= 0) {
         this.setGameMode(GameMode.BATTLE_END);
-        this.fadingAlert('You Died', 90, "30%", "red", "Cormorant Unicase");
-        // Check if boss is in death interval and it has ended (win condition)
       } else if (this.battle.bossHealth <= 0 && this.battle.currentInterval === "death") {
         const deathInterval = this.editor.level.attackIntervals.get("death");
         if (deathInterval && currentTime >= deathInterval.end || this.videoPlayer.getPlayerState() === YT.PlayerState.ENDED) {
           this.setGameMode(GameMode.BATTLE_END);
-          this.fadingAlert('You Won', 90, "30%", "green", "Cormorant Unicase");
         }
       }
     }
@@ -515,9 +513,15 @@ export class VideoSouls {
 
     // if the new mode is battle end, show the battle end hud
     if (mode === GameMode.BATTLE_END) {
-      this.elements.battleEndHUD.style.display = 'flex';
+      // Only create HUD when entering battle end
+      if (this.battle.playerHealth <= 0) {
+        this.createBattleEndHud("lose");
+      } else {
+        this.createBattleEndHud("win");
+      }
+      if (this.battleEndHudElement) this.battleEndHudElement.style.display = "flex";
     } else {
-      this.elements.battleEndHUD.style.display = 'none';
+      if (this.battleEndHudElement) this.battleEndHudElement.style.display = "none";
     }
 
     // if the new mode is game, show the game hud
@@ -626,6 +630,35 @@ export class VideoSouls {
     return this.battleRenderer.getCurrentTargetAngleRadians(
       this.inputManager.getCurrentTargetDirection.bind(this.inputManager)
     );
+  }
+
+  // Helper to create and show the battle end HUD
+  private createBattleEndHud(type: "win" | "lose") {
+    // Remove previous HUD if present
+    if (this.battleEndHudElement && this.battleEndHudElement.parentNode) {
+      this.battleEndHudElement.parentNode.removeChild(this.battleEndHudElement);
+      this.battleEndHudElement = null;
+    }
+
+    // Pick template id
+    const templateId = type === "win" ? "battle-end-hud-win-template" : "battle-end-hud-lose-template";
+    const template = document.getElementById(templateId) as HTMLTemplateElement;
+    if (!template || !template.content) throw new Error(`Missing ${templateId}`);
+
+    const hudFragment = template.content.cloneNode(true) as DocumentFragment;
+    const hudClone = hudFragment.querySelector<HTMLElement>("#battle-end-hud")!;
+    document.body.appendChild(hudClone);
+    this.battleEndHudElement = hudClone;
+
+    // Wire up buttons
+    const backBtn = hudClone.querySelector<HTMLButtonElement>("#back-button");
+    if (backBtn) backBtn.onclick = () => this.setGameMode(GameMode.MENU);
+
+    const retryBtn = hudClone.querySelector<HTMLButtonElement>("#retry-button");
+    if (retryBtn) retryBtn.onclick = () => this.setGameMode(GameMode.PLAYING);
+
+    // Show HUD
+    hudClone.style.display = "flex";
   }
 }
 
