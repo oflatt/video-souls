@@ -31,51 +31,47 @@
         <div id="video-player"></div>
     </div>
     <div id="floating-menu">
-        <h1 style="margin-bottom: 20px;">Video Souls</h1>
-        <div id="levels-container" style="margin-bottom: 20px;"></div>
-        <h2 style="margin-bottom: 10px;">New Custom Level</h1>
+        <h1>Video Souls</h1>
+        <div id="levels-container"></div>
+        <h2>New Custom Level</h2>
         <input id="video-url" type="text" placeholder="Enter YouTube video URL" />
-        <button id="record-button" style="margin-bottom: 20px;">Edit New Custom Level</button>
-        <h2 style="margin-bottom: 10px;">Custom Level</h1>
-        <textarea id="custom-level-input" >Level JSON Here</textarea>
-        <div style="display:flex"> 
-            <button id="custom-level-play-button" style="margin-bottom: 20px;">Play</button>
-            <div style="width: 20px"></div>
-            <button id="custom-level-edit-button" style="margin-bottom: 20px;">Edit</button>
-            <div style="width: 20px"></div>
-            <button id="export-button" style="display: none; margin-bottom: 20px;">Export</button>
+        <button id="record-button">Edit New Custom Level</button>
+        <h2>Custom Level</h2>
+        <textarea id="custom-level-input">Level JSON Here</textarea>
+        <div>
+            <button id="custom-level-play-button">Play</button>
+            <div></div>
+            <button id="custom-level-edit-button">Edit</button>
+            <div></div>
+            <button id="export-button">Export</button>
         </div>
-        <textarea id="validation-error" style="display: none;"></textarea>
+        <textarea id="validation-error"></textarea>
         <!-- Settings section at the bottom of the menu -->
         <div id="main-menu-settings-section">
             <div id="main-menu-volume-container">
-                <label for="main-menu-volume-slider" style="margin-right: 10px; color: #fff; font-size: 18px;">Volume</label>
-                <input id="main-menu-volume-slider" type="range" min="0" max="100" style="width: 200px; margin-bottom: 10px;" />
+                <label for="main-menu-volume-slider">Volume</label>
+                <input id="main-menu-volume-slider" type="range" min="0" max="100" />
             </div>
         </div>
     </div>
     <div id="game-hud">
-        <h2 id="current-time" style="position: absolute; bottom: 10px; right: 10px;">Current Time</h2>
-        <h2 id="wkey" style="position: absolute; bottom: 80px; left: 80px;">W</h2>
-        <h2 id="akey" style="position: absolute; bottom: 50px; left: 50px;">A</h2>
-        <h2 id="skey" style="position: absolute; bottom: 50px; left: 90px;">S</h2>
-        <h2 id="dkey" style="position: absolute; bottom: 50px; left: 120px;">D</h2>
-        <h2 id="parrykey" style="position: absolute; bottom: 100px; right: 100px;">Parry: k</ht>
-        <h2 id="attackkey" style="position: absolute; bottom: 50px; right: 100px;">Attack: j</h2>
+        <h2 id="current-time">Current Time</h2>
+        <h2 id="wkey">W</h2>
+        <h2 id="akey">A</h2>
+        <h2 id="skey">S</h2>
+        <h2 id="dkey">D</h2>
+        <h2 id="parrykey">Parry: k</h2>
+        <h2 id="attackkey">Attack: j</h2>
     </div>
     <div id="battle-end-hud">
         <button id="back-button">Back</button>
         <button id="retry-button">Retry</button>
     </div>
     <div id="record-hud">
-        <button id="editor-exit-to-menu-button" style="display: none;">Exit to Menu</button>
-        <!-- Centered level title input -->
-        <input id="editor-title-input" type="text" placeholder="Level Title" style="margin: 0 auto; display: block; text-align: center; font-family: 'Cormorant Unicase', serif; font-size: 40px; margin-bottom: 10px; width: 60%;" />
-        <!--recording-controls has a scrollbar with the editor inside-->
+        <button id="editor-exit-to-menu-button">Exit to Menu</button>
+        <input id="editor-title-input" type="text" placeholder="Level Title" />
         <div id="recording-controls">
-            <!-- playback-bar-warpper has a margin on each side of 10px -->
             <div id="playback-bar-wrapper">
-                <!--- the clickable playback bar. Pixel coordinates are relative to this element -->
                 <div id="playback-bar"></div>
                 <div id="playback-point"></div>
                 <div class="attack-marker template">
@@ -116,7 +112,7 @@
             </div>
         </div>
     </div>
-    <canvas id="game-canvas" style="position: absolute; top: 0; left: 0; pointer-events: none;"></canvas>
+    <canvas id="game-canvas"></canvas>
 
     <script src="src/acorn_interpreter.js"></script>
     <script src="dist/main.js"></script>

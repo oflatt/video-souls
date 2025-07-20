@@ -23,12 +23,13 @@ export class AudioPlayer {
   }
 
   setVolume(normalizedVolume: number) {
-    // Set volume for all sound effects (assuming they are HTMLAudioElement)
-    this.playerAttack.volume = normalizedVolume;
-    this.enemyHit.volume = normalizedVolume;
-    this.playerHit.volume = normalizedVolume;
-    this.parrySound.volume = normalizedVolume;
-    this.warnings.forEach(warning => warning.volume = normalizedVolume);
+    // Ensure volume is finite and in [0, 1]
+    const safeVolume = Number.isFinite(normalizedVolume) ? Math.max(0, Math.min(1, normalizedVolume)) : 1;
+    this.playerAttack.volume = safeVolume;
+    this.enemyHit.volume = safeVolume;
+    this.playerHit.volume = safeVolume;
+    this.parrySound.volume = safeVolume;
+    this.warnings.forEach(warning => warning.volume = safeVolume);
     // Add any other sound effects here
   }
 }

@@ -21,6 +21,8 @@ export class Settings {
   }
 
   getNormalizedVolume(): number {
-    return Math.max(0, Math.min(1, this.volume / 100));
+    const v = this.volume;
+    if (!Number.isFinite(v)) return 1;
+    return Math.max(0, Math.min(1, v / 100));
   }
 }

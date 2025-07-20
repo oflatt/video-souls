@@ -1,3 +1,4 @@
+/* --- Recording Controls --- */
 #recording-controls {
   overflow-x: auto;
   overflow-y: visible;
@@ -9,9 +10,18 @@
   right: 55px;
   cursor: pointer;
   border-radius: 8px;
-  border: lightgray 2px solid;
+  border: 2px solid lightgray;
 }
 
+#playback-bar-wrapper {
+  position: absolute;
+  left: 10px;
+  top: 0;
+  margin-right: 10px;
+  height: 100%;
+  display: flex;
+  flex-direction: column-reverse;
+}
 
 #playback-bar {
   margin-bottom: 10px;
@@ -19,20 +29,8 @@
   width: 100%;
   height: 24px;
   box-sizing: border-box;
-  /* background-color: hsl(333, 70%, 35%); */
   background-image: linear-gradient(to right, hsl(313, 70%, 35%) 0%, hsl(353, 70%, 35%) 100%);
-  /* border: lightgray 1px solid; */
   border-radius: 5px;
-}
-
-#playback-bar-wrapper {
-  position: absolute;
-  left: 10px;
-  top: 0px;
-  margin-right: 10px;
-  height: 100%;
-  display: flex;
-  flex-direction: column-reverse;
 }
 
 #playback-point {
@@ -41,29 +39,28 @@
   width: 16px;
   height: 30px;
   background-color: hsl(333, 90%, 45%);
-  box-shadow: black 0 1px 4px;
-  /* border: lightgray 1px solid; */
-  border-radius: 8px / 15px 15px 8px 8px;
+  box-shadow: 0 1px 4px black;
+  border-radius: 8px 8px 15px 15px / 15px 15px 8px 8px;
   z-index: 10;
   transform: translateX(-50%);
 }
 
-/* Attack marker */
-.attack-marker.template {
-  display: none !important;
-}
-
+/* --- Attack Marker --- */
 .attack-marker {
   position: absolute;
   bottom: 20px;
-  /* Variables */
   --height: 35px;
   --marker-color: hsl(210, 70%, 40%);
   --highlight-color: hsl(210, 55%, 60%);
   --damage-color: hsl(5, 75%, 60%);
   --damage-offset: 10px;
 }
-
+.attack-marker.template { display: none !important; }
+.attack-marker.selected {
+  --height: 70px !important;
+  --marker-color: hsl(130, 70%, 35%);
+  --highlight-color: hsl(130, 55%, 50%);
+}
 .attack-marker .marker-line {
   position: absolute;
   bottom: 0;
@@ -73,7 +70,6 @@
   background-color: var(--marker-color);
   cursor: default;
 }
-
 .attack-marker .marker-handle {
   position: absolute;
   top: -8px;
@@ -82,14 +78,11 @@
   height: 16px;
   box-sizing: border-box;
   background-image: radial-gradient(circle at center, var(--highlight-color) 0%, var(--marker-color) 100%);
-  border: transparent 2px solid;
+  border: 2px solid transparent;
   border-radius: 50%;
   cursor: pointer;
 }
-.attack-marker:not(.selected) .marker-handle:hover {
-  border-color: lightgray;
-}
-
+.attack-marker:not(.selected) .marker-handle:hover { border-color: lightgray; }
 .attack-marker .marker-handle .damage-line {
   position: absolute;
   bottom: 50%;
@@ -111,45 +104,52 @@
   border-radius: 25%;
   cursor: ew-resize;
 }
+.attack-marker:not(.selected) .marker-handle .damage-line { display: none; }
 
-.attack-marker:not(.selected) .marker-handle .damage-line {
-  display: none;
-}
-
-.attack-marker.selected {
-  --height: 70px !important;
-  --marker-color: hsl(130, 70%, 35%);
-  --highlight-color: hsl(130, 55%, 50%);
-}
-
-
-/* Intervals */
-
+/* --- Intervals --- */
 .interval-start, .interval-end {
   position: absolute;
   bottom: 20px;
   height: 40px;
   width: 10px;
 }
-
-.interval-start {
-  border-radius: 8px 0 0 8px;
-}
-
+.interval-start { border-radius: 8px 0 0 8px; }
 .interval-end {
   border-radius: 0 8px 8px 0;
-  /* end interval is right-aligned */
   transform: translateX(-100%);
 }
-
 .interval-name {
   position: absolute;
-  bottom: 0px;
+  bottom: 0;
   height: 20px;
   transform: translateX(-50%);
 }
-
 .interval-start:not(.selected), .interval-end:not(.selected) {
+  background-image: linear-gradient(to bottom, hsl(210, 70%, 40%) 0%, hsl(210, 70%, 30%) 100%);
+}
+.interval-start.selected, .interval-end.selected {
+  background-image: linear-gradient(to bottom, hsl(130, 70%, 40%) 0%, hsl(130, 70%, 30%) 100%);
+}
+.interval-name:not(.selected) { border: 1px solid hsl(210, 70%, 30%); }
+.interval-name.selected { border: 1px solid hsl(130, 70%, 30%); }
+
+/* --- Controls Info --- */
+#controls-info {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 10em;
+  padding: 1em;
+  background-color: #10141b;
+  border-left: 2px solid lightgray;
+  border-bottom: 2px solid lightgray;
+  color: #efefef;
+}
+#controls-info .controls-entry {
+  margin: 0.4em 0;
+  text-align: right;
+}
+#controls-info .controls-entry > kbd { float: left; }
   background-image: linear-gradient(to bottom, hsl(210, 70%, 40%) 0%, hsl(210, 70%, 30%) 100%);
 }
 
@@ -325,4 +325,90 @@ div::-webkit-scrollbar-thumb {
 
 #editor-title-input:focus {
   border-bottom: 2px solid #28a745;
+}
+
+/* Floating menu styles moved from inline */
+#floating-menu h1 {
+  margin-bottom: 20px;
+}
+#levels-container {
+  margin-bottom: 20px;
+}
+#floating-menu h2 {
+  margin-bottom: 10px;
+}
+#record-button,
+#custom-level-play-button,
+#custom-level-edit-button,
+#export-button {
+  margin-bottom: 20px;
+}
+#custom-level-input {
+  /* Add any needed styles here */
+}
+#floating-menu > div {
+  display: flex;
+}
+#floating-menu > div > div {
+  width: 20px;
+}
+#export-button {
+  display: none;
+}
+#validation-error {
+  display: none;
+}
+#main-menu-volume-container label {
+  margin-right: 10px;
+  color: #fff;
+  font-size: 18px;
+}
+#main-menu-volume-slider {
+  width: 200px;
+  margin-bottom: 10px;
+}
+
+/* Game HUD positioning */
+#current-time {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+}
+#wkey {
+  position: absolute;
+  bottom: 80px;
+  left: 80px;
+}
+#akey {
+  position: absolute;
+  bottom: 50px;
+  left: 50px;
+}
+#skey {
+  position: absolute;
+  bottom: 50px;
+  left: 90px;
+}
+#dkey {
+  position: absolute;
+  bottom: 50px;
+  left: 120px;
+}
+#parrykey {
+  position: absolute;
+  bottom: 100px;
+  right: 100px;
+}
+#attackkey {
+  position: absolute;
+  bottom: 50px;
+  right: 100px;
+}
+
+/* Canvas positioning */
+#game-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
 }
