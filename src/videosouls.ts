@@ -53,7 +53,6 @@ export class VideoSouls {
   editor: Editor;
     settings: Settings;
   volumeSlider: HTMLInputElement;
-  exitToMenuButton: HTMLButtonElement;
 
   constructor(player: YT.Player) {
     this.videoPlayer = new VideoPlayer(player);
@@ -90,7 +89,7 @@ export class VideoSouls {
     this.graphics = new Graphics(this.elements.canvas);
     this.battleRenderer = new BattleRenderer(this.graphics, this.elements.canvas);
     this.battleLogic = new BattleLogic(this.audio);
-    this.editor = new Editor(new LevelDataV0(), this.graphics);
+    this.editor = new Editor(new LevelDataV0(), this.graphics, this.videoPlayer);
     this.gameMode = GameMode.MENU;
     this.battle = initialBattleState();
     this.alerts = [];
@@ -125,12 +124,6 @@ export class VideoSouls {
         this.audio.setVolume(this.settings.getNormalizedVolume());
       }
     }, 500);
-
-    this.exitToMenuButton = document.getElementById("editor-exit-to-menu-button") as HTMLButtonElement;
-    this.exitToMenuButton.style.display = "none";
-    this.exitToMenuButton.addEventListener("click", () => {
-      this.setGameMode(GameMode.MENU);
-    });
 
     this.initializeEventListeners();
     this.loadLevelButtons();
@@ -265,24 +258,6 @@ export class VideoSouls {
       this.setGameMode(GameMode.EDITING);
     });
 
-    this.elements.recordingControls.addEventListener("mousewheel", (event) => { this.recordingMouseWheel(event) }, { passive: false });
-    // Firefox
-    this.elements.recordingControls.addEventListener("DOMMouseScroll", (event) => { this.recordingMouseWheel(event) }, { passive: false });
-
-    // when mouse is released, send this event to the editor
-    document.addEventListener('mouseup', (event) => {
-      if (this.gameMode === GameMode.EDITING) {
-        this.editor.mouseReleased(event);
-      }
-    });
-
-    // when the playback bar is clicked, seek to that time
-    this.elements.playbackBar.addEventListener('click', (event) => {
-      if (this.gameMode === GameMode.EDITING) {
-        this.editor.playbackBarClicked(event, this.videoPlayer);
-      }
-    });
-
     // Listen for editor HUD back button event
     window.addEventListener("editor-back-to-menu", () => {
       this.setGameMode(GameMode.MENU);
@@ -317,28 +292,12 @@ export class VideoSouls {
     if (this.gameMode === GameMode.EDITING) {
       this.drawSword();
       // draw the editor
-      this.editor.draw(this.inputManager.mouseX, this.inputManager.mouseY, this.videoPlayer);
+      this.editor.draw(this.inputManager.mouseX, this.inputManager.mouseY);
     }
 
     this.fadeOutAlerts();
 
     requestAnimationFrame(this.mainLoop.bind(this));
-  }
-
-  recordingMouseWheel(event: Event) {
-    // check if the event is a wheel event
-    if (!(event instanceof WheelEvent)) {
-      return;
-    }
-
-    // if the control key is pressed, prevent the default behavior
-    if (this.inputManager.isKeyPressed('Control')) {
-      event.preventDefault();
-      // increase the zoom in the editor
-      this.editor.changeZoom(event);
-    } else {
-      this.editor.changeScroll(event);
-    }
   }
 
   fadingAlert(message: string, fontSize: number = 40, position: string, color: string = 'white', font: string = 'Arial') {
@@ -449,7 +408,7 @@ export class VideoSouls {
 
     // if the game mode is editing, update the editor
     if (this.gameMode == GameMode.EDITING) {
-      this.editor!.update(this.inputManager.getJustPressedKeys(), this.inputManager.getCurrentTargetDirection(), this.inputManager.mouseX, this.videoPlayer);
+      this.editor!.update(this.inputManager.getJustPressedKeys(), this.inputManager.getCurrentTargetDirection(), this.inputManager.mouseX);
     }
 
     if (this.gameMode == GameMode.PLAYING) {
@@ -530,11 +489,6 @@ export class VideoSouls {
   }
 
   setGameMode(mode: GameMode) {
-    // Clean up editor elements before switching modes
-    if (this.gameMode === GameMode.EDITING && this.editor) {
-      this.editor.cleanup();
-    }
-
     // always sync the custom level input with the level data using generic stringify
     this.elements.customLevelInput.value = stringifyWithMaps(this.editor.level);
 
@@ -576,14 +530,23 @@ export class VideoSouls {
         this.videoPlayer.cueVideoById(this.editor.level.video);
       }
 
+      // Clean up old editor
+      this.editor.cleanup();
       // Create new Editor, which now creates HUD itself
-      this.editor = new Editor(this.editor.level, this.graphics);
+      this.editor = new Editor(this.editor.level, this.graphics, this.videoPlayer);
 
       // Set the editor title input to the level's title
       const title = this.editor.level.title ?? "";
       if (this.editor.hud && this.editor.hud.titleInput) {
         this.editor.hud.titleInput.value = title;
       }
+    }
+
+    // if the new mode is editing, show the editor hud
+    if (mode === GameMode.EDITING) {
+      this.editor.hudElement.style.display = 'flex';
+    } else {
+      this.editor.hudElement.style.display = 'none';
     }
 
     // load the video for playing

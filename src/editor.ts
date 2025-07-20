@@ -78,9 +78,11 @@ export class Editor {
   controlsInfoVisible: boolean = true;
   hud: EditorHud;
   hudElement: HTMLElement; // <-- Store the HUD element
+  videoPlayer: VideoPlayer;
 
-  constructor(level: LevelDataV0, graphics: Graphics) {
+  constructor(level: LevelDataV0, graphics: Graphics, videoPlayer: VideoPlayer) {
     this.graphics = graphics;
+    this.videoPlayer = videoPlayer;
     this.frameToAttack = new Map<number, AttackData>();
     this.elements = new Map<AttackData, HTMLElement>();
     this.intervalElements = new Map<AttackInterval, IntervalElements>();
@@ -100,7 +102,9 @@ export class Editor {
     // Clone HUD template and insert into DOM
     const template = document.getElementById("record-hud-template") as HTMLTemplateElement;
     if (!template || !template.content) throw new Error("Missing record-hud-template");
-    const hudClone = template.content.firstElementChild!.cloneNode(true) as HTMLElement;
+    const hudFragment = template.content.cloneNode(true) as DocumentFragment;
+    // Find the record-hud element inside the fragment
+    const hudClone = hudFragment.querySelector<HTMLElement>("#record-hud")!;
     document.body.appendChild(hudClone);
     this.hudElement = hudClone;
 
@@ -108,6 +112,24 @@ export class Editor {
     this.recordingControls = hudClone.querySelector<HTMLElement>("#recording-controls")!;
     this.playbackBar = hudClone.querySelector<HTMLElement>("#playback-bar")!;
     this.playbackWrapper = this.recordingControls.querySelector<HTMLElement>("#playback-bar-wrapper")!;
+
+    // Add mousewheel event listeners for zoom/scroll
+    this.recordingControls.addEventListener("mousewheel", (event) => {
+      this.handleMouseWheelEvent(event);
+    }, { passive: false });
+    // Firefox
+    this.recordingControls.addEventListener("DOMMouseScroll", (event) => {
+      this.handleDomMouseScrollEvent(event);
+    }, { passive: false });
+
+    this.playbackBar.addEventListener("click", (event) => {
+      this.playbackBarClicked(event as MouseEvent);
+    });
+
+    // Listen for mouse release anywhere on the document
+    document.addEventListener("mouseup", (event) => {
+      this.mouseReleased(event as MouseEvent);
+    });
 
     // now add all existing attacks to UI
     this.addAttacks();
@@ -117,38 +139,14 @@ export class Editor {
 
   cleanup() {
     console.log("Cleaning up editor state...");
-    // Remove all attack elements
-    for (let [attack, element] of this.elements) {
-      element.remove();
-    }
-    this.elements.clear();
-
-    // Remove all interval elements
-    for (let [interval, elements] of this.intervalElements) {
-      elements.startElement.remove();
-      elements.endElement.remove();
-      elements.nameElement.remove();
-    }
-    this.intervalElements.clear();
-
-    // Clear other maps
-    this.frameToAttack.clear();
-
-    // Reset state
-    this.selected = null;
-    this.dragged = null;
-
     // Remove the entire HUD from DOM
     if (this.hudElement && this.hudElement.parentNode) {
       this.hudElement.parentNode.removeChild(this.hudElement);
     }
-
-    // Reset HUD panels
-    this.hud.reset();
   }
 
-  private getCurrentTimeSafe(videoPlayer: VideoPlayer): number {
-    return videoPlayer.getCurrentTime();
+  private getCurrentTimeSafe(): number {
+    return this.videoPlayer.getCurrentTime();
   }
 
   mouseReleased(event: MouseEvent) {
@@ -208,10 +206,10 @@ export class Editor {
   }
 
   // update all the elements
-  draw(mouseX: number, mouseY: number, videoPlayer: VideoPlayer) {
+  draw(mouseX: number, mouseY: number) {
     const clientWidth = this.recordingControls.clientWidth - PLAYBACK_BAR_PADDING * 2;
 
-    let duration = videoPlayer.getDuration();
+    let duration = this.videoPlayer.getDuration();
     let possibleW = this.timeToPx(duration);
     // if we are zoomed out too far, set zoom to a larger number
     if (possibleW < clientWidth && !Number.isNaN(duration) && duration != 0) {
@@ -267,7 +265,7 @@ export class Editor {
 
     // update the playback point
     const playbackPoint = document.querySelector<HTMLElement>("#playback-point")!;
-    const playbackPointLeft = this.timeToPx(this.getCurrentTimeSafe(videoPlayer));
+    const playbackPointLeft = this.timeToPx(this.getCurrentTimeSafe());
     playbackPoint.style.left = `${playbackPointLeft}px`;
 
     if (this.hud.titleInput.value) {
@@ -311,39 +309,39 @@ export class Editor {
     this.recordingControls.scrollLeft += -event.deltaY / 5;
   }
 
-  update(keyJustPressed: Set<string>, currentTargetDir: AttackDirection, mouseX: number, videoPlayer: VideoPlayer) {
-    videoPlayer.updateTime();
+  update(keyJustPressed: Set<string>, currentTargetDir: AttackDirection, mouseX: number) {
+    this.videoPlayer.updateTime();
 
     if (keyJustPressed.has(" ")) {
-      if (videoPlayer.getPlayerState() == YT.PlayerState.PLAYING) {
-        videoPlayer.pauseVideo();
+      if (this.videoPlayer.getPlayerState() == YT.PlayerState.PLAYING) {
+        this.videoPlayer.pauseVideo();
       } else {
-        videoPlayer.playVideo();
+        this.videoPlayer.playVideo();
       }
     }
     if (keyJustPressed.has("ArrowLeft")) {
-      this.seekForward(-10, videoPlayer);
+      this.seekForward(-10);
     }
     if (keyJustPressed.has("ArrowRight")) {
-      this.seekForward(10, videoPlayer);
+      this.seekForward(10);
     }
     if (keyJustPressed.has("m")) {
-      this.seekForward(-0.05, videoPlayer);
+      this.seekForward(-0.05);
     }
     if (keyJustPressed.has(".")) {
-      this.seekForward(0.05, videoPlayer);
+      this.seekForward(0.05);
     }
     if (keyJustPressed.has("j")) {
-      this.seekForward(-0.5, videoPlayer);
+      this.seekForward(-0.5);
     }
     if (keyJustPressed.has("l")) {
-      this.seekForward(0.5, videoPlayer);
+      this.seekForward(0.5);
     }
     if (keyJustPressed.has("Enter") || keyJustPressed.has("k")) {
-      this.createAttackAt(this.getCurrentTimeSafe(videoPlayer), currentTargetDir, Editor.defaults.attackDamage);
+      this.createAttackAt(this.getCurrentTimeSafe(), currentTargetDir, Editor.defaults.attackDamage);
     }
     if (keyJustPressed.has("i")) {
-      this.createIntervalAt(this.getCurrentTimeSafe(videoPlayer), videoPlayer);
+      this.createIntervalAt(this.getCurrentTimeSafe());
     }
     if (keyJustPressed.has("x") || keyJustPressed.has("Backspace") || keyJustPressed.has("Delete")) {
       this.removeSelected();
@@ -354,7 +352,7 @@ export class Editor {
     if (this.dragged != null) {
       let posRelative = mouseX - this.playbackBar.getBoundingClientRect().left;
       let time = this.pxToTime(posRelative);
-      this.seek(time, videoPlayer);
+      this.seek(time);
     }
 
     // now check if there is a "death" attack interval, if not, add one
@@ -368,12 +366,12 @@ export class Editor {
       }
     }
 
-    let playerReady = (videoPlayer.getPlayerState() == YT.PlayerState.PAUSED || videoPlayer.getPlayerState() == YT.PlayerState.PLAYING);
+    let playerReady = (this.videoPlayer.getPlayerState() == YT.PlayerState.PAUSED || this.videoPlayer.getPlayerState() == YT.PlayerState.PLAYING);
 
     // check the state of the player so duration is valid
     if (!deathInterval && playerReady) {
-      let startTime = Math.max(videoPlayer.getDuration() - 2, 0);
-      let endTime = videoPlayer.getDuration();
+      let startTime = Math.max(this.videoPlayer.getDuration() - 2, 0);
+      let endTime = this.videoPlayer.getDuration();
       let newDeathInterval = {
         start: startTime,
         end: endTime,
@@ -384,7 +382,7 @@ export class Editor {
 
     if (!introInterval && playerReady) {
       let startTime = 0;
-      let endTime = Math.min(2, videoPlayer.getDuration());
+      let endTime = Math.min(2, this.videoPlayer.getDuration());
       let newIntroInterval = {
         start: startTime,
         end: endTime,
@@ -395,8 +393,8 @@ export class Editor {
 
     // if there's no non-special intervals, add a default one
     if (!hasNonSpecialInterval && playerReady) {
-      let startTime = Math.min(2, videoPlayer.getDuration());
-      let endTime = Math.max(videoPlayer.getDuration() - 2, startTime + 1);
+      let startTime = Math.min(2, this.videoPlayer.getDuration());
+      let endTime = Math.max(this.videoPlayer.getDuration() - 2, startTime + 1);
       let defaultInterval = {
         start: startTime,
         end: endTime,
@@ -434,8 +432,8 @@ export class Editor {
     this.selectAttack(newAttack);
   }
 
-  createIntervalAt(timestamp: DOMHighResTimeStamp, videoPlayer: VideoPlayer) {
-    let endTime = Math.min(timestamp + 2, videoPlayer.getDuration());
+  createIntervalAt(timestamp: DOMHighResTimeStamp) {
+    let endTime = Math.min(timestamp + 2, this.videoPlayer.getDuration());
     // if the end time is the same as the start time, don't create
     if (endTime == timestamp) {
       return;
@@ -469,7 +467,7 @@ export class Editor {
   }
 
   /// get a mouse event relative to the playback bar's coordinates
-  playbackBarClicked(event: MouseEvent, videoPlayer: VideoPlayer) {
+  playbackBarClicked(event: MouseEvent) {
     // check the mouse event is left click
     if (event.button == 0) {
       let mouseX = event.offsetX;
@@ -478,17 +476,17 @@ export class Editor {
       // deselect the current attack
       this.selectAttack(null);
       // seek to that time
-      this.seek(time, videoPlayer);
+      this.seek(time);
     }
   }
 
-  seek(seconds: number, videoPlayer: VideoPlayer) {
-    videoPlayer.seekTo(seconds, true);
+  seek(seconds: number) {
+    this.videoPlayer.seekTo(seconds, true);
   }
 
-  seekForward(seconds: number, videoPlayer: VideoPlayer) {
-    let targetTime = Math.min(Math.max(this.getCurrentTimeSafe(videoPlayer) + seconds, 0), videoPlayer.getDuration() - 0.05 * seconds);
-    videoPlayer.seekTo(targetTime, true);
+  seekForward(seconds: number) {
+    let targetTime = Math.min(Math.max(this.getCurrentTimeSafe() + seconds, 0), this.videoPlayer.getDuration() - 0.05 * seconds);
+    this.videoPlayer.seekTo(targetTime, true);
   }
 
   private addIntervalElements(interval: AttackInterval) {
@@ -618,13 +616,23 @@ export class Editor {
   }
 
   private deleteAttack(attack: AttackData) {
+    // Remove from frameToAttack
     let frameIndex = this.frameIndex(attack);
     if (this.frameToAttack.get(frameIndex) == attack) {
       this.frameToAttack.delete(frameIndex);
     }
-    this.elements.get(attack)!.remove();
+    // Remove DOM element if present
+    const element = this.elements.get(attack);
+    if (element) {
+      element.remove();
+      this.elements.delete(attack);
+    }
+    // Remove from attackData array
     let index = this.level.attackData.indexOf(attack);
-    this.level.attackData.splice(index, 1);
+    if (index !== -1) {
+      this.level.attackData.splice(index, 1);
+    }
+    // Clear selection if needed
     if (this.selected != null && this.selected.ty == "attack" && this.selected.attack == attack) {
       this.selected = null;
     }
@@ -651,7 +659,7 @@ export class Editor {
     }
   }
 
-  private selectInterval(interval: AttackInterval, isStart: boolean, videoPlayer?: VideoPlayer) {
+  private selectInterval(interval: AttackInterval, isStart: boolean) {
     this.selected = null;
     this.clearSelectClass();
     if (interval != null) {
@@ -659,25 +667,23 @@ export class Editor {
       this.intervalElements.get(interval)!.startElement.classList.add("selected");
       this.intervalElements.get(interval)!.endElement.classList.add("selected");
       this.intervalElements.get(interval)!.nameElement.classList.add("selected");
-      if (videoPlayer) {
+      if (this.videoPlayer) {
         if (isStart) {
-          this.seek(interval.start, videoPlayer);
+          this.seek(interval.start);
         } else {
-          this.seek(interval.end, videoPlayer);
+          this.seek(interval.end);
         }
       }
     }
   }
 
-  private selectAttack(attack: AttackData | null, videoPlayer?: VideoPlayer) {
+  private selectAttack(attack: AttackData | null) {
     this.selected = null;
     this.clearSelectClass();
     if (attack != null) {
       this.selected = new DraggedAttack(attack);
       this.elements.get(attack)!.classList.add("selected");
-      if (videoPlayer) {
-        this.seek(attack.time, videoPlayer);
-      }
+      this.seek(attack.time);
     }
   }
 
@@ -734,6 +740,28 @@ export class Editor {
       return Math.floor(timeOrAttack / FRAME_LENGTH);
     }
     return Math.floor(timeOrAttack.time / FRAME_LENGTH);
+  }
+
+  // Helper for mousewheel event (Chrome/Edge/Safari)
+  handleMouseWheelEvent(event: Event) {
+    if (!(event instanceof WheelEvent)) return;
+    if (event.ctrlKey) {
+      event.preventDefault();
+      this.changeZoom(event);
+    } else {
+      this.changeScroll(event);
+    }
+  }
+
+  // Helper for DOMMouseScroll event (Firefox)
+  handleDomMouseScrollEvent(event: Event) {
+    if (!(event instanceof WheelEvent)) return;
+    if (event.ctrlKey) {
+      event.preventDefault();
+      this.changeZoom(event);
+    } else {
+      this.changeScroll(event);
+    }
   }
 
 }
