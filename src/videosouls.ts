@@ -169,27 +169,66 @@ export class VideoSouls {
     this.loadLevelButtons();
   }
 
+  // Shared helper to fetch and parse a level file
+  private async fetchAndParseLevelFile(levelFile: string): Promise<LevelDataV0 | null> {
+    try {
+      const response = await fetch(`/levels/${levelFile}`);
+      if (!response.ok) return null;
+      const levelData = await response.text();
+      const level = parseWithMaps(levelData);
+      const validation = await validateLevelData(level);
+      if (validation === null) {
+        return level as LevelDataV0;
+      } else {
+        console.error('Level validation failed:', validation);
+        return null;
+      }
+    } catch (error) {
+      console.error('Error fetching/parsing level:', error);
+      return null;
+    }
+  }
+
   private async loadLevelButtons() {
     try {
-      // Load level files from the levels directory
       const levelFiles = await this.getLevelFiles();
-
-      // Clear existing level buttons
       this.elements.levelsContainer.innerHTML = '';
 
-      // Create a button for each level file
-      levelFiles.forEach(levelFile => {
+      for (const levelFile of levelFiles) {
+        let titleText = "";
+        const level = await this.fetchAndParseLevelFile(levelFile);
+        if (level && level.title) {
+          titleText = String(level.title);
+        }
         const button = document.createElement('button');
-        button.textContent = this.getLevelDisplayName(levelFile);
+        button.textContent = titleText
+          ? `${this.getLevelDisplayName(levelFile)} — ${titleText}`
+          : this.getLevelDisplayName(levelFile);
         button.className = 'level-button';
         button.addEventListener('click', () => {
           this.loadAndPlayLevel(levelFile);
         });
         this.elements.levelsContainer.appendChild(button);
-      });
+      }
     } catch (error) {
       console.error('Failed to load level files:', error);
       this.fadingAlert('Failed to load level files', 30, "20px");
+    }
+  }
+
+  private async loadAndPlayLevel(levelFile: string) {
+    try {
+      console.log(`Loading level from file: ${levelFile}`);
+      const level = await this.fetchAndParseLevelFile(levelFile);
+      if (level) {
+        this.editor.level = level;
+        this.setGameMode(GameMode.PLAYING);
+      } else {
+        this.fadingAlert(`Invalid or failed to load level file: ${levelFile}`, 30, "20px");
+      }
+    } catch (error) {
+      this.fadingAlert(`Failed to load level: ${levelFile}`, 30, "20px");
+      console.error('Error loading level:', error);
     }
   }
 
@@ -219,32 +258,6 @@ export class VideoSouls {
       .replace('.json', '')
       .replace(/([a-z])([A-Z])/g, '$1 $2')
       .replace(/^./, str => str.toUpperCase());
-  }
-
-  private async loadAndPlayLevel(levelFile: string) {
-    try {
-      console.log(`Loading level from file: ${levelFile}`);
-      const response = await fetch(`/levels/${levelFile}`);
-      if (!response.ok) {
-        throw new Error(`Failed to load level: ${levelFile}`);
-      }
-
-      const levelData = await response.text();
-      console.log(`Level data loaded: ${levelData.slice(0, 100)}...`); // Log first 100 chars for brevity
-      const level = parseWithMaps(levelData);
-      const validation = await validateLevelData(level);
-
-      if (validation === null) {
-        this.editor.level = level;
-        this.setGameMode(GameMode.PLAYING);
-      } else {
-        this.fadingAlert(`Invalid level file: ${levelFile}`, 30, "20px");
-        console.error('Level validation failed:', validation);
-      }
-    } catch (error) {
-      this.fadingAlert(`Failed to load level: ${levelFile}`, 30, "20px");
-      console.error('Error loading level:', error);
-    }
   }
 
   private initializeEventListeners() {
@@ -649,7 +662,8 @@ export class VideoSouls {
 
   private drawCanvas() {
     const currentTime = this.currentTime();
-    const youtubeVideoName = this.elements.player.getIframe().title;
+    // Use the title from the level JSON, fallback to YouTube title if missing
+    const displayTitle = this.editor.level.title || this.elements.player.getIframe().title;
 
     this.battleRenderer.drawCanvas(
       currentTime,
@@ -658,7 +672,7 @@ export class VideoSouls {
       this.getAttacksInInterval.bind(this),
       this.audio.playWarningSound.bind(this.audio),
       this.inputManager.getCurrentTargetDirection.bind(this.inputManager),
-      youtubeVideoName
+      displayTitle // <-- Use level title
     );
   }
 

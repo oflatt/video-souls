@@ -291,23 +291,8 @@ export class Editor {
     this.recordingControls.scrollLeft += -event.deltaY / 5;
   }
 
-  updateTitle(player: VideoPlayer) {
-    // Populate the title if not set and player is CUED
-    if (!this.level.title) {
-      // YT.PlayerState.CUED === 5
-      if (player.getPlayerState() === 5) {
-        const ytTitle = player.getIframe().title;
-        if (ytTitle && ytTitle !== "") {
-          this.level.title = ytTitle;
-        }
-      }
-    }
-  }
-
-
   update(keyJustPressed: Set<string>, currentTargetDir: AttackDirection, mouseX: number, videoPlayer: VideoPlayer) {
     videoPlayer.updateTime();
-    this.updateTitle(videoPlayer);
 
     if (keyJustPressed.has(" ")) {
       if (videoPlayer.getPlayerState() == YT.PlayerState.PLAYING) {
