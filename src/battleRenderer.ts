@@ -31,16 +31,23 @@ export class BattleRenderer {
     this.canvas = canvas;
   }
 
-  drawAttackWarning(currentTime: number, prevTime: number, getAttacksInInterval: (start: number, end: number) => any[], playWarningSound: () => void) {
+  drawAttackWarning(
+    currentTime: number,
+    prevTime: number,
+    getAttacksInInterval: (start: number, end: number) => any[],
+    playWarningSound?: (() => void), // <-- now optional
+    arrowless?: boolean // <-- new param
+  ) {
+    if (arrowless) return; // Suppress all warnings/arrows
+
     const ctx = this.canvas.getContext('2d')!;
-  
     // check for attack warning sound
     const soundAttack = getAttacksInInterval(prevTime + ATTACK_WARNING_ADVANCE, currentTime + ATTACK_WARNING_ADVANCE);
-  
-    if (soundAttack.length > 0) {
+
+    if (soundAttack.length > 0 && playWarningSound) {
       playWarningSound();
     }
-  
+
     const animAttacks = getAttacksInInterval(currentTime, currentTime + ATTACK_WARNING_ADVANCE);
     for (const attack of animAttacks) {
       const attackPos = [...directionNumToSwordPos.get(attack.direction)!];
@@ -48,10 +55,10 @@ export class BattleRenderer {
       attackPos[1] = attackPos[1] * 1.5;
       attackPos[0] += 0.5;
       attackPos[1] += 0.5;
-  
+
       const animTime = (currentTime - attack.time) / ATTACK_WARNING_ADVANCE;
       const opacity = Math.max(0, 1 - animTime);
-  
+
       const attackX = this.canvas.width * attackPos[0];
       const attackY = this.canvas.height * (1 - attackPos[1]);
       ctx.save();
@@ -121,11 +128,12 @@ export class BattleRenderer {
     prevTime: number,
     battle: BattleState, 
     getAttacksInInterval: (start: number, end: number) => any[], 
-    playWarningSound: () => void,
+    playWarningSound: (() => void) | undefined,
     getCurrentTargetDirection: () => number,
-    youtubeVideoName: string
+    youtubeVideoName: string,
+    arrowless?: boolean // <-- new param
   ) {
-    this.drawAttackWarning(currentTime, prevTime, getAttacksInInterval, playWarningSound);
+    this.drawAttackWarning(currentTime, prevTime, getAttacksInInterval, playWarningSound, arrowless);
     this.drawSword(currentTime, battle, getCurrentTargetDirection);
 
     animateBossName(youtubeVideoName, this.canvas, currentTime, 0.15);

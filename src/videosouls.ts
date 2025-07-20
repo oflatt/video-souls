@@ -662,17 +662,18 @@ export class VideoSouls {
 
   private drawCanvas() {
     const currentTime = this.currentTime();
-    // Use the title from the level JSON, fallback to YouTube title if missing
     const displayTitle = this.editor.level.title || this.elements.player.getIframe().title;
+    const arrowless = !!this.editor.level.arrowless;
 
     this.battleRenderer.drawCanvas(
       currentTime,
       this.videoPlayer.prevTime,
       this.battle,
       this.getAttacksInInterval.bind(this),
-      this.audio.playWarningSound.bind(this.audio),
+      arrowless ? undefined : this.audio.playWarningSound.bind(this.audio),
       this.inputManager.getCurrentTargetDirection.bind(this.inputManager),
-      displayTitle // <-- Use level title
+      displayTitle,
+      arrowless // <-- pass arrowless flag
     );
   }
 

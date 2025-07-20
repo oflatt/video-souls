@@ -39,7 +39,8 @@ export class LevelDataV0 {
   attackIntervals: Map<string, AttackInterval>;
   attackSchedule: string;
   version: string;
-  title: string | null; 
+  title: string | null;
+  arrowless: boolean; // <-- Now mandatory
 
   constructor() {
     this.video = null;
@@ -48,12 +49,14 @@ export class LevelDataV0 {
     this.attackSchedule = DEFAULT_ATTACK_SCHEDULE;
     this.version = "0.0.0";
     this.title = null;
+    this.arrowless = false; // <-- Default value
   }
 }
 
 export function levelDataFromVideo(videoId: string): LevelDataV0 {
   const level = new LevelDataV0();
   level.video = videoId;
+  level.arrowless = false; // <-- Always set
   return level;
 }
 
@@ -84,13 +87,14 @@ export function stringifyLevelData(levelData: LevelDataV0): string {
   for (const [key, value] of levelData.attackIntervals) {
     attackIntervalsObj[key] = value;
   }
-  const serializable = {
+  const serializable: any = {
     video: levelData.video,
     attackData: levelData.attackData,
     attackIntervals: attackIntervalsObj,
     attackSchedule: levelData.attackSchedule,
     version: levelData.version,
-    title: levelData.title // <-- Add title to serialization
+    title: levelData.title,
+    arrowless: levelData.arrowless // <-- Always present
   };
   return JSON.stringify(serializable, null, 2);
 }
@@ -109,7 +113,8 @@ export function parseLevelData(jsonString: string): LevelDataV0 {
   levelData.attackIntervals = attackIntervals;
   levelData.attackSchedule = parsed.attackSchedule || DEFAULT_ATTACK_SCHEDULE;
   levelData.version = parsed.version || "0.0.0";
-  levelData.title = parsed.title || null; // <-- Parse title
+  levelData.title = parsed.title || null;
+  levelData.arrowless = !!parsed.arrowless; // <-- Always set, fallback to false
   return levelData;
 }
 
