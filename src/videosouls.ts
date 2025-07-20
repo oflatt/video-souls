@@ -193,29 +193,23 @@ export class VideoSouls {
   }
 
   private async getLevelFiles(): Promise<string[]> {
-    try {
-      // Try to fetch the levels directory listing
-      const response = await fetch('/levels/');
-      if (!response.ok) {
-        throw new Error('Failed to fetch levels directory');
+    // Try loading levels named level01.json, level02.json, ... until a fetch fails
+    const levelFiles: string[] = [];
+    const maxLevels = 50; // Arbitrary upper limit to avoid infinite loop
+    for (let i = 1; i <= maxLevels; i++) {
+      const filename = `${i.toString().padStart(2, '0')}.json`;
+      try {
+        const response = await fetch(`/levels/${filename}`, { method: 'HEAD' });
+        if (response.ok) {
+          levelFiles.push(filename);
+        } else {
+          break;
+        }
+      } catch {
+        break;
       }
-
-      const html = await response.text();
-
-      // Parse HTML to extract .json files
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, 'text/html');
-      const links = Array.from(doc.querySelectorAll('a'));
-
-      return links
-        .map(link => link.getAttribute('href'))
-        .filter(href => href && href.endsWith('.json'))
-        .map(href => href!) as string[];
-    } catch (error) {
-      // Fallback: return hardcoded level files if directory listing fails
-      console.warn('Directory listing failed, using fallback levels:', error);
-      return ['level1.json']; // Add more default levels as needed
     }
+    return levelFiles;
   }
 
   private getLevelDisplayName(filename: string): string {
