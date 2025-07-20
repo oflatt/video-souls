@@ -2,8 +2,10 @@ export class EditorHud {
   controlsInfoPanel: HTMLElement | null = null;
   controlsInfoToggle: HTMLButtonElement | null = null;
   controlsInfoVisible: boolean = true;
+  titleInput: HTMLInputElement;
 
   constructor() {
+    this.titleInput = document.getElementById("editor-title-input") as HTMLInputElement;
     this.controlsInfoPanel = document.getElementById("controls-info");
     if (this.controlsInfoPanel) {
       let toggleBtn = document.getElementById("controls-info-toggle") as HTMLButtonElement;

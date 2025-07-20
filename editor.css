@@ -198,6 +198,32 @@
   background-image: linear-gradient(to bottom, rgba(128, 128, 128, 30%) 0%, rgba(128, 128, 128, 40%) 30%, rgba(128, 128, 128, 10%) 100%);
 }
 
+#controls-info-toggle {
+  position: static;
+  display: block;
+  margin: 0 0 8px 0;
+  width: 100%;
+  font-size: 13px;
+  padding: 2px 0;
+  background: #222;
+  color: #fff;
+  border: 1px solid #aaa;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+#controls-info-toggle:hover {
+  background: #444;
+}
+
+#controls-info-toggle.floating {
+  position: absolute !important;
+  top: 10px !important;
+  right: 10px !important;
+  width: auto !important;
+  z-index: 2000;
+}
 
 div::-webkit-scrollbar {
   width: 16px;
@@ -255,4 +281,48 @@ div::-webkit-scrollbar-thumb {
 
 .attack-warning:hover .attack-warning-tooltip {
   opacity: 1;
+}
+
+#editor-exit-to-menu-button {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 100;
+  font-size: 18px;
+  padding: 8px 16px;
+  background-color: #444;
+  color: #fff;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  display: none;
+}
+
+#editor-exit-to-menu-button:hover {
+  background-color: #666;
+}
+
+#editor-title-input {
+  display: block;
+  /* Move to top */
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  text-align: center;
+  font-family: 'Cormorant Unicase', serif;
+  font-size: 40px;
+  width: 60%;
+  background: transparent;
+  color: #fff;
+  border: none;
+  border-bottom: 2px solid #aaa;
+  outline: none;
+  transition: border-color 0.2s;
+  z-index: 101;
+}
+
+#editor-title-input:focus {
+  border-bottom: 2px solid #28a745;
 }

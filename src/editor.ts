@@ -254,6 +254,10 @@ export class Editor {
     const playbackPointLeft = this.timeToPx(this.getCurrentTimeSafe(videoPlayer));
     playbackPoint.style.left = `${playbackPointLeft}px`;
 
+    if (this.hud.titleInput.value) {
+      this.level.title = this.hud.titleInput.value; 
+    }
+
     // Update attack warnings every frame
     this.updateAttackWarnings();
   }

@@ -53,6 +53,7 @@ export class VideoSouls {
   editor: Editor;
   settings: Settings;
   volumeSlider: HTMLInputElement;
+  exitToMenuButton: HTMLButtonElement;
 
   constructor(player: YT.Player) {
     this.videoPlayer = new VideoPlayer(player);
@@ -95,48 +96,9 @@ export class VideoSouls {
     this.alerts = [];
     this.settings = Settings.load();
 
-    // Add volume slider to a new settings section at the bottom of the floating menu
-    this.volumeSlider = document.createElement("input");
-    this.volumeSlider.type = "range";
-    this.volumeSlider.min = "0";
-    this.volumeSlider.max = "100";
+    // Use the volume slider from the DOM
+    this.volumeSlider = document.getElementById("main-menu-volume-slider") as HTMLInputElement;
     this.volumeSlider.value = String(this.settings.volume);
-    this.volumeSlider.style.width = "200px";
-    this.volumeSlider.style.marginBottom = "10px";
-    this.volumeSlider.title = "Volume";
-    this.volumeSlider.id = "main-menu-volume-slider";
-
-    const volumeLabel = document.createElement("label");
-    volumeLabel.textContent = "Volume";
-    volumeLabel.htmlFor = "main-menu-volume-slider";
-    volumeLabel.style.marginRight = "10px";
-    volumeLabel.style.color = "#fff";
-    volumeLabel.style.fontSize = "18px";
-
-    // Create a settings section at the bottom
-    const settingsSection = document.createElement("div");
-    settingsSection.id = "main-menu-settings-section";
-    settingsSection.style.display = "flex";
-    settingsSection.style.alignItems = "center";
-    settingsSection.style.marginTop = "30px";
-    settingsSection.style.justifyContent = "center";
-    settingsSection.style.width = "100%";
-    settingsSection.style.position = "absolute";
-    settingsSection.style.bottom = "20px";
-    settingsSection.style.left = "0";
-    settingsSection.style.right = "0";
-
-    const volumeContainer = document.createElement("div");
-    volumeContainer.style.display = "flex";
-    volumeContainer.style.alignItems = "center";
-    volumeContainer.style.marginBottom = "10px";
-    volumeContainer.appendChild(volumeLabel);
-    volumeContainer.appendChild(this.volumeSlider);
-
-    settingsSection.appendChild(volumeContainer);
-
-    // Insert settings section at the end of floating menu
-    this.elements.floatingMenu.appendChild(settingsSection);
 
     // Set initial YouTube player volume
     player.setVolume(this.settings.volume);
@@ -154,7 +116,6 @@ export class VideoSouls {
     });
 
     // Listen for YouTube player volume changes (if user changes via YouTube UI)
-    // This requires polling since YT.Player doesn't emit volume change events
     setInterval(() => {
       const ytVol = player.getVolume();
       if (ytVol !== this.settings.volume) {
@@ -164,6 +125,12 @@ export class VideoSouls {
         this.audio.setVolume(this.settings.getNormalizedVolume());
       }
     }, 500);
+
+    this.exitToMenuButton = document.getElementById("editor-exit-to-menu-button") as HTMLButtonElement;
+    this.exitToMenuButton.style.display = "none";
+    this.exitToMenuButton.addEventListener("click", () => {
+      this.setGameMode(GameMode.MENU);
+    });
 
     this.initializeEventListeners();
     this.loadLevelButtons();
@@ -314,6 +281,11 @@ export class VideoSouls {
       if (this.gameMode === GameMode.EDITING) {
         this.editor.playbackBarClicked(event, this.videoPlayer);
       }
+    });
+
+    // Listen for editor HUD back button event
+    window.addEventListener("editor-back-to-menu", () => {
+      this.setGameMode(GameMode.MENU);
     });
   }
 
@@ -601,8 +573,10 @@ export class VideoSouls {
     // if the new mode is editing, show the editing hud
     if (mode === GameMode.EDITING) {
       this.elements.recordHUD.style.display = 'flex';
+      this.exitToMenuButton.style.display = 'block';
     } else {
       this.elements.recordHUD.style.display = 'none';
+      this.exitToMenuButton.style.display = 'none';
     }
 
     // if the new mode is menu, show the menu
@@ -625,6 +599,13 @@ export class VideoSouls {
 
       // in the editing mode, create a new editor
       this.editor = new Editor(this.elements.recordingControls, this.elements.playbackBar, this.editor.level, this.graphics);
+
+      // Set the editor title input to the level's title
+      const title = this.editor.level.title ?? "";
+      const titleInput = document.getElementById("editor-title-input") as HTMLInputElement;
+      if (titleInput) {
+        titleInput.value = title;
+      }
     }
 
     // load the video for playing

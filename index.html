@@ -46,6 +46,13 @@
             <button id="export-button" style="display: none; margin-bottom: 20px;">Export</button>
         </div>
         <textarea id="validation-error" style="display: none;"></textarea>
+        <!-- Settings section at the bottom of the menu -->
+        <div id="main-menu-settings-section">
+            <div id="main-menu-volume-container">
+                <label for="main-menu-volume-slider" style="margin-right: 10px; color: #fff; font-size: 18px;">Volume</label>
+                <input id="main-menu-volume-slider" type="range" min="0" max="100" style="width: 200px; margin-bottom: 10px;" />
+            </div>
+        </div>
     </div>
     <div id="game-hud">
         <h2 id="current-time" style="position: absolute; bottom: 10px; right: 10px;">Current Time</h2>
@@ -61,6 +68,9 @@
         <button id="retry-button">Retry</button>
     </div>
     <div id="record-hud">
+        <button id="editor-exit-to-menu-button" style="display: none;">Exit to Menu</button>
+        <!-- Centered level title input -->
+        <input id="editor-title-input" type="text" placeholder="Level Title" style="margin: 0 auto; display: block; text-align: center; font-family: 'Cormorant Unicase', serif; font-size: 40px; margin-bottom: 10px; width: 60%;" />
         <!--recording-controls has a scrollbar with the editor inside-->
         <div id="recording-controls">
             <!-- playback-bar-warpper has a margin on each side of 10px -->

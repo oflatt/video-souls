@@ -1,20 +1,32 @@
+:root {
+  --bg-dark: #222;
+  --bg-menu: rgba(0, 0, 0, 0.8);
+  --bg-video: #000;
+  --btn-bg: #28a745;
+  --btn-bg-hover: #218838;
+  --color-white: #fff;
+  --border-radius: 8px;
+  --input-radius: 4px;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
-html,
-body {
+
+html, body {
   width: 100%;
   height: 100%;
   overflow: hidden;
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: #222;
-  color: #fff;
+  background: var(--bg-dark);
+  color: var(--color-white);
   font-family: Arial, sans-serif;
 }
+
 #game-container {
   width: 100%;
   height: 100%;
@@ -24,12 +36,14 @@ body {
   align-items: center;
   text-align: center;
 }
+
 #video-player {
   width: 100%;
   height: 100%;
-  background-color: #000; /* Placeholder for video */
-  pointer-events: none; /* Disable mouse events on video */
+  background: var(--bg-video);
+  pointer-events: none;
 }
+
 /* Floating menu styles */
 #floating-menu {
   position: absolute;
@@ -40,11 +54,29 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  background-color: rgba(0, 0, 0, 0.8);
+  background: var(--bg-menu);
   padding: 10px 20px;
-  border-radius: 8px;
+  border-radius: var(--border-radius);
   overflow-y: auto;
   height: 100%;
+}
+
+#levels-container {
+  margin-bottom: 20px;
+}
+
+#floating-menu h1 { margin-bottom: 20px; }
+#floating-menu h2 { margin-bottom: 10px; }
+
+#record-button,
+#custom-level-play-button,
+#custom-level-edit-button,
+#export-button {
+  margin-bottom: 20px;
+}
+
+#custom-level-input {
+  min-height: 300px;
 }
 
 #main-menu-settings-section {
@@ -61,18 +93,35 @@ body {
   pointer-events: auto;
 }
 
-/* game HUD style */
+#main-menu-volume-container {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+#main-menu-volume-slider {
+  width: 200px;
+  margin-bottom: 10px;
+}
+
+#main-menu-volume-container label {
+  margin-right: 10px;
+  color: var(--color-white);
+  font-size: 18px;
+}
+
+/* HUD styles */
 #game-hud, #battle-end-hud, #record-hud {
   position: absolute;
-  top: 0px;
-  left: 0px;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
   display: none;
   gap: 20px;
-  background-color: rgba(0, 0, 0, 0.0);
+  background: rgba(0, 0, 0, 0.0);
   padding: 10px 20px;
-  border-radius: 8px;
+  border-radius: var(--border-radius);
 }
 
 #battle-end-hud {
@@ -85,65 +134,60 @@ body {
   align-items: center;
 }
 
-input {
+input, textarea {
   width: 300px;
   padding: 5px;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--input-radius);
   font-size: 1em;
-}
-
-#custom-level-input {
-  min-height: 300px;
 }
 
 textarea {
-  border: none;
-  border-radius: 4px;
-  padding: 5px;
-  font-size: 1em;
-  width: 300px;
+  /* ...existing code... */
 }
 
-/* TODO how to make it resize with content? */
 #validation-error {
   color: red;
   min-height: 200px;
+  display: none;
 }
 
-h1 {
-  font-size: 40px;
-}
-
-h2 {
-  font-size: 30px;
-}
+h1 { font-size: 40px; }
+h2 { font-size: 30px; }
 
 button {
   padding: 5px 10px;
   font-size: 20px;
   cursor: pointer;
   border: none;
-  border-radius: 4px;
-  background-color: #28a745;
-  color: #fff;
+  border-radius: var(--input-radius);
+  background: var(--btn-bg);
+  color: var(--color-white);
+  transition: background 0.2s;
 }
 #record-button:hover {
-  background-color: #218838;
+  background: var(--btn-bg-hover);
 }
 
 /* Fading alerts */
 .fading-alert {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 10px 20px;
-    background-color: rgba(0, 0, 0, 0.8);
-    border-radius: 8px;
-    z-index: 1000;
-    opacity: 100%;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 20px;
+  background: var(--bg-menu);
+  border-radius: var(--border-radius);
+  z-index: 1000;
+  opacity: 100%;
 }
 
-#recording-controls {
-  overflow-x: auto;
-}
+#recording-controls { overflow-x: auto; }
+#current-time { position: absolute; bottom: 10px; right: 10px; }
+#wkey { position: absolute; bottom: 80px; left: 80px; }
+#akey { position: absolute; bottom: 50px; left: 50px; }
+#skey { position: absolute; bottom: 50px; left: 90px; }
+#dkey { position: absolute; bottom: 50px; left: 120px; }
+#parrykey { position: absolute; bottom: 100px; right: 100px; }
+#attackkey { position: absolute; bottom: 50px; right: 100px; }
+
+#export-button { display: none; }
