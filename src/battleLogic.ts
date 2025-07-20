@@ -7,7 +7,7 @@ import { LevelDataV0 } from './leveldata';
 
 const ATTACK_COMBO_STARTUP_TIMES = [0.2, 0.2, 0.3, 0.2, 0.4];
 const ATTACK_COMBO_DAMAGE_MULT = [1.0, 1.1, 1.3, 1.0, 2.2];
-const ATTACK_END_LAG = 0.15;
+const ATTACK_END_LAG = 0.85;
 const COMBO_EXTEND_TIME = 3.0;
 const STAGGER_TIME = 0.4;
 const PARRY_WINDOW = 0.2;
