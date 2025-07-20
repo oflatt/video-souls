@@ -56,6 +56,12 @@ class DraggedAttack {
   }
 }
 
+function attackDataEquals(a: AttackData, b: AttackData): boolean {
+  return a.time === b.time &&
+    a.direction === b.direction &&
+    a.damage === b.damage;
+}
+
 export class Editor {
   static defaults = {
     attackDamage: 0.1,
@@ -627,8 +633,8 @@ export class Editor {
       element.remove();
       this.elements.delete(attack);
     }
-    // Remove from attackData array
-    let index = this.level.attackData.indexOf(attack);
+    // Remove from attackData array using custom equality
+    let index = this.level.attackData.findIndex(a => attackDataEquals(a, attack));
     if (index !== -1) {
       this.level.attackData.splice(index, 1);
     }
