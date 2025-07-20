@@ -7,6 +7,11 @@
       "damage": 0.1
     },
     {
+      "time": 11.081739999999987,
+      "direction": 0,
+      "damage": 0.1
+    },
+    {
       "time": 11.953170117011712,
       "direction": 0,
       "damage": 0.1
@@ -39,6 +44,11 @@
     {
       "time": 29.503170117011805,
       "direction": 6,
+      "damage": 0.1
+    },
+    {
+      "time": 32.78521199999998,
+      "direction": 0,
       "damage": 0.1
     }
   ],

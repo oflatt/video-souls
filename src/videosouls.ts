@@ -605,9 +605,7 @@ export class VideoSouls {
     // load the video for editing, make new editor
     if (mode === GameMode.EDITING) {
       if (this.editor.level.video != null) {
-        this.videoPlayer.loadVideoById(this.editor.level.video);
-        // Do NOT play the video automatically in editor mode
-        this.videoPlayer.pauseVideo();
+        this.videoPlayer.cueVideoById(this.editor.level.video);
       }
 
       // in the editing mode, create a new editor

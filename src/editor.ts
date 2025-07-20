@@ -17,6 +17,7 @@ import {
   parseLevelData,
   validateLevelData
 } from './leveldata';
+import { EditorHud } from './editorHud';
 
 const FRAME_LENGTH = 0.05;
 const PLAYBACK_BAR_PADDING = 20;
@@ -42,7 +43,7 @@ class DraggedInterval {
     this.interval = interval;
     this.isStart = isStart;
     this.ty = "interval";
-  } 
+  }
 }
 
 class DraggedAttack {
@@ -72,6 +73,10 @@ export class Editor {
   dragged: DraggedAttack | null | DraggedInterval;
   freshName: number;
   graphics: Graphics;
+  controlsInfoToggle: HTMLButtonElement | null = null;
+  controlsInfoPanel: HTMLElement | null = null;
+  controlsInfoVisible: boolean = true;
+  hud: EditorHud;
 
   constructor(recordingControls: HTMLElement, playbackBar: HTMLElement, level: LevelDataV0, graphics: Graphics) {
     this.graphics = graphics;
@@ -96,6 +101,8 @@ export class Editor {
 
     // now add all existing attacks to UI
     this.addAttacks();
+
+    this.hud = new EditorHud();
   }
 
   cleanup() {
@@ -115,10 +122,13 @@ export class Editor {
 
     // Clear other maps
     this.frameToAttack.clear();
-    
+
     // Reset state
     this.selected = null;
     this.dragged = null;
+
+    // Reset HUD panels
+    this.hud.reset();
   }
 
   private getCurrentTimeSafe(videoPlayer: VideoPlayer): number {
@@ -183,7 +193,7 @@ export class Editor {
 
   // update all the elements
   draw(mouseX: number, mouseY: number, videoPlayer: VideoPlayer) {
-    const clientWidth = this.recordingControls.clientWidth - PLAYBACK_BAR_PADDING*2;
+    const clientWidth = this.recordingControls.clientWidth - PLAYBACK_BAR_PADDING * 2;
 
     let duration = videoPlayer.getDuration();
     let possibleW = this.timeToPx(duration);
@@ -191,7 +201,7 @@ export class Editor {
     if (possibleW < clientWidth && !Number.isNaN(duration) && duration != 0) {
       this.zoom = 1.0 / (duration / 60.0);
     }
-    
+
     let finalW = this.timeToPx(duration);
     this.playbackBar.style.width = `${finalW}px`;
 
@@ -199,7 +209,7 @@ export class Editor {
     this.playbackWrapper = this.recordingControls.querySelector<HTMLElement>("#playback-bar-wrapper")!;
     // lines every 1 second
     let lineLength = 3;
-    let lineSpacing = this.timeToPx(1.0)-lineLength;
+    let lineSpacing = this.timeToPx(1.0) - lineLength;
     // make stripes- grey for lineLength, then transparent from lineLength to lineSpacing
     this.playbackWrapper.style.backgroundImage = `repeating-linear-gradient(to right, grey 0px, grey ${lineLength}px, transparent ${lineLength}px, transparent ${lineSpacing}px, grey ${lineSpacing}px)`;
 
@@ -250,15 +260,15 @@ export class Editor {
 
   timeToPx(time: number) {
     // Make the bar length proportional to client width and video duration
-    const clientWidth = this.recordingControls.clientWidth - PLAYBACK_BAR_PADDING*2;
+    const clientWidth = this.recordingControls.clientWidth - PLAYBACK_BAR_PADDING * 2;
     // default 1 minute of content on screen
     let duration = time / 60.0;
     return (duration * clientWidth * this.zoom);
   }
 
   pxToTime(px: number) {
-    const clientWidth = this.recordingControls.clientWidth - PLAYBACK_BAR_PADDING*2;
-    return (px*60.0 / (clientWidth * this.zoom));
+    const clientWidth = this.recordingControls.clientWidth - PLAYBACK_BAR_PADDING * 2;
+    return (px * 60.0 / (clientWidth * this.zoom));
   }
 
   changeZoom(event: WheelEvent) {
@@ -280,7 +290,7 @@ export class Editor {
   changeScroll(event: WheelEvent) {
     this.recordingControls.scrollLeft += -event.deltaY / 5;
   }
-  
+
 
   update(keyJustPressed: Set<string>, currentTargetDir: AttackDirection, mouseX: number, videoPlayer: VideoPlayer) {
     videoPlayer.updateTime();
@@ -339,7 +349,7 @@ export class Editor {
         break;
       }
     }
-    
+
     let playerReady = (videoPlayer.getPlayerState() == YT.PlayerState.PAUSED || videoPlayer.getPlayerState() == YT.PlayerState.PLAYING);
 
     // check the state of the player so duration is valid
@@ -353,7 +363,7 @@ export class Editor {
       };
       this.createInterval(newDeathInterval);
     }
-    
+
     if (!introInterval && playerReady) {
       let startTime = 0;
       let endTime = Math.min(2, videoPlayer.getDuration());
@@ -412,7 +422,7 @@ export class Editor {
     if (endTime == timestamp) {
       return;
     }
-    
+
     let newInterval = {
       start: timestamp,
       end: endTime,
@@ -452,7 +462,7 @@ export class Editor {
       // seek to that time
       this.seek(time, videoPlayer);
     }
- }
+  }
 
   seek(seconds: number, videoPlayer: VideoPlayer) {
     videoPlayer.seekTo(seconds, true);
@@ -463,7 +473,7 @@ export class Editor {
     videoPlayer.seekTo(targetTime, true);
   }
 
-  private addIntervalElements(interval: AttackInterval) {   
+  private addIntervalElements(interval: AttackInterval) {
     const parentElement = this.playbackWrapper;
     let startElement = document.createElement("div");
     startElement.classList.add("interval-start");
@@ -510,7 +520,7 @@ export class Editor {
       this.attackMouseDown(attack);
     });
     this.elements.set(attack, attackElement);
-    
+
     // Insert attack chronologically
     let index = this.level.attackData.findIndex(a => attack.time < a.time);
     if (index == -1) {
@@ -528,19 +538,19 @@ export class Editor {
     arrowCanvas.width = arrowSize;
     arrowCanvas.height = arrowSize;
     let arrowCtx = arrowCanvas.getContext("2d")!;
-    arrowCtx.translate(arrowSize/2, arrowSize/2);
-    arrowCtx.rotate((Math.PI/4) * attack.direction);
-    arrowCtx.drawImage(arrowImg, -arrowSize/2, -arrowSize/2, arrowSize, arrowSize);
+    arrowCtx.translate(arrowSize / 2, arrowSize / 2);
+    arrowCtx.rotate((Math.PI / 4) * attack.direction);
+    arrowCtx.drawImage(arrowImg, -arrowSize / 2, -arrowSize / 2, arrowSize, arrowSize);
     // now add the canvas to the attack element in the right position
     let arrowElement = document.createElement("div");
     arrowElement.appendChild(arrowCanvas);
     arrowElement.style.position = "absolute";
     let pos_vector: [number, number] = [0, 30];
     // rotate pos_vector clockwise by attack data direction
-    let angle = (Math.PI/4) * attack.direction;
+    let angle = (Math.PI / 4) * attack.direction;
     let rotated_vector = roatate_vec2(pos_vector, angle);
-    let left = -arrowSize/2 + rotated_vector[0];
-    let top = -arrowSize/2 + rotated_vector[1];
+    let left = -arrowSize / 2 + rotated_vector[0];
+    let top = -arrowSize / 2 + rotated_vector[1];
     arrowElement.style.left = `${left}px`;
     arrowElement.style.bottom = `calc(var(--height) + ${top}px)`;
 
@@ -566,7 +576,7 @@ export class Editor {
     // add the interval elements
     this.addIntervalElements(interval);
   }
-  
+
   private createAttack(attack: AttackData) {
     // Insert attack chronologically
     let index = this.level.attackData.findIndex(a => attack.time < a.time);

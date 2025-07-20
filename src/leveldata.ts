@@ -32,6 +32,7 @@ export type AttackData = {
   damage: number,
 };
 
+
 export class LevelDataV0 {
   video: string | null;
   attackData: AttackData[];

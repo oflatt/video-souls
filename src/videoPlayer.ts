@@ -26,6 +26,10 @@ export class VideoPlayer {
     this.player.loadVideoById(videoId, startSeconds, suggestedQuality);
   }
 
+  cueVideoById(videoId: string): void {
+    this.player.cueVideoById(videoId);
+  }
+
   pauseVideo(): void {
     this.player.pauseVideo();
   }
