@@ -62,6 +62,8 @@ export function initialBattleState(): BattleState {
 
 // Helper function to update time and handle time jumps
 export function updateBattleTime(battle: BattleState, deltaTime: number) {
+  battle.anim.timeElapsed += deltaTime;
+  battle.anim.timeElapsed = Math.min(battle.anim.timeElapsed, battle.anim.duration); 
   battle.timeSinceLastParry += deltaTime;
   battle.timeSinceLastHit += deltaTime;
   battle.timeSincePlayerHit += deltaTime;

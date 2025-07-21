@@ -53,7 +53,7 @@ export class BattleLogic {
     return attackData.filter(attack => attack.time > startTime && attack.time <= endTime);
   }
 
-  doAttack(battle: BattleState, currentTime: number) {
+  doAttack(battle: BattleState) {
     battle.lastBossHealth = battle.bossHealth;
     battle.bossHealth -= 0.1 * ATTACK_COMBO_DAMAGE_MULT[battle.hitCombo % ATTACK_COMBO_DAMAGE_MULT.length];
     battle.timeSinceBossHit = 0;  // Reset duration
@@ -68,7 +68,6 @@ export class BattleLogic {
     const angle = battle.anim.endAngle;
     // First, ATTACKING animation
     battle.anim = BattleAnim.attacking(
-      currentTime,
       attackStartPosition,
       endPos,
       angle,
@@ -103,7 +102,6 @@ export class BattleLogic {
     const currentDir = battle.anim.endAngle;
 
     battle.anim = BattleAnim.attackStarting(
-      currentTime,
       [startPos[0], startPos[1]],
       endPos,
       currentDir,
@@ -114,9 +112,8 @@ export class BattleLogic {
     this.audio.playerAttack.play();
   }
 
-  doParry(battle: BattleState, currentTime: number) {
+  doParry(battle: BattleState) {
     battle.anim = BattleAnim.parrying(
-      currentTime,
       [...battle.anim.endPos],
       battle.anim.endAngle,
       PARRY_WINDOW + PARRY_END_LAG
@@ -177,16 +174,16 @@ export class BattleLogic {
     battle.timeSincePlayerHit = 0;  // Reset duration
     battle.hitCombo = 0;
 
-    battle.anim.state = AttackAnimation.STAGGERING;
-    battle.anim.startTime = currentTime;
-    battle.anim.endTime = currentTime + STAGGER_TIME;
-    battle.anim.startPos = [...battle.anim.endPos];
-    battle.anim.endPos = [
-      attackedPosition[0] + (Math.random() - 0.5) * 0.1,
-      attackedPosition[1] + (Math.random() - 0.5) * 0.1,
-    ];
-    battle.anim.startAngle = battle.anim.endAngle;
-    battle.anim.endAngle = attackedAngle;
+    battle.anim = BattleAnim.staggering(
+      [...battle.anim.endPos],
+      [
+        attackedPosition[0] + (Math.random() - 0.5) * 0.1,
+        attackedPosition[1] + (Math.random() - 0.5) * 0.1,
+      ],
+      battle.anim.endAngle,
+      attackedAngle,
+      STAGGER_TIME
+    );
   }
 
   private normalize(vec: [number, number]) {
@@ -213,15 +210,13 @@ export class BattleLogic {
 
   handleAnimations(
     battle: BattleState,
-    currentTime: number,
   ) {
-    if (battle.anim.state !== AttackAnimation.NONE && currentTime >= battle.anim.endTime) {
+    if (battle.anim.state !== AttackAnimation.NONE && battle.anim.isOver()) {
       if (battle.anim.state === AttackAnimation.ATTACK_STARTING) {
-        this.doAttack(battle, currentTime);
+        this.doAttack(battle);
       } else if (battle.anim.state === AttackAnimation.ATTACKING) {
         // Transition to ATTACK_END_LAG animation
         battle.anim = BattleAnim.attackEndLag(
-          currentTime,
           [...battle.anim.endPos],
           battle.anim.endAngle,
           ATTACK_END_LAG

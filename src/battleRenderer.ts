@@ -84,7 +84,7 @@ export class BattleRenderer {
     var yscale = 1.0;
   
     if (battle.anim.state !== AttackAnimation.NONE) {
-      const animProgressUncapped = (currentTime - battle.anim.startTime) / (battle.anim.endTime - battle.anim.startTime);
+      const animProgressUncapped = (battle.anim.timeElapsed) / (battle.anim.duration);
       const animProgress = Math.max(Math.min(1.0, animProgressUncapped), 0.0);
       swordPos = [
         battle.anim.startPos[0] + (battle.anim.endPos[0] - battle.anim.startPos[0]) * animProgress,

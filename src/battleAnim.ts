@@ -2,9 +2,8 @@ import { AttackAnimation } from './battle';
 
 export class BattleAnim {
   state: AttackAnimation;
-  // TODO bugged due to moving times, change to how long has elapsed and total duration instead
-  startTime: number;
-  endTime: number;
+  timeElapsed: number;
+  duration: number;
   startPos: [number, number];
   endPos: [number, number];
   startAngle: number;
@@ -16,8 +15,8 @@ export class BattleAnim {
 
   constructor() {
     this.state = AttackAnimation.NONE;
-    this.startTime = 0;
-    this.endTime = 0;
+    this.timeElapsed = 1;
+    this.duration = 1;
     this.startPos = [0.5, 0.5];
     this.endPos = [0.5, 0.5];
     this.startAngle = 0;
@@ -28,8 +27,11 @@ export class BattleAnim {
     this.endXScale = 1.0;
   }
 
+  isOver(): boolean {
+    return this.timeElapsed >= this.duration;
+  }
+
   static attackStarting(
-    currentTime: number,
     startPos: [number, number],
     endPos: [number, number],
     startAngle: number,
@@ -38,8 +40,8 @@ export class BattleAnim {
   ): BattleAnim {
     const anim = new BattleAnim();
     anim.state = AttackAnimation.ATTACK_STARTING;
-    anim.startTime = currentTime;
-    anim.endTime = currentTime + duration;
+    anim.timeElapsed = 0; // Reset time elapsed for new animation
+    anim.duration = duration; // Set the total duration of the animation
     anim.startPos = [...startPos];
     anim.endPos = [...endPos];
     anim.startAngle = startAngle;
@@ -52,7 +54,6 @@ export class BattleAnim {
   }
 
   static attacking(
-    currentTime: number,
     startPos: [number, number],
     endPos: [number, number],
     angle: number,
@@ -60,8 +61,8 @@ export class BattleAnim {
   ): BattleAnim {
     const anim = new BattleAnim();
     anim.state = AttackAnimation.ATTACKING;
-    anim.startTime = currentTime;
-    anim.endTime = currentTime + duration;
+    anim.timeElapsed = 0; // Reset time elapsed for new animation
+    anim.duration = duration; // Set the total duration of the animation
     anim.startPos = [...startPos];
     anim.endPos = [...endPos];
     anim.startAngle = angle;
@@ -74,15 +75,14 @@ export class BattleAnim {
   }
 
   static parrying(
-    currentTime: number,
     pos: [number, number],
     angle: number,
     duration: number
   ): BattleAnim {
     const anim = new BattleAnim();
     anim.state = AttackAnimation.PARRYING;
-    anim.startTime = currentTime;
-    anim.endTime = currentTime + duration;
+    anim.timeElapsed = 0; // Reset time elapsed for new animation
+    anim.duration = duration; // Set the total duration of the animation
     anim.startPos = [...pos];
     anim.endPos = [...pos];
     anim.startAngle = angle;
@@ -95,15 +95,14 @@ export class BattleAnim {
   }
 
   static attackEndLag(
-    currentTime: number,
     pos: [number, number],
     angle: number,
     duration: number
   ): BattleAnim {
     const anim = new BattleAnim();
     anim.state = AttackAnimation.ATTACK_END_LAG;
-    anim.startTime = currentTime;
-    anim.endTime = currentTime + duration;
+    anim.timeElapsed = 0; // Reset time elapsed for new animation
+    anim.duration = duration; // Set the total duration of the animation
     anim.startPos = [...pos];
     // Drift: move slightly in the attack direction and a little down
     const driftAmount = -0.06;
@@ -116,6 +115,28 @@ export class BattleAnim {
     anim.endAngle = angle;
     anim.startYScale = -1.0;
     anim.endYScale = -1.0;
+    anim.startXScale = 1.0;
+    anim.endXScale = 1.0;
+    return anim;
+  }
+
+  static staggering(
+    startPos: [number, number],
+    endPos: [number, number],
+    startAngle: number,
+    endAngle: number,
+    duration: number
+  ): BattleAnim {
+    const anim = new BattleAnim();
+    anim.state = AttackAnimation.STAGGERING;
+    anim.timeElapsed = 0;
+    anim.duration = duration;
+    anim.startPos = [...startPos];
+    anim.endPos = [...endPos];
+    anim.startAngle = startAngle;
+    anim.endAngle = endAngle;
+    anim.startYScale = 1.0;
+    anim.endYScale = 1.0;
     anim.startXScale = 1.0;
     anim.endXScale = 1.0;
     return anim;

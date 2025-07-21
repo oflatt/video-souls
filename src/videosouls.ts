@@ -403,8 +403,7 @@ export class VideoSouls {
   }
 
   doParry() {
-    const currentTime = this.currentTime();
-    this.battleLogic.doParry(this.battle, currentTime);
+    this.battleLogic.doParry(this.battle);
   }
 
   updateState() {
@@ -441,7 +440,7 @@ export class VideoSouls {
       }
 
       // check if we finished an animation
-      this.battleLogic.handleAnimations(this.battle, currentTime);
+      this.battleLogic.handleAnimations(this.battle);
 
       // ready for new buffered action
       if (this.battle.bufferedInput !== null && this.battle.anim.state === AttackAnimation.NONE) {
