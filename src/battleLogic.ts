@@ -14,6 +14,7 @@ const COMBO_EXTEND_TIME = 3.0;
 const STAGGER_TIME = 0.4;
 const PARRY_WINDOW = 0.2;
 const PARRY_END_LAG = 0.2;
+const CRITICAL_TIME = 2.5; // Duration (seconds) a critical is active
 
 const attackedPosition = [0.7, 0.4];
 const attackedAngle = Math.PI / 2;
@@ -45,6 +46,18 @@ export class BattleLogic {
         this.playerTakeDamage(battle, currentTime);
       }
     }
+
+    // Detect criticals in this frame
+    const criticals = this.getCriticalsInInterval(this.level.criticals, prevTime, currentTime);
+    if (criticals.length > 0) {
+      console.log("Critical detected:", criticals[0]);
+      const crit = criticals[0];
+      battle.currentCritical = {
+        direction: crit.direction,
+        multiplier: crit.multiplier,
+        timeLeft: CRITICAL_TIME
+      };
+    }
   }
 
   // gets the attack direction, if any, for this time period
@@ -53,12 +66,29 @@ export class BattleLogic {
     return attackData.filter(attack => attack.time > startTime && attack.time <= endTime);
   }
 
+  // gets the criticals, if any, for this time period
+  // starttime exclusive, endtime inclusive
+  getCriticalsInInterval(criticalData: any[], startTime: number, endTime: number) {
+    return criticalData.filter(crit => crit.time > startTime && crit.time <= endTime);
+  }
+
   doAttack(battle: BattleState) {
     battle.lastBossHealth = battle.bossHealth;
-    battle.bossHealth -= 0.1 * ATTACK_COMBO_DAMAGE_MULT[battle.hitCombo % ATTACK_COMBO_DAMAGE_MULT.length];
+
+    // Check for critical hit
+    let damageMult = ATTACK_COMBO_DAMAGE_MULT[battle.hitCombo % ATTACK_COMBO_DAMAGE_MULT.length];
+    const closestDir = this.currentClosestDir(battle);
+    if (
+      battle.currentCritical &&
+      battle.currentCritical.direction === closestDir
+    ) {
+      damageMult *= battle.currentCritical.multiplier;
+      battle.currentCritical = null; // Remove critical after use
+    }
+
+    battle.bossHealth -= 0.1 * damageMult;
     battle.timeSinceBossHit = 0;  // Reset duration
 
-    const closestDir = this.currentClosestDir(battle);
     const attackStartPosition: [number, number] = [...battle.anim.endPos];
     const attackEndPosition = directionNumToSwordPos.get((closestDir + 4) % 8)!;
     const endPos: [number, number] = [0.5 + attackEndPosition[0], 0.5 + attackEndPosition[1]];

@@ -23,6 +23,40 @@ function adjustColorOpacity(color: Color, opacity: number): Color {
   return { ...color, a: opacity };
 }
 
+function drawArrowWithMultiplier(
+  ctx: CanvasRenderingContext2D,
+  arrowSprite: HTMLCanvasElement,
+  direction: number,
+  x: number,
+  y: number,
+  size: number,
+  multiplier?: number
+) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(direction * Math.PI / 4);
+  ctx.globalAlpha = multiplier ? 0.85 : 1.0;
+  ctx.drawImage(arrowSprite, -size / 2, -size / 2, size, size);
+  if (multiplier) {
+    ctx.globalCompositeOperation = "source-atop";
+    ctx.fillStyle = "#ffd700";
+    ctx.globalAlpha = 0.5;
+    ctx.fillRect(-size / 2, -size / 2, size, size);
+    ctx.globalCompositeOperation = "source-over";
+    ctx.globalAlpha = 1.0;
+    // Draw multiplier label
+    ctx.font = "bold 22px Arial";
+    ctx.fillStyle = "#ffd700";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "bottom";
+    ctx.shadowColor = "#fff700";
+    ctx.shadowBlur = 8;
+    ctx.fillText(`x${multiplier.toFixed(1)}`, 0, -size / 2 - 2);
+    ctx.shadowBlur = 0;
+  }
+  ctx.restore();
+}
+
 export class BattleRenderer {
   private graphics: Graphics;
   private canvas: HTMLCanvasElement;
@@ -126,6 +160,29 @@ export class BattleRenderer {
     this.drawCenteredRotated(this.graphics.swordSprites.default, topLeftX, topLeftY, swordAngle- Math.PI / 2, 1.0, xscale, yscale);
   }
 
+  drawCriticalMarker(
+    battle: BattleState
+  ) {
+    if (!battle.currentCritical) return;
+    const ctx = this.canvas.getContext('2d')!;
+    const dir = battle.currentCritical.direction;
+    const pos = [...directionNumToSwordPos.get(dir)!];
+    const arrowSprite = this.graphics.arrowSprite;
+    const size = 60;
+    // Place critical marker at the same position as attack warnings/arrows
+    const x = this.canvas.width * (0.5 + pos[0] * 1.5);
+    const y = this.canvas.height * (1 - (0.5 + pos[1] * 1.5));
+    drawArrowWithMultiplier(
+      ctx,
+      arrowSprite,
+      dir,
+      x,
+      y,
+      size,
+      battle.currentCritical.multiplier
+    );
+  }
+
   drawCanvas(
     currentTime: number,
     prevTime: number,
@@ -137,6 +194,7 @@ export class BattleRenderer {
     arrowless?: boolean // <-- new param
   ) {
     this.drawAttackWarning(currentTime, prevTime, getAttacksInInterval, playWarningSound, arrowless);
+    this.drawCriticalMarker(battle); // <-- draw critical marker if present
     this.drawSword(currentTime, battle, getCurrentTargetDirection);
 
     animateBossName(youtubeVideoName, this.canvas, currentTime, 0.15);

@@ -17,6 +17,7 @@ export type BattleState = {
   lastBossHealth: number,
   timeSinceBossHit: number,
   currentInterval: string,
+  currentCritical: { direction: number, multiplier: number, timeLeft: number } | null, // <-- updated
 };
 
 const directionNumToSwordAngle = new Map<number, number>([
@@ -57,6 +58,7 @@ export function initialBattleState(): BattleState {
     hitCombo: 0,
     timeSinceLastHit: 1000,  // Large initial value
     currentInterval: "intro",
+    currentCritical: null, // <-- updated
   };
 }
 
@@ -68,6 +70,12 @@ export function updateBattleTime(battle: BattleState, deltaTime: number) {
   battle.timeSinceLastHit += deltaTime;
   battle.timeSincePlayerHit += deltaTime;
   battle.timeSinceBossHit += deltaTime;
+  if (battle.currentCritical) {
+    battle.currentCritical.timeLeft -= deltaTime;
+    if (battle.currentCritical.timeLeft <= 0) {
+      battle.currentCritical = null;
+    }
+  }
 }
 
 export { directionNumToSwordPos, directionNumToSwordAngle };
