@@ -4,6 +4,7 @@ import { AttackSchedule } from './attackSchedule';
 import { AttackInterval } from './editor';
 import { VideoPlayer } from './videoPlayer';
 import { LevelDataV0 } from './leveldata';
+import { BattleAnim } from './battleAnim';
 
 const ATTACK_COMBO_STARTUP_TIMES = [0.2, 0.2, 0.3, 0.2, 0.4];
 const ATTACK_COMBO_DAMAGE_MULT = [1.0, 1.1, 1.3, 1.0, 2.2];
@@ -56,25 +57,21 @@ export class BattleLogic {
     battle.bossHealth -= 0.1 * ATTACK_COMBO_DAMAGE_MULT[battle.hitCombo % ATTACK_COMBO_DAMAGE_MULT.length];
     battle.timeSinceBossHit = 0;  // Reset duration
 
-    battle.anim.state = AttackAnimation.ATTACKING;
-    battle.anim.startTime = currentTime;
-    battle.anim.endTime = currentTime + ATTACK_END_LAG;
-
     const closestDir = this.currentClosestDir(battle);
     const attackStartPosition: [number, number] = [...battle.anim.endPos];
-    battle.anim.startPos = [attackStartPosition[0], attackStartPosition[1]];
     const attackEndPosition = directionNumToSwordPos.get((closestDir + 4) % 8)!;
-    battle.anim.endPos = [0.5 + attackEndPosition[0], 0.5 + attackEndPosition[1]];
-    battle.anim.endPos[0] += (Math.random() - 0.5) * 0.1;
-    battle.anim.endPos[1] += (Math.random() - 0.5) * 0.1;
+    const endPos: [number, number] = [0.5 + attackEndPosition[0], 0.5 + attackEndPosition[1]];
+    endPos[0] += (Math.random() - 0.5) * 0.1;
+    endPos[1] += (Math.random() - 0.5) * 0.1;
 
-    const currentDir = battle.anim.endAngle;
-    battle.anim.startAngle = currentDir;
-    battle.anim.endAngle = currentDir;
-    battle.anim.startYScale = 1.0;
-    battle.anim.endYScale = -1.0;
-    battle.anim.startXScale = 1.0;
-    battle.anim.endXScale = 1.0;
+    const angle = battle.anim.endAngle;
+    battle.anim = BattleAnim.attacking(
+      currentTime,
+      attackStartPosition,
+      endPos,
+      angle,
+      ATTACK_END_LAG
+    );
 
     this.audio.enemyHit.play();
   }
@@ -89,42 +86,39 @@ export class BattleLogic {
     }
     battle.timeSinceLastHit = 0;  // Reset duration
 
-    battle.anim.state = AttackAnimation.ATTACK_STARTING;
-    battle.anim.startTime = currentTime;
-    battle.anim.endTime = currentTime + ATTACK_COMBO_STARTUP_TIMES[currentCombo % ATTACK_COMBO_STARTUP_TIMES.length];
-
     const closestDir = this.currentClosestDir(battle);
-    battle.anim.startPos = [...battle.anim.endPos];
+    const startPos = [...battle.anim.endPos];
     const attackEndPosition = directionNumToSwordPos.get(closestDir)!;
-    battle.anim.endPos = [0.5 + attackEndPosition[0]*1.2, 0.5 + attackEndPosition[1]*1.2];
-    battle.anim.endPos[0] += (Math.random() - 0.5) * 0.1;
-    battle.anim.endPos[1] += (Math.random() - 0.5) * 0.1;
+    const endPos: [number, number] = [
+      0.5 + attackEndPosition[0] * 1.2,
+      0.5 + attackEndPosition[1] * 1.2
+    ];
+    endPos[0] += (Math.random() - 0.5) * 0.1;
+    endPos[1] += (Math.random() - 0.5) * 0.1;
 
     const attackDir = this.normalize(directionNumToSwordPos.get(closestDir)!);
     const targetDir = Math.atan2(attackDir[1], attackDir[0]);
     const currentDir = battle.anim.endAngle;
-    battle.anim.startAngle = currentDir;
-    battle.anim.endAngle = targetDir;
-    battle.anim.startYScale = 1.0;
-    battle.anim.endYScale = 0.8;
-    battle.anim.startXScale = 1.0;
-    battle.anim.endXScale = 1.0;
+
+    battle.anim = BattleAnim.attackStarting(
+      currentTime,
+      [startPos[0], startPos[1]],
+      endPos,
+      currentDir,
+      targetDir,
+      ATTACK_COMBO_STARTUP_TIMES[currentCombo % ATTACK_COMBO_STARTUP_TIMES.length]
+    );
 
     this.audio.playerAttack.play();
   }
 
   doParry(battle: BattleState, currentTime: number) {
-    battle.anim.state = AttackAnimation.PARRYING;
-    battle.anim.startTime = currentTime;
-    battle.anim.endTime = currentTime + PARRY_WINDOW + PARRY_END_LAG;
-    battle.anim.startPos = [...battle.anim.endPos];
-    battle.anim.endPos = [...battle.anim.endPos];
-    battle.anim.startAngle = battle.anim.endAngle;
-    battle.anim.endAngle = battle.anim.startAngle - (Math.PI / 10);
-    battle.anim.startYScale = 1.0;
-    battle.anim.endYScale = 1.0;
-    battle.anim.startXScale = 1.0;
-    battle.anim.endXScale = 1.0;
+    battle.anim = BattleAnim.parrying(
+      currentTime,
+      [...battle.anim.endPos],
+      battle.anim.endAngle,
+      PARRY_WINDOW + PARRY_END_LAG
+    );
   }
 
   updateSwordPosition(battle: BattleState, getCurrentTargetDirection: () => number) {

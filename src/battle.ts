@@ -1,35 +1,7 @@
+import { BattleAnim } from './battleAnim';
+
 export enum AttackAnimation {
   NONE, PARRYING, ATTACK_STARTING, ATTACKING, STAGGERING
-}
-
-// New BattleAnim class for anim field
-export class BattleAnim {
-  state: AttackAnimation;
-  // TODO bugged due to moving times, change to how long has elapsed and total duration instead
-  startTime: number;
-  endTime: number;
-  startPos: [number, number];
-  endPos: [number, number];
-  startAngle: number;
-  endAngle: number;
-  startYScale: number;
-  endYScale: number;
-  startXScale: number;
-  endXScale: number;
-
-  constructor() {
-    this.state = AttackAnimation.NONE;
-    this.startTime = 0;
-    this.endTime = 0;
-    this.startPos = [0.5, 0.5];
-    this.endPos = [0.5, 0.5];
-    this.startAngle = 0;
-    this.endAngle = 0;
-    this.startYScale = 1.0;
-    this.endYScale = 1.0;
-    this.startXScale = 1.0;
-    this.endXScale = 1.0;
-  }
 }
 
 export type BattleState = {
