@@ -8,7 +8,8 @@ import { BattleAnim } from './battleAnim';
 
 const ATTACK_COMBO_STARTUP_TIMES = [0.2, 0.2, 0.3, 0.2, 0.4];
 const ATTACK_COMBO_DAMAGE_MULT = [1.0, 1.1, 1.3, 1.0, 2.2];
-const ATTACK_END_LAG = 0.6;
+const ATTACK_DURATION = 0.3;
+const ATTACK_END_LAG = 0.3;
 const COMBO_EXTEND_TIME = 3.0;
 const STAGGER_TIME = 0.4;
 const PARRY_WINDOW = 0.2;
@@ -65,12 +66,13 @@ export class BattleLogic {
     endPos[1] += (Math.random() - 0.5) * 0.1;
 
     const angle = battle.anim.endAngle;
+    // First, ATTACKING animation
     battle.anim = BattleAnim.attacking(
       currentTime,
       attackStartPosition,
       endPos,
       angle,
-      ATTACK_END_LAG
+      ATTACK_DURATION
     );
 
     this.audio.enemyHit.play();
@@ -216,6 +218,14 @@ export class BattleLogic {
     if (battle.anim.state !== AttackAnimation.NONE && currentTime >= battle.anim.endTime) {
       if (battle.anim.state === AttackAnimation.ATTACK_STARTING) {
         this.doAttack(battle, currentTime);
+      } else if (battle.anim.state === AttackAnimation.ATTACKING) {
+        // Transition to ATTACK_END_LAG animation
+        battle.anim = BattleAnim.attackEndLag(
+          currentTime,
+          [...battle.anim.endPos],
+          battle.anim.endAngle,
+          ATTACK_END_LAG
+        );
       } else {
         battle.anim.state = AttackAnimation.NONE;
       }

@@ -93,4 +93,25 @@ export class BattleAnim {
     anim.endXScale = 1.0;
     return anim;
   }
+
+  static attackEndLag(
+    currentTime: number,
+    pos: [number, number],
+    angle: number,
+    duration: number
+  ): BattleAnim {
+    const anim = new BattleAnim();
+    anim.state = AttackAnimation.ATTACK_END_LAG;
+    anim.startTime = currentTime;
+    anim.endTime = currentTime + duration;
+    anim.startPos = [...pos];
+    anim.endPos = [...pos];
+    anim.startAngle = angle;
+    anim.endAngle = angle;
+    anim.startYScale = 1.0;
+    anim.endYScale = 1.0;
+    anim.startXScale = 1.0;
+    anim.endXScale = 1.0;
+    return anim;
+  }
 }

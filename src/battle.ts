@@ -1,7 +1,7 @@
 import { BattleAnim } from './battleAnim';
 
 export enum AttackAnimation {
-  NONE, PARRYING, ATTACK_STARTING, ATTACKING, STAGGERING
+  NONE, PARRYING, ATTACK_STARTING, ATTACKING, ATTACK_END_LAG, STAGGERING
 }
 
 export type BattleState = {
