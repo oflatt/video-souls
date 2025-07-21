@@ -38,12 +38,14 @@ type AlertData = {
 const attackedPosition = [0.7, 0.4];
 const attackedAngle = Math.PI / 2;
 
+// Create a global graphics instance and export it
+export const graphics = new Graphics(document.querySelector<HTMLCanvasElement>("#game-canvas")!);
+
 export class VideoSouls {
   elements;
   gameMode: GameMode;
   battle: BattleState;
   alerts: AlertData[];
-  graphics: Graphics;
   audio: AudioPlayer;
   inputManager: InputManager;
   battleRenderer: BattleRenderer;
@@ -87,9 +89,8 @@ export class VideoSouls {
       levelsContainer: document.querySelector<HTMLDivElement>("#levels-container")!,
     } as const;
 
-    this.graphics = new Graphics(this.elements.canvas);
-    this.editor = new Editor(new LevelDataV0(), this.graphics, this.videoPlayer);
-    this.battleRenderer = new BattleRenderer(this.graphics, this.elements.canvas, this.editor.level);
+    this.editor = new Editor(new LevelDataV0(), graphics, this.videoPlayer);
+    this.battleRenderer = new BattleRenderer(this.elements.canvas, this.editor.level);
     this.battleLogic = new BattleLogic(this.audio, this.editor.level);
     this.gameMode = GameMode.MENU;
     this.battle = initialBattleState();
@@ -186,7 +187,7 @@ export class VideoSouls {
         // Recreate battleLogic with new level
         this.battleLogic = new BattleLogic(this.audio, level);
         // Recreate battleRenderer with new level
-        this.battleRenderer = new BattleRenderer(this.graphics, this.elements.canvas, level);
+        this.battleRenderer = new BattleRenderer(this.elements.canvas, level);
         this.setGameMode(GameMode.PLAYING);
       } else {
         this.fadingAlert(`Invalid or failed to load level file: ${levelFile}`, 30, "20px");
@@ -348,7 +349,7 @@ export class VideoSouls {
         // Recreate battleLogic with new level
         this.battleLogic = new BattleLogic(this.audio, level);
         // Recreate battleRenderer with new level
-        this.battleRenderer = new BattleRenderer(this.graphics, this.elements.canvas, level);
+        this.battleRenderer = new BattleRenderer(this.elements.canvas, level);
         return true;
       } else {
         this.fadingAlert("Invalid Level- see validation error below", 30, "20px");
@@ -533,7 +534,7 @@ export class VideoSouls {
       // Clean up old editor
       this.editor.cleanup();
       // Create new Editor, which now creates HUD itself
-      this.editor = new Editor(this.editor.level, this.graphics, this.videoPlayer);
+      this.editor = new Editor(this.editor.level, graphics, this.videoPlayer);
 
       // Set the editor title input to the level's title
       const title = this.editor.level.title ?? "";
@@ -572,7 +573,7 @@ export class VideoSouls {
     // Recreate battleLogic with new level
     this.battleLogic = new BattleLogic(this.audio, this.editor.level);
     // Recreate battleRenderer with new level
-    this.battleRenderer = new BattleRenderer(this.graphics, this.elements.canvas, this.editor.level);
+    this.battleRenderer = new BattleRenderer(this.elements.canvas, this.editor.level);
   }
 
   // Function to play a YouTube video by extracting the video ID from the URL

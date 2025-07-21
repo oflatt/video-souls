@@ -1,6 +1,7 @@
 import { Graphics } from './graphics';
 import { AttackAnimation, BattleState, directionNumToSwordPos, directionNumToSwordAngle } from './battle';
 import { LevelDataV0 } from './leveldata';
+import { graphics } from './videosouls'; // <-- import global graphics
 
 const PARRY_WINDOW = 0.2;
 const PARRY_END_LAG = 0.2;
@@ -86,12 +87,10 @@ export function drawArrowOrX(
 }
 
 export class BattleRenderer {
-  private graphics: Graphics;
   private canvas: HTMLCanvasElement;
   private level: LevelDataV0; // <-- Add level reference
 
-  constructor(graphics: Graphics, canvas: HTMLCanvasElement, level: LevelDataV0) {
-    this.graphics = graphics;
+  constructor(canvas: HTMLCanvasElement, level: LevelDataV0) {
     this.canvas = canvas;
     this.level = level;
   }
@@ -132,13 +131,13 @@ export class BattleRenderer {
       // Use shared arrow/X drawing helper
       drawArrowOrX(
         ctx,
-        this.graphics.arrowSprite,
+        graphics.arrowSprite,
         attack.direction,
         attackX,
         attackY,
-        this.graphics.arrowSprite.width,
+        graphics.arrowSprite.width,
         undefined,
-        this.graphics.xSprite // <-- pass xSprite
+        graphics.xSprite // <-- pass xSprite
       );
 
       ctx.restore();
@@ -191,9 +190,9 @@ export class BattleRenderer {
     var swordOutlineX = topLeftX;
     var swordOutlineY = topLeftY; 
   
-    this.drawCenteredRotated(this.graphics.swordSprites.yellowOutline, swordOutlineX, swordOutlineY, swordAngle - Math.PI / 2, redSwordOutlineStrength, xscale, yscale);
-    this.drawCenteredRotated(this.graphics.swordSprites.greenOutline, swordOutlineX, swordOutlineY, swordAngle- Math.PI / 2, greenSwordOutlineStrength, xscale, yscale);
-    this.drawCenteredRotated(this.graphics.swordSprites.default, topLeftX, topLeftY, swordAngle- Math.PI / 2, 1.0, xscale, yscale);
+    this.drawCenteredRotated(graphics.swordSprites.yellowOutline, swordOutlineX, swordOutlineY, swordAngle - Math.PI / 2, redSwordOutlineStrength, xscale, yscale);
+    this.drawCenteredRotated(graphics.swordSprites.greenOutline, swordOutlineX, swordOutlineY, swordAngle- Math.PI / 2, greenSwordOutlineStrength, xscale, yscale);
+    this.drawCenteredRotated(graphics.swordSprites.default, topLeftX, topLeftY, swordAngle- Math.PI / 2, 1.0, xscale, yscale);
   }
 
   drawCriticalMarker(
@@ -203,7 +202,7 @@ export class BattleRenderer {
     const ctx = this.canvas.getContext('2d')!;
     const dir = battle.currentCritical.direction;
     const pos = [...directionNumToSwordPos.get(dir)!];
-    const arrowSprite = this.graphics.arrowSprite;
+    const arrowSprite = graphics.arrowSprite;
     const size = 60;
     // Place critical marker closer to the center than attack warnings/arrows
     const x = this.canvas.width * (0.5 + pos[0] * 0.9);
@@ -216,7 +215,7 @@ export class BattleRenderer {
       y,
       size,
       battle.currentCritical.multiplier,
-      this.graphics.xSprite
+      graphics.xSprite
     );
   }
 

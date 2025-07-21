@@ -20,6 +20,7 @@ import {
 } from './leveldata';
 import { EditorHud } from './editorHud';
 import { drawArrowOrX } from './battleRenderer'; // <-- add this import
+import { graphics } from './videosouls'; // <-- import global graphics
 
 const FRAME_LENGTH = 0.05;
 const PLAYBACK_BAR_PADDING = 20;
@@ -96,7 +97,6 @@ export class Editor {
   zoom: number;
   dragged: DraggedAttack | null | DraggedInterval | DraggedCritical;
   freshName: number;
-  graphics: Graphics;
   controlsInfoToggle: HTMLButtonElement | null = null;
   controlsInfoPanel: HTMLElement | null = null;
   controlsInfoVisible: boolean = true;
@@ -104,8 +104,7 @@ export class Editor {
   hudElement: HTMLElement; // <-- Store the HUD element
   videoPlayer: VideoPlayer;
 
-  constructor(level: LevelDataV0, graphics: Graphics, videoPlayer: VideoPlayer) {
-    this.graphics = graphics;
+  constructor(level: LevelDataV0, _graphics: Graphics, videoPlayer: VideoPlayer) {
     this.videoPlayer = videoPlayer;
     this.frameToAttack = new Map<number, AttackData>();
     this.elements = new Map<AttackData, HTMLElement>();
@@ -299,8 +298,8 @@ export class Editor {
     }
 
     // Draw arrow for direction using drawArrowOrX
-    let arrowImg = this.graphics.arrowSprite;
-    let xImg = this.graphics.xSprite; // <-- get xSprite
+    let arrowImg = graphics.arrowSprite;
+    let xImg = graphics.xSprite; // <-- get xSprite
     let arrowSize = 50;
     let arrowCanvas = document.createElement("canvas");
     arrowCanvas.width = arrowSize;
