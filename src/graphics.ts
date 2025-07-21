@@ -5,7 +5,7 @@ export class Graphics {
     greenOutline: HTMLImageElement | HTMLCanvasElement,
   };
   arrowSprite: HTMLCanvasElement;
-  xSprite: HTMLCanvasElement; // <-- Add xSprite
+  xSprite: HTMLCanvasElement;
 
   constructor(canvas: HTMLCanvasElement) {
     // Load sword sprites
@@ -42,19 +42,29 @@ export class Graphics {
       this.arrowSprite = glow;
     });
 
-    // --- X sprite loading and glow ---
-    const xImage = new Image();
-    xImage.src = 'x.png';
-    this.xSprite = document.createElement('canvas');
-    xImage.addEventListener('load', () => {
-      let scale_factor = (0.05 * canvas.width) / xImage.width;
-      const scaled = scaleImage(xImage, scale_factor, scale_factor);
-      const glowBefore = makeGlow(scaled, 0.1);
-      const glow = tintImage(glowBefore, [1.0, 0.5, 0.5]);
-      const ctx2 = glow.getContext('2d')!;
-      ctx2.drawImage(scaled, (glow.width - scaled.width) / 2, (glow.height - scaled.height) / 2);
-      this.xSprite = glow;
-    });
+    const xSize = 200;
+    const xCanvas = document.createElement('canvas');
+    xCanvas.width = xSize;
+    xCanvas.height = xSize;
+    const xCtx = xCanvas.getContext('2d')!;
+    xCtx.save();
+    xCtx.strokeStyle = "#000";
+    xCtx.lineWidth = xSize * 0.08;
+    xCtx.lineCap = "round";
+    xCtx.beginPath();
+    xCtx.moveTo(xSize * 0.2, xSize * 0.2);
+    xCtx.lineTo(xSize * 0.8, xSize * 0.8);
+    xCtx.moveTo(xSize * 0.8, xSize * 0.2);
+    xCtx.lineTo(xSize * 0.2, xSize * 0.8);
+    xCtx.stroke();
+    xCtx.restore();
+
+    // Apply glow and tint to match arrow style, but with less blur for the X
+    const glowBefore = makeGlow(xCanvas, 0.05);
+    const glow = tintImage(glowBefore, [1.0, 0.5, 0.5]);
+    const ctx2 = glow.getContext('2d')!;
+    ctx2.drawImage(xCanvas, (glow.width - xCanvas.width) / 2, (glow.height - xCanvas.height) / 2);
+    this.xSprite = glow;
   }
 }
 
