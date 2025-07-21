@@ -169,7 +169,7 @@ export class BattleLogic {
 
   private successParry(battle: BattleState, currentTime: number) {
     this.audio.parrySound.play();
-    battle.anim.timeSinceLastParry = 0;  // Reset duration
+    battle.timeSinceLastParry = 0;  // Reset duration
     battle.anim.state = AttackAnimation.NONE;
   }
 

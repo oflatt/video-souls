@@ -112,7 +112,7 @@ export class BattleRenderer {
       yscale = battle.anim.startYScale + (battle.anim.endYScale - battle.anim.startYScale) * slowExponentialAnimProgress;
     }
 
-    if (battle.anim.timeSinceLastParry < SUCCESS_PARRY_ANIM_FADE) {
+    if (battle.timeSinceLastParry < SUCCESS_PARRY_ANIM_FADE) {
       greenSwordOutlineStrength = Math.sqrt(1.0 - (battle.anim.timeSinceLastParry / SUCCESS_PARRY_ANIM_FADE));
     }
 
