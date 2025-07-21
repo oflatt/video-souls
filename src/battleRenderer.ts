@@ -205,9 +205,9 @@ export class BattleRenderer {
     const pos = [...directionNumToSwordPos.get(dir)!];
     const arrowSprite = this.graphics.arrowSprite;
     const size = 60;
-    // Place critical marker at the same position as attack warnings/arrows
-    const x = this.canvas.width * (0.5 + pos[0] * 1.5);
-    const y = this.canvas.height * (1 - (0.5 + pos[1] * 1.5));
+    // Place critical marker closer to the center than attack warnings/arrows
+    const x = this.canvas.width * (0.5 + pos[0] * 0.9);
+    const y = this.canvas.height * (1 - (0.5 + pos[1] * 0.9));
     drawArrowOrX(
       ctx,
       arrowSprite,
@@ -216,7 +216,7 @@ export class BattleRenderer {
       y,
       size,
       battle.currentCritical.multiplier,
-      this.graphics.xSprite // <-- pass xSprite
+      this.graphics.xSprite
     );
   }
 
