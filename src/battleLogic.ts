@@ -214,4 +214,17 @@ export class BattleLogic {
       attackSchedule
     );
   }
+
+  handleAnimations(
+    battle: BattleState,
+    currentTime: number,
+  ) {
+    if (battle.anim.state !== AttackAnimation.NONE && currentTime >= battle.anim.endTime) {
+      if (battle.anim.state === AttackAnimation.ATTACK_STARTING) {
+        this.doAttack(battle, currentTime);
+      } else {
+        battle.anim.state = AttackAnimation.NONE;
+      }
+    }
+  }
 }

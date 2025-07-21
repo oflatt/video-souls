@@ -397,11 +397,6 @@ export class VideoSouls {
     );
   }
 
-  doAttack() {
-    const currentTime = this.currentTime();
-    this.battleLogic.doAttack(this.battle, currentTime);
-  }
-
   startAttack() {
     const currentTime = this.currentTime();
     this.battleLogic.startAttack(this.battle, currentTime);
@@ -446,15 +441,7 @@ export class VideoSouls {
       }
 
       // check if we finished an animation
-      if (this.battle.anim.state !== AttackAnimation.NONE && currentTime >= this.battle.anim.endTime) {
-
-        // if the animation is attack starting, do the attack
-        if (this.battle.anim.state === AttackAnimation.ATTACK_STARTING) {
-          this.doAttack();
-        } else {
-          this.battle.anim.state = AttackAnimation.NONE;
-        }
-      }
+      this.battleLogic.handleAnimations(this.battle, currentTime);
 
       // ready for new buffered action
       if (this.battle.bufferedInput !== null && this.battle.anim.state === AttackAnimation.NONE) {

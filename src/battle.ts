@@ -2,21 +2,39 @@ export enum AttackAnimation {
   NONE, PARRYING, ATTACK_STARTING, ATTACKING, STAGGERING
 }
 
+// New BattleAnim class for anim field
+export class BattleAnim {
+  state: AttackAnimation;
+  startTime: number;
+  endTime: number;
+  startPos: [number, number];
+  endPos: [number, number];
+  startAngle: number;
+  endAngle: number;
+  timeSinceLastParry: number;
+  startYScale: number;
+  endYScale: number;
+  startXScale: number;
+  endXScale: number;
+
+  constructor() {
+    this.state = AttackAnimation.NONE;
+    this.startTime = 0;
+    this.endTime = 0;
+    this.startPos = [0.5, 0.5];
+    this.endPos = [0.5, 0.5];
+    this.startAngle = 0;
+    this.endAngle = 0;
+    this.timeSinceLastParry = 1000;
+    this.startYScale = 1.0;
+    this.endYScale = 1.0;
+    this.startXScale = 1.0;
+    this.endXScale = 1.0;
+  }
+}
+
 export type BattleState = {
-  anim: {
-    state: AttackAnimation,
-    startTime: number,
-    endTime: number,
-    startPos: [number, number],
-    endPos: [number, number],
-    startAngle: number,
-    endAngle: number,
-    timeSinceLastParry: number,
-    startYScale: number,
-    endYScale: number,
-    startXScale: number,
-    endXScale: number,
-  },
+  anim: BattleAnim,
   hitCombo: number,
   timeSinceLastHit: number, 
   bufferedInput: string | null,
@@ -55,20 +73,7 @@ const directionNumToSwordPos = new Map<number, [number, number]>([
 
 export function initialBattleState(): BattleState {
   return {
-    anim: {
-      state: AttackAnimation.NONE,
-      startTime: 0,
-      endTime: 0,
-      startPos: [0.5, 0.5],
-      endPos: [0.5, 0.5],
-      startAngle: 0,
-      endAngle: 0,
-      timeSinceLastParry: 1000,  // Large initial value
-      startYScale: 1.0,
-      endYScale: 1.0,
-      startXScale: 1.0,
-      endXScale: 1.0,
-    },
+    anim: new BattleAnim(),
     bufferedInput: null,
     playerHealth: 1.0,
     lastPlayerHealth: 1.0,
