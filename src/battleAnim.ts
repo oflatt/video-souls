@@ -105,11 +105,17 @@ export class BattleAnim {
     anim.startTime = currentTime;
     anim.endTime = currentTime + duration;
     anim.startPos = [...pos];
-    anim.endPos = [...pos];
+    // Drift: move slightly in the attack direction and a little down
+    const driftAmount = -0.06;
+    const downAmount = 0.01;
+    anim.endPos = [
+      pos[0] + Math.cos(angle) * driftAmount,
+      pos[1] + Math.sin(angle) * driftAmount - downAmount
+    ];
     anim.startAngle = angle;
     anim.endAngle = angle;
-    anim.startYScale = 1.0;
-    anim.endYScale = 1.0;
+    anim.startYScale = -1.0;
+    anim.endYScale = -1.0;
     anim.startXScale = 1.0;
     anim.endXScale = 1.0;
     return anim;
