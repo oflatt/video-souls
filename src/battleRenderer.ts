@@ -80,7 +80,6 @@ export class BattleRenderer {
     var swordAngle = battle.anim.endAngle;
     var redSwordOutlineStrength = 0.0;
     var greenSwordOutlineStrength = 0.0;
-    var yellowSwordOutlineStrength = 0.0;
     var xscale = 1.0;
     var yscale = 1.0;
   
@@ -109,11 +108,6 @@ export class BattleRenderer {
         redSwordOutlineStrength = Math.sqrt(1.0 - (animProgress / parryWindowProportion));
       }
 
-      // Yellow glow for end lag
-      if (battle.anim.state === AttackAnimation.ATTACK_END_LAG) {
-        yellowSwordOutlineStrength = 1.0;
-      }
-
       xscale = battle.anim.startYScale + (battle.anim.endXScale - battle.anim.startXScale) * slowExponentialAnimProgress;
       yscale = battle.anim.startYScale + (battle.anim.endYScale - battle.anim.startYScale) * slowExponentialAnimProgress;
     }
@@ -127,7 +121,7 @@ export class BattleRenderer {
     var swordOutlineX = topLeftX;
     var swordOutlineY = topLeftY; 
   
-    this.drawCenteredRotated(this.graphics.swordSprites.yellowOutline, swordOutlineX, swordOutlineY, swordAngle - Math.PI / 2, redSwordOutlineStrength + yellowSwordOutlineStrength, xscale, yscale);
+    this.drawCenteredRotated(this.graphics.swordSprites.yellowOutline, swordOutlineX, swordOutlineY, swordAngle - Math.PI / 2, redSwordOutlineStrength, xscale, yscale);
     this.drawCenteredRotated(this.graphics.swordSprites.greenOutline, swordOutlineX, swordOutlineY, swordAngle- Math.PI / 2, greenSwordOutlineStrength, xscale, yscale);
     this.drawCenteredRotated(this.graphics.swordSprites.default, topLeftX, topLeftY, swordAngle- Math.PI / 2, 1.0, xscale, yscale);
   }
