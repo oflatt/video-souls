@@ -15,7 +15,8 @@ import {
   parseWithMaps,
   stringifyLevelData,
   parseLevelData,
-  validateLevelData
+  validateLevelData,
+  CriticalData // <-- import CriticalData
 } from './leveldata';
 import { EditorHud } from './editorHud';
 
@@ -56,10 +57,25 @@ class DraggedAttack {
   }
 }
 
+class DraggedCritical {
+  critical: CriticalData;
+  ty: "critical";
+  constructor(critical: CriticalData) {
+    this.critical = critical;
+    this.ty = "critical";
+  }
+}
+
 function attackDataEquals(a: AttackData, b: AttackData): boolean {
   return a.time === b.time &&
     a.direction === b.direction &&
     a.damage === b.damage;
+}
+
+function criticalDataEquals(a: CriticalData, b: CriticalData): boolean {
+  return a.time === b.time &&
+    a.direction === b.direction &&
+    a.multiplier === b.multiplier;
 }
 
 export class Editor {
@@ -70,13 +86,14 @@ export class Editor {
   frameToAttack: Map<number, AttackData>;
   elements: Map<AttackData, HTMLElement>;
   intervalElements: Map<AttackInterval, IntervalElements>;
-  selected: DraggedAttack | null | DraggedInterval;
+  criticalElements: Map<CriticalData, HTMLElement>;
+  selected: DraggedAttack | null | DraggedInterval | DraggedCritical;
   playbackBar: HTMLElement;
   recordingControls: HTMLElement;
   playbackWrapper: HTMLElement;
   level: LevelDataV0;
   zoom: number;
-  dragged: DraggedAttack | null | DraggedInterval;
+  dragged: DraggedAttack | null | DraggedInterval | DraggedCritical;
   freshName: number;
   graphics: Graphics;
   controlsInfoToggle: HTMLButtonElement | null = null;
@@ -92,6 +109,7 @@ export class Editor {
     this.frameToAttack = new Map<number, AttackData>();
     this.elements = new Map<AttackData, HTMLElement>();
     this.intervalElements = new Map<AttackInterval, IntervalElements>();
+    this.criticalElements = new Map<CriticalData, HTMLElement>();
     this.selected = null;
     this.level = level;
     this.zoom = 1.0;
@@ -139,6 +157,7 @@ export class Editor {
 
     // now add all existing attacks to UI
     this.addAttacks();
+    this.addCriticals(); // <-- add criticals to UI
 
     this.hud = new EditorHud();
   }
@@ -166,6 +185,11 @@ export class Editor {
         // add the attack back at the mouse position
         this.createAttackAtMousePosition(event.clientX, this.dragged.attack.direction, this.dragged.attack.damage);
 
+        this.dragged = null;
+      } else if (this.dragged.ty == "critical") {
+        this.dragged = <DraggedCritical>this.dragged;
+        this.deleteCritical(this.dragged.critical);
+        this.createCriticalAtMousePosition(event.clientX, this.dragged.critical.direction, this.dragged.critical.multiplier);
         this.dragged = null;
       } else if (this.dragged.constructor.name == "DraggedInterval") {
         this.dragged = <DraggedInterval>this.dragged;
@@ -203,11 +227,123 @@ export class Editor {
 
   addAttacks() {
     for (let attack of this.level.attackData) {
-      this.addAttackElement(attack);
+      this.addAttackOrCriticalElement(attack, false);
     }
-
     for (let [name, interval] of this.level.attackIntervals) {
       this.addIntervalElements(interval);
+    }
+  }
+
+  addCriticals() {
+    for (let crit of this.level.criticals) {
+      this.addAttackOrCriticalElement(crit, true);
+    }
+  }
+
+  // Shared helper for both attacks and criticals
+  private addAttackOrCriticalElement(
+    data: AttackData | CriticalData,
+    isCritical: boolean
+  ) {
+    const parentElement = this.playbackWrapper;
+    let templateElement: HTMLElement | null = null;
+    if (isCritical) {
+      const tpl = document.getElementById("critical-marker-template") as HTMLTemplateElement | null;
+      if (tpl && tpl.content) {
+        templateElement = tpl.content.firstElementChild as HTMLElement;
+      }
+    } else {
+      const tpl = document.getElementById("attack-marker-template") as HTMLTemplateElement | null;
+      if (tpl && tpl.content) {
+        templateElement = tpl.content.firstElementChild as HTMLElement;
+      }
+    }
+    if (!templateElement) {
+      console.error("Template element not found for", isCritical ? "critical-marker-template" : "attack-marker-template");
+      return;
+    }
+    let element = templateElement.cloneNode(true) as HTMLElement;
+    element.classList.remove("template");
+    if (isCritical) element.classList.add("critical-marker");
+
+    // Mouse down handler
+    const handleMouseDown = isCritical
+      ? ((event: Event) => {
+          event.stopPropagation();
+          event.preventDefault();
+          this.criticalMouseDown(data as CriticalData);
+        }) as EventListener
+      : ((event: Event) => {
+          event.stopPropagation();
+          event.preventDefault();
+          this.attackMouseDown(data as AttackData);
+        }) as EventListener;
+    element.querySelector(".marker-handle")!.addEventListener("mousedown", handleMouseDown);
+
+    // Insert chronologically
+    const arr = isCritical ? this.level.criticals : this.level.attackData;
+    const map = isCritical ? this.criticalElements : this.elements;
+    let index = arr.findIndex(a => a.time > data.time);
+    if (index == -1) {
+      parentElement.insertBefore(element, null);
+    } else {
+      let nextElem = map.get(arr[index] as any) as HTMLElement | undefined;
+      parentElement.insertBefore(element, nextElem ?? null);
+    }
+    map.set(data as any, element);
+
+    // For attacks, update frameToAttack
+    if (!isCritical) {
+      this.frameToAttack.set(this.frameIndex(data as AttackData), data as AttackData);
+    }
+
+    // Draw arrow for direction
+    let arrowImg = this.graphics.arrowSprite;
+    let arrowSize = 50;
+    let arrowCanvas = document.createElement("canvas");
+    arrowCanvas.width = arrowSize;
+    arrowCanvas.height = arrowSize;
+    let arrowCtx = arrowCanvas.getContext("2d")!;
+    arrowCtx.save();
+    arrowCtx.translate(arrowSize / 2, arrowSize / 2);
+    arrowCtx.rotate((Math.PI / 4) * data.direction);
+
+    if (isCritical) {
+      // Draw a gold/yellow arrow with partial opacity for criticals
+      arrowCtx.globalAlpha = 0.85;
+      // Draw a yellow overlay on top of the arrow sprite
+      arrowCtx.drawImage(arrowImg, -arrowSize / 2, -arrowSize / 2, arrowSize, arrowSize);
+      arrowCtx.globalCompositeOperation = "source-atop";
+      arrowCtx.fillStyle = "#ffd700";
+      arrowCtx.globalAlpha = 0.5;
+      arrowCtx.fillRect(-arrowSize / 2, -arrowSize / 2, arrowSize, arrowSize);
+      arrowCtx.globalCompositeOperation = "source-over";
+      arrowCtx.globalAlpha = 1.0;
+    } else {
+      // Normal attack arrow
+      arrowCtx.globalAlpha = 1.0;
+      arrowCtx.drawImage(arrowImg, -arrowSize / 2, -arrowSize / 2, arrowSize, arrowSize);
+    }
+    arrowCtx.restore();
+
+    let arrowElement = document.createElement("div");
+    arrowElement.appendChild(arrowCanvas);
+    arrowElement.style.position = "absolute";
+    let pos_vector: [number, number] = [0, 30];
+    let angle = (Math.PI / 4) * data.direction;
+    let rotated_vector = roatate_vec2(pos_vector, angle);
+    let left = -arrowSize / 2 + rotated_vector[0];
+    let top = -arrowSize / 2 + rotated_vector[1];
+    arrowElement.style.left = `${left}px`;
+    arrowElement.style.bottom = `calc(var(--height) + ${top}px)`;
+    element.appendChild(arrowElement);
+
+    // For criticals, show multiplier label
+    if (isCritical) {
+      let multLabel = document.createElement("div");
+      multLabel.textContent = `x${(data as CriticalData).multiplier}`;
+      multLabel.className = "mult-label";
+      element.appendChild(multLabel);
     }
   }
 
@@ -267,6 +403,18 @@ export class Editor {
       elements.endElement.style.left = `${endLeft}px`;
       elements.nameElement.style.left = `${(startLeft + endLeft) / 2}px`;
       elements.nameElement.style.width = (interval.name.length + 2) + "ch";
+    }
+
+    // update all of the critical elements positions
+    for (let [crit, element] of this.criticalElements) {
+      var left = this.timeToPx(crit.time);
+      if (this.dragged != null && this.dragged.ty == "critical") {
+        if ((this.dragged as DraggedCritical).critical == crit) {
+          left = mouseX - this.playbackBar.getBoundingClientRect().left;
+        }
+      }
+      element.style.left = `${left}px`;
+      element.style.setProperty('--height', `50px`);
     }
 
     // update the playback point
@@ -348,6 +496,9 @@ export class Editor {
     }
     if (keyJustPressed.has("i")) {
       this.createIntervalAt(this.getCurrentTimeSafe());
+    }
+    if (keyJustPressed.has("o")) {
+      this.createCriticalAt(this.getCurrentTimeSafe(), currentTargetDir, 1.5);
     }
     if (keyJustPressed.has("x") || keyJustPressed.has("Backspace") || keyJustPressed.has("Delete")) {
       this.removeSelected();
@@ -438,6 +589,28 @@ export class Editor {
     this.selectAttack(newAttack);
   }
 
+  createCriticalAtMousePosition(pos: number, targetDir: AttackDirection, multiplier: number) {
+    let posRelative = pos - this.playbackBar.getBoundingClientRect().left;
+    let time = this.pxToTime(posRelative);
+    let newCrit: CriticalData = {
+      time: time,
+      direction: targetDir,
+      multiplier: multiplier
+    };
+    this.createCritical(newCrit);
+    this.selectCritical(newCrit);
+  }
+
+  createCriticalAt(timestamp: number, targetDir: AttackDirection, multiplier: number) {
+    let newCrit: CriticalData = {
+      time: timestamp,
+      direction: targetDir,
+      multiplier: multiplier
+    };
+    this.createCritical(newCrit);
+    this.selectCritical(newCrit);
+  }
+
   createIntervalAt(timestamp: DOMHighResTimeStamp) {
     let endTime = Math.min(timestamp + 2, this.videoPlayer.getDuration());
     // if the end time is the same as the start time, don't create
@@ -468,6 +641,8 @@ export class Editor {
         this.deleteAttack(this.selected.attack);
       } else if (this.selected.ty == "interval") {
         this.deleteInterval(this.selected.interval);
+      } else if (this.selected.ty == "critical") {
+        this.deleteCritical((this.selected as DraggedCritical).critical);
       }
     }
   }
@@ -530,55 +705,6 @@ export class Editor {
     parentElement.appendChild(nameElement);
   }
 
-  private addAttackElement(attack: AttackData) {
-    // Set up attack marker element
-    const parentElement = this.playbackWrapper;
-    const templateElement = document.querySelector<HTMLElement>(".attack-marker.template")!;
-    let attackElement = <HTMLElement>templateElement.cloneNode(true); // Returns Node type by default
-    attackElement.classList.remove("template");
-    attackElement.querySelector(".marker-handle")!.addEventListener("mousedown", event => {
-      event.stopPropagation();
-      event.preventDefault();
-      this.attackMouseDown(attack);
-    });
-    this.elements.set(attack, attackElement);
-
-    // Insert attack chronologically
-    let index = this.level.attackData.findIndex(a => attack.time < a.time);
-    if (index == -1) {
-      parentElement.insertBefore(attackElement, null);
-    } else {
-      parentElement.insertBefore(attackElement, this.elements.get(this.level.attackData[index])!);
-    }
-    this.frameToAttack.set(this.frameIndex(attack), attack);
-
-    // now add an arrow image to the attack element based on the direction of the attack
-    let arrowImg = this.graphics.arrowSprite;
-    let arrowSize = 50;
-    let arrowDir = attack.direction;
-    let arrowCanvas = document.createElement("canvas");
-    arrowCanvas.width = arrowSize;
-    arrowCanvas.height = arrowSize;
-    let arrowCtx = arrowCanvas.getContext("2d")!;
-    arrowCtx.translate(arrowSize / 2, arrowSize / 2);
-    arrowCtx.rotate((Math.PI / 4) * attack.direction);
-    arrowCtx.drawImage(arrowImg, -arrowSize / 2, -arrowSize / 2, arrowSize, arrowSize);
-    // now add the canvas to the attack element in the right position
-    let arrowElement = document.createElement("div");
-    arrowElement.appendChild(arrowCanvas);
-    arrowElement.style.position = "absolute";
-    let pos_vector: [number, number] = [0, 30];
-    // rotate pos_vector clockwise by attack data direction
-    let angle = (Math.PI / 4) * attack.direction;
-    let rotated_vector = roatate_vec2(pos_vector, angle);
-    let left = -arrowSize / 2 + rotated_vector[0];
-    let top = -arrowSize / 2 + rotated_vector[1];
-    arrowElement.style.left = `${left}px`;
-    arrowElement.style.bottom = `calc(var(--height) + ${top}px)`;
-
-    attackElement.appendChild(arrowElement);
-  }
-
   private createInterval(interval: AttackInterval) {
     // Check if any intervals have overlapping times
     let existingInterval: AttackInterval | undefined;
@@ -600,14 +726,23 @@ export class Editor {
   }
 
   private createAttack(attack: AttackData) {
-    // Insert attack chronologically
     let index = this.level.attackData.findIndex(a => attack.time < a.time);
     if (index == -1) {
       this.level.attackData.push(attack);
     } else {
       this.level.attackData.splice(index, 0, attack);
     }
-    this.addAttackElement(attack);
+    this.addAttackOrCriticalElement(attack, false);
+  }
+
+  private createCritical(crit: CriticalData) {
+    let index = this.level.criticals.findIndex(a => crit.time < a.time);
+    if (index == -1) {
+      this.level.criticals.push(crit);
+    } else {
+      this.level.criticals.splice(index, 0, crit);
+    }
+    this.addAttackOrCriticalElement(crit, true);
   }
 
   private deleteInterval(interval: AttackInterval) {
@@ -621,32 +756,51 @@ export class Editor {
     }
   }
 
-  private deleteAttack(attack: AttackData) {
-    // Remove from frameToAttack
-    let frameIndex = this.frameIndex(attack);
-    if (this.frameToAttack.get(frameIndex) == attack) {
-      this.frameToAttack.delete(frameIndex);
-    }
-    // Remove DOM element if present
-    const element = this.elements.get(attack);
+  private deleteAttackOrCritical(
+    data: AttackData | CriticalData,
+    isCritical: boolean
+  ) {
+    const map = isCritical ? this.criticalElements : this.elements;
+    const arr = isCritical ? this.level.criticals : this.level.attackData;
+    const equals = isCritical ? criticalDataEquals : attackDataEquals;
+    const element = map.get(data as any);
     if (element) {
       element.remove();
-      this.elements.delete(attack);
+      map.delete(data as any);
     }
-    // Remove from attackData array using custom equality
-    let index = this.level.attackData.findIndex(a => attackDataEquals(a, attack));
+    let index = arr.findIndex(a => equals(a as any, data as any));
     if (index !== -1) {
-      this.level.attackData.splice(index, 1);
+      arr.splice(index, 1);
     }
-    // Clear selection if needed
-    if (this.selected != null && this.selected.ty == "attack" && this.selected.attack == attack) {
-      this.selected = null;
+    if (!isCritical && this.frameToAttack.get(this.frameIndex(data as AttackData)) == data) {
+      this.frameToAttack.delete(this.frameIndex(data as AttackData));
     }
+    if (this.selected != null) {
+      if (
+        (!isCritical && this.selected.ty == "attack" && (this.selected as DraggedAttack).attack == data) ||
+        (isCritical && this.selected.ty == "critical" && (this.selected as DraggedCritical).critical == data)
+      ) {
+        this.selected = null;
+      }
+    }
+  }
+
+  private deleteAttack(attack: AttackData) {
+    this.deleteAttackOrCritical(attack, false);
+  }
+
+  private deleteCritical(crit: CriticalData) {
+    this.deleteAttackOrCritical(crit, true);
   }
 
   private attackMouseDown(attack: AttackData) {
     this.selectAttack(attack);
     this.dragged = new DraggedAttack(attack);
+  }
+
+  private criticalMouseDown(crit: CriticalData) {
+    this.selectCritical(crit);
+    this.dragged = new DraggedCritical(crit);
   }
 
   private intervalMouseDown(interval: AttackInterval, isStart: boolean) {
@@ -662,6 +816,9 @@ export class Editor {
     }
     for (let attackElement of this.elements.values()) {
       attackElement.classList.remove("selected");
+    }
+    for (let critElement of this.criticalElements.values()) {
+      critElement.classList.remove("selected");
     }
   }
 
@@ -690,6 +847,16 @@ export class Editor {
       this.selected = new DraggedAttack(attack);
       this.elements.get(attack)!.classList.add("selected");
       this.seek(attack.time);
+    }
+  }
+
+  private selectCritical(crit: CriticalData | null) {
+    this.selected = null;
+    this.clearSelectClass();
+    if (crit != null) {
+      this.selected = new DraggedCritical(crit);
+      this.criticalElements.get(crit)!.classList.add("selected");
+      this.seek(crit.time);
     }
   }
 

@@ -67,6 +67,28 @@
         <button id="back-button">Back</button>
         <button id="retry-button">Retry</button>
     </div>
+    <template id="attack-marker-template">
+        <div class="attack-marker template">
+            <div class="marker-line">
+                <div class="marker-handle">
+                    <div class="damage-line">
+                        <div class="damage-handle"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+    <template id="critical-marker-template">
+        <div class="attack-marker critical-marker template">
+            <div class="marker-line">
+                <div class="marker-handle">
+                    <div class="damage-line">
+                        <div class="damage-handle"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
     <template id="record-hud-template">
         <div id="record-hud">
             <button id="editor-exit-to-menu-button">Exit to Menu</button>
@@ -75,15 +97,6 @@
                 <div id="playback-bar-wrapper">
                     <div id="playback-bar"></div>
                     <div id="playback-point"></div>
-                    <div class="attack-marker template">
-                        <div class="marker-line">
-                            <div class="marker-handle">
-                            <div class="damage-line">
-                                <div class="damage-handle"></div>
-                            </div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
             <div id="controls-info">

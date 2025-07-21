@@ -32,10 +32,16 @@ export type AttackData = {
   damage: number,
 };
 
+export type CriticalData = {
+  time: number,
+  direction: AttackDirection,
+  multiplier: number,
+};
 
 export class LevelDataV0 {
   video: string | null;
   attackData: AttackData[];
+  criticals: CriticalData[];
   attackIntervals: Map<string, AttackInterval>;
   attackSchedule: string;
   version: string;
@@ -47,13 +53,14 @@ export class LevelDataV0 {
   constructor() {
     this.video = null;
     this.attackData = [];
+    this.criticals = [];
     this.attackIntervals = new Map<string, AttackInterval>();
     this.attackSchedule = DEFAULT_ATTACK_SCHEDULE;
     this.version = "0.0.0";
     this.title = null;
     this.arrowless = false;
     this.bossDamageMultiplier = 1.0; 
-    this.bossHealth = 1.0;
+    this.bossHealth = 4.0;
   }
 }
 
@@ -63,6 +70,7 @@ export function levelDataFromVideo(videoId: string): LevelDataV0 {
   level.arrowless = false; // <-- Always set
   level.bossDamageMultiplier = 1.0; // <-- always set
   level.bossHealth = 1.0; // <-- always set
+  level.criticals = []; // <-- always set
   return level;
 }
 
@@ -96,6 +104,7 @@ export function stringifyLevelData(levelData: LevelDataV0): string {
   const serializable: any = {
     video: levelData.video,
     attackData: levelData.attackData,
+    criticals: levelData.criticals,
     attackIntervals: attackIntervalsObj,
     attackSchedule: levelData.attackSchedule,
     version: levelData.version,
@@ -118,6 +127,7 @@ export function parseLevelData(jsonString: string): LevelDataV0 {
   const levelData = new LevelDataV0();
   levelData.video = parsed.video || null;
   levelData.attackData = parsed.attackData || [];
+  levelData.criticals = parsed.criticals || [];
   levelData.attackIntervals = attackIntervals;
   levelData.attackSchedule = parsed.attackSchedule || DEFAULT_ATTACK_SCHEDULE;
   levelData.version = parsed.version || "0.0.0";
@@ -147,6 +157,15 @@ export function validateLevelData(levelData: unknown): null | string {
     }
     if (typeof (levelData as any).bossHealth !== "number") {
       return "Expected bossHealth to be a number";
+    }
+    // Validate criticals array
+    if (!Array.isArray((levelData as any).criticals)) {
+      return "Expected criticals to be an array";
+    }
+    for (const crit of (levelData as any).criticals) {
+      if (typeof crit.time !== "number" || typeof crit.direction !== "number" || typeof crit.multiplier !== "number") {
+        return "Each critical must have time:number, direction:number, multiplier:number";
+      }
     }
     return null;
   } else {

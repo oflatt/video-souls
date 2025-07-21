@@ -107,6 +107,19 @@
 }
 .attack-marker:not(.selected) .marker-handle .damage-line { display: none; }
 
+/* Multiplier label for critical markers */
+.critical-marker .mult-label {
+  position: absolute;
+  top: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #ffd700;
+  font-weight: bold;
+  font-size: 18px;
+  text-shadow: 0 0 8px #fff700, 0 0 2px #fff;
+  pointer-events: none;
+}
+
 /* --- Intervals --- */
 .interval-start, .interval-end {
   position: absolute;
@@ -151,8 +164,6 @@
   text-align: right;
 }
 #controls-info .controls-entry > kbd { float: left; }
-  background-image: linear-gradient(to bottom, hsl(210, 70%, 40%) 0%, hsl(210, 70%, 30%) 100%);
-}
 
 .interval-start.selected, .interval-end.selected {
   background-image: linear-gradient(to bottom, hsl(130, 70%, 40%) 0%, hsl(130, 70%, 30%) 100%);
