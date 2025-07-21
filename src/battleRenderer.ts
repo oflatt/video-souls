@@ -23,36 +23,64 @@ function adjustColorOpacity(color: Color, opacity: number): Color {
   return { ...color, a: opacity };
 }
 
-function drawArrowWithMultiplier(
+export function drawArrowOrX(
   ctx: CanvasRenderingContext2D,
   arrowSprite: HTMLCanvasElement,
   direction: number,
   x: number,
   y: number,
   size: number,
-  multiplier?: number
+  multiplier?: number,
+  xSprite?: HTMLCanvasElement // <-- new optional param
 ) {
   ctx.save();
   ctx.translate(x, y);
-  ctx.rotate(direction * Math.PI / 4);
-  ctx.globalAlpha = multiplier ? 0.85 : 1.0;
-  ctx.drawImage(arrowSprite, -size / 2, -size / 2, size, size);
-  if (multiplier) {
-    ctx.globalCompositeOperation = "source-atop";
-    ctx.fillStyle = "#ffd700";
-    ctx.globalAlpha = 0.5;
-    ctx.fillRect(-size / 2, -size / 2, size, size);
-    ctx.globalCompositeOperation = "source-over";
-    ctx.globalAlpha = 1.0;
-    // Draw multiplier label
-    ctx.font = "bold 22px Arial";
-    ctx.fillStyle = "#ffd700";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "bottom";
-    ctx.shadowColor = "#fff700";
-    ctx.shadowBlur = 8;
-    ctx.fillText(`x${multiplier.toFixed(1)}`, 0, -size / 2 - 2);
+  if (direction === 8 && xSprite) {
+    // Use the xSprite image with glow
+    ctx.globalAlpha = multiplier ? 0.85 : 1.0;
+    ctx.shadowColor = multiplier ? "#ff0000" : "#a00";
+    ctx.shadowBlur = multiplier ? 15 : 8;
+    ctx.drawImage(xSprite, -size / 2, -size / 2, size, size);
     ctx.shadowBlur = 0;
+    if (multiplier) {
+      ctx.globalCompositeOperation = "source-atop";
+      ctx.fillStyle = "#ffd700";
+      ctx.globalAlpha = 0.5;
+      ctx.fillRect(-size / 2, -size / 2, size, size);
+      ctx.globalCompositeOperation = "source-over";
+      ctx.globalAlpha = 1.0;
+      ctx.font = "bold 22px Arial";
+      ctx.fillStyle = "#ffd700";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "bottom";
+      ctx.shadowColor = "#fff700";
+      ctx.shadowBlur = 8;
+      ctx.fillText(`x${multiplier.toFixed(1)}`, 0, -size / 2 - 2);
+      ctx.shadowBlur = 0;
+    }
+  } else {
+    ctx.rotate(direction * Math.PI / 4);
+    ctx.globalAlpha = multiplier ? 0.85 : 1.0;
+    ctx.shadowColor = multiplier ? "#ff0000" : "#a00";
+    ctx.shadowBlur = multiplier ? 15 : 8;
+    ctx.drawImage(arrowSprite, -size / 2, -size / 2, size, size);
+    ctx.shadowBlur = 0;
+    if (multiplier) {
+      ctx.globalCompositeOperation = "source-atop";
+      ctx.fillStyle = "#ffd700";
+      ctx.globalAlpha = 0.5;
+      ctx.fillRect(-size / 2, -size / 2, size, size);
+      ctx.globalCompositeOperation = "source-over";
+      ctx.globalAlpha = 1.0;
+      ctx.font = "bold 22px Arial";
+      ctx.fillStyle = "#ffd700";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "bottom";
+      ctx.shadowColor = "#fff700";
+      ctx.shadowBlur = 8;
+      ctx.fillText(`x${multiplier.toFixed(1)}`, 0, -size / 2 - 2);
+      ctx.shadowBlur = 0;
+    }
   }
   ctx.restore();
 }
@@ -101,9 +129,17 @@ export class BattleRenderer {
       ctx.save();
       ctx.globalAlpha = opacity;
 
-      ctx.translate(attackX, attackY);
-      ctx.rotate(attack.direction * Math.PI / 4);
-      ctx.drawImage(this.graphics.arrowSprite, -this.graphics.arrowSprite.width / 2, -this.graphics.arrowSprite.height / 2);
+      // Use shared arrow/X drawing helper
+      drawArrowOrX(
+        ctx,
+        this.graphics.arrowSprite,
+        attack.direction,
+        attackX,
+        attackY,
+        this.graphics.arrowSprite.width,
+        undefined,
+        this.graphics.xSprite // <-- pass xSprite
+      );
 
       ctx.restore();
     }
@@ -172,14 +208,15 @@ export class BattleRenderer {
     // Place critical marker at the same position as attack warnings/arrows
     const x = this.canvas.width * (0.5 + pos[0] * 1.5);
     const y = this.canvas.height * (1 - (0.5 + pos[1] * 1.5));
-    drawArrowWithMultiplier(
+    drawArrowOrX(
       ctx,
       arrowSprite,
       dir,
       x,
       y,
       size,
-      battle.currentCritical.multiplier
+      battle.currentCritical.multiplier,
+      this.graphics.xSprite // <-- pass xSprite
     );
   }
 

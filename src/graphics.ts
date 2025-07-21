@@ -5,6 +5,7 @@ export class Graphics {
     greenOutline: HTMLImageElement | HTMLCanvasElement,
   };
   arrowSprite: HTMLCanvasElement;
+  xSprite: HTMLCanvasElement; // <-- Add xSprite
 
   constructor(canvas: HTMLCanvasElement) {
     // Load sword sprites
@@ -39,6 +40,20 @@ export class Graphics {
       ctx2.drawImage(scaled, (glow.width - scaled.width) / 2, (glow.height - scaled.height) / 2);
 
       this.arrowSprite = glow;
+    });
+
+    // --- X sprite loading and glow ---
+    const xImage = new Image();
+    xImage.src = 'x.png';
+    this.xSprite = document.createElement('canvas');
+    xImage.addEventListener('load', () => {
+      let scale_factor = (0.05 * canvas.width) / xImage.width;
+      const scaled = scaleImage(xImage, scale_factor, scale_factor);
+      const glowBefore = makeGlow(scaled, 0.1);
+      const glow = tintImage(glowBefore, [1.0, 0.5, 0.5]);
+      const ctx2 = glow.getContext('2d')!;
+      ctx2.drawImage(scaled, (glow.width - scaled.width) / 2, (glow.height - scaled.height) / 2);
+      this.xSprite = glow;
     });
   }
 }

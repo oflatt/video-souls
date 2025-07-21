@@ -19,6 +19,7 @@ import {
   CriticalData // <-- import CriticalData
 } from './leveldata';
 import { EditorHud } from './editorHud';
+import { drawArrowOrX } from './battleRenderer'; // <-- add this import
 
 const FRAME_LENGTH = 0.05;
 const PLAYBACK_BAR_PADDING = 20;
@@ -297,34 +298,25 @@ export class Editor {
       this.frameToAttack.set(this.frameIndex(data as AttackData), data as AttackData);
     }
 
-    // Draw arrow for direction
+    // Draw arrow for direction using drawArrowOrX
     let arrowImg = this.graphics.arrowSprite;
+    let xImg = this.graphics.xSprite; // <-- get xSprite
     let arrowSize = 50;
     let arrowCanvas = document.createElement("canvas");
     arrowCanvas.width = arrowSize;
     arrowCanvas.height = arrowSize;
     let arrowCtx = arrowCanvas.getContext("2d")!;
-    arrowCtx.save();
-    arrowCtx.translate(arrowSize / 2, arrowSize / 2);
-    arrowCtx.rotate((Math.PI / 4) * data.direction);
-
-    if (isCritical) {
-      // Draw a gold/yellow arrow with partial opacity for criticals
-      arrowCtx.globalAlpha = 0.85;
-      // Draw a yellow overlay on top of the arrow sprite
-      arrowCtx.drawImage(arrowImg, -arrowSize / 2, -arrowSize / 2, arrowSize, arrowSize);
-      arrowCtx.globalCompositeOperation = "source-atop";
-      arrowCtx.fillStyle = "#ffd700";
-      arrowCtx.globalAlpha = 0.5;
-      arrowCtx.fillRect(-arrowSize / 2, -arrowSize / 2, arrowSize, arrowSize);
-      arrowCtx.globalCompositeOperation = "source-over";
-      arrowCtx.globalAlpha = 1.0;
-    } else {
-      // Normal attack arrow
-      arrowCtx.globalAlpha = 1.0;
-      arrowCtx.drawImage(arrowImg, -arrowSize / 2, -arrowSize / 2, arrowSize, arrowSize);
-    }
-    arrowCtx.restore();
+    // Use drawArrowOrX for both arrows and X, pass xImg for direction 8
+    drawArrowOrX(
+      arrowCtx,
+      arrowImg,
+      data.direction,
+      arrowSize / 2,
+      arrowSize / 2,
+      arrowSize,
+      isCritical ? (data as CriticalData).multiplier : undefined,
+      xImg // <-- pass xSprite
+    );
 
     let arrowElement = document.createElement("div");
     arrowElement.appendChild(arrowCanvas);
@@ -338,7 +330,7 @@ export class Editor {
     arrowElement.style.bottom = `calc(var(--height) + ${top}px)`;
     element.appendChild(arrowElement);
 
-    // For criticals, show multiplier label
+    // For criticals, show multiplier label (already drawn by drawArrowOrX, but keep for accessibility)
     if (isCritical) {
       let multLabel = document.createElement("div");
       multLabel.textContent = `x${(data as CriticalData).multiplier}`;
