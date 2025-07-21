@@ -19,8 +19,23 @@ export class Graphics {
 
     // add a scaled sword image to elements once swordImage is loaded
     swordImage.addEventListener('load', () => {
-      let scale_factor = (0.15 * canvas.width) / swordImage.width;
-      this.swordSprites.default = scaleImage(swordImage, scale_factor, scale_factor);
+      // Use a fixed large size for the sword, similar to arrow/x
+      const swordSize = 200;
+      let scale_factor = swordSize / swordImage.width;
+      const scaledSword = scaleImage(swordImage, scale_factor, scale_factor);
+
+      // Center the sword in a square canvas of swordSize
+      const finalSwordCanvas = document.createElement('canvas');
+      finalSwordCanvas.width = swordSize;
+      finalSwordCanvas.height = swordSize;
+      const finalSwordCtx = finalSwordCanvas.getContext('2d')!;
+      finalSwordCtx.drawImage(
+        scaledSword,
+        (swordSize - scaledSword.width) / 2,
+        (swordSize - scaledSword.height) / 2
+      );
+      this.swordSprites.default = finalSwordCanvas;
+
       let untinted = makeGlow(this.swordSprites.default, 0.1);
       this.swordSprites.yellowOutline = tintImage(untinted, [1.0, 1.0, 0.2]);
       this.swordSprites.greenOutline = tintImage(untinted, [0.2, 1.0, 0.2]);
@@ -30,16 +45,33 @@ export class Graphics {
     arrowImage.src = 'arrow.png';
     this.arrowSprite = document.createElement('canvas');
     arrowImage.addEventListener('load', () => {
-      let scale_factor = (0.05 * canvas.width) / arrowImage.width;
+      const arrowSize = 200;
+      let scale_factor = arrowSize / arrowImage.width;
       const scaled = scaleImage(arrowImage, scale_factor, scale_factor);
       const glowBefore = makeGlow(scaled, 0.1);
       const glow = tintImage(glowBefore, [1.0, 0.5, 0.5]);
-      
-      // draw scaled onto glowBig
-      const ctx2 = glow.getContext('2d')!;
-      ctx2.drawImage(scaled, (glow.width - scaled.width) / 2, (glow.height - scaled.height) / 2);
 
-      this.arrowSprite = glow;
+      // Make the final canvas larger to fit the glow (add margin for blur)
+      const margin = Math.ceil(Math.max(glow.width, glow.height) * 0.15);
+      const finalSize = Math.max(arrowSize, glow.width, glow.height) + margin * 2;
+      const finalCanvas = document.createElement('canvas');
+      finalCanvas.width = finalSize;
+      finalCanvas.height = finalSize;
+      const finalCtx = finalCanvas.getContext('2d')!;
+      // Center the glow in the final canvas
+      finalCtx.drawImage(
+        glow,
+        (finalSize - glow.width) / 2,
+        (finalSize - glow.height) / 2
+      );
+      // Draw the arrow on top of the glow, centered
+      finalCtx.drawImage(
+        scaled,
+        (finalSize - scaled.width) / 2,
+        (finalSize - scaled.height) / 2
+      );
+
+      this.arrowSprite = finalCanvas;
     });
 
     const xSize = 200;

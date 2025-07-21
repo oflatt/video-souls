@@ -128,14 +128,16 @@ export class BattleRenderer {
       ctx.save();
       ctx.globalAlpha = opacity;
 
-      // Use shared arrow/X drawing helper
+      // Draw arrow at half size in play mode
+      const arrowDrawSize = graphics.arrowSprite.width / 2;
+
       drawArrowOrX(
         ctx,
         graphics.arrowSprite,
         attack.direction,
         attackX,
         attackY,
-        graphics.arrowSprite.width,
+        arrowDrawSize,
         undefined,
         graphics.xSprite // <-- pass xSprite
       );
@@ -190,9 +192,35 @@ export class BattleRenderer {
     var swordOutlineX = topLeftX;
     var swordOutlineY = topLeftY; 
   
-    this.drawCenteredRotated(graphics.swordSprites.yellowOutline, swordOutlineX, swordOutlineY, swordAngle - Math.PI / 2, redSwordOutlineStrength, xscale, yscale);
-    this.drawCenteredRotated(graphics.swordSprites.greenOutline, swordOutlineX, swordOutlineY, swordAngle- Math.PI / 2, greenSwordOutlineStrength, xscale, yscale);
-    this.drawCenteredRotated(graphics.swordSprites.default, topLeftX, topLeftY, swordAngle- Math.PI / 2, 1.0, xscale, yscale);
+    // Draw sword 1.5x as big
+    const swordScale = 1.5;
+    this.drawCenteredRotated(
+      graphics.swordSprites.yellowOutline,
+      swordOutlineX,
+      swordOutlineY,
+      swordAngle - Math.PI / 2,
+      redSwordOutlineStrength,
+      xscale * swordScale,
+      yscale * swordScale
+    );
+    this.drawCenteredRotated(
+      graphics.swordSprites.greenOutline,
+      swordOutlineX,
+      swordOutlineY,
+      swordAngle - Math.PI / 2,
+      greenSwordOutlineStrength,
+      xscale * swordScale,
+      yscale * swordScale
+    );
+    this.drawCenteredRotated(
+      graphics.swordSprites.default,
+      topLeftX,
+      topLeftY,
+      swordAngle - Math.PI / 2,
+      1.0,
+      xscale * swordScale,
+      yscale * swordScale
+    );
   }
 
   drawCriticalMarker(
@@ -203,7 +231,8 @@ export class BattleRenderer {
     const dir = battle.currentCritical.direction;
     const pos = [...directionNumToSwordPos.get(dir)!];
     const arrowSprite = graphics.arrowSprite;
-    const size = 60;
+    // Draw critical marker at half size in play mode
+    const size = graphics.arrowSprite.width / 2;
     // Place critical marker closer to the center than attack warnings/arrows
     const x = this.canvas.width * (0.5 + pos[0] * 0.9);
     const y = this.canvas.height * (1 - (0.5 + pos[1] * 0.9));

@@ -299,13 +299,12 @@ export class Editor {
 
     // Draw arrow for direction using drawArrowOrX
     let arrowImg = graphics.arrowSprite;
-    let xImg = graphics.xSprite; // <-- get xSprite
-    let arrowSize = 50;
+    let xImg = graphics.xSprite;
+    let arrowSize = 70;
     let arrowCanvas = document.createElement("canvas");
     arrowCanvas.width = arrowSize;
     arrowCanvas.height = arrowSize;
     let arrowCtx = arrowCanvas.getContext("2d")!;
-    // Use drawArrowOrX for both arrows and X, pass xImg for direction 8
     drawArrowOrX(
       arrowCtx,
       arrowImg,
@@ -314,7 +313,7 @@ export class Editor {
       arrowSize / 2,
       arrowSize,
       isCritical ? (data as CriticalData).multiplier : undefined,
-      xImg // <-- pass xSprite
+      xImg
     );
 
     let arrowElement = document.createElement("div");
