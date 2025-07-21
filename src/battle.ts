@@ -77,6 +77,7 @@ export function initialBattleState(): BattleState {
     bufferedInput: null,
     playerHealth: 1.0,
     lastPlayerHealth: 1.0,
+    timeSinceLastParry: 1000,  // Large initial value
     timeSincePlayerHit: 1000,  // Large initial value
     bossHealth: 1.0,
     lastBossHealth: 1.0,

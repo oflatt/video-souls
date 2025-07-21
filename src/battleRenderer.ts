@@ -113,7 +113,7 @@ export class BattleRenderer {
     }
 
     if (battle.timeSinceLastParry < SUCCESS_PARRY_ANIM_FADE) {
-      greenSwordOutlineStrength = Math.sqrt(1.0 - (battle.anim.timeSinceLastParry / SUCCESS_PARRY_ANIM_FADE));
+      greenSwordOutlineStrength = Math.sqrt(1.0 - (battle.timeSinceLastParry / SUCCESS_PARRY_ANIM_FADE));
     }
 
     const topLeftX = this.canvas.width * swordPos[0];
