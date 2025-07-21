@@ -492,12 +492,6 @@ export class VideoSouls {
     // if the video is valid, load it
     this.videoPlayer.pauseVideo();
 
-    // reset the sword state
-    this.battle = initialBattleState();
-    // Set bossHealth from level data
-    this.battle.bossHealth = this.editor.level.bossHealth;
-    this.battle.lastBossHealth = this.editor.level.bossHealth;
-
     // if the new mode is battle end, show the battle end hud
     if (mode === GameMode.BATTLE_END) {
       // Only create HUD when entering battle end
@@ -510,6 +504,12 @@ export class VideoSouls {
     } else {
       if (this.battleEndHudElement) this.battleEndHudElement.style.display = "none";
     }
+
+    // reset the sword state
+    this.battle = initialBattleState();
+    // Set bossHealth from level data
+    this.battle.bossHealth = this.editor.level.bossHealth;
+    this.battle.lastBossHealth = this.editor.level.bossHealth;
 
     // if the new mode is game, show the game hud
     if (mode === GameMode.PLAYING) {
