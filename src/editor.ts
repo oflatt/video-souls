@@ -132,6 +132,16 @@ export class Editor {
     document.body.appendChild(hudClone);
     this.hudElement = hudClone;
 
+    // --- Add back to menu button handler ---
+    const exitBtn = hudClone.querySelector<HTMLButtonElement>("#editor-exit-to-menu-button");
+    if (exitBtn) {
+      exitBtn.style.display = "block";
+      exitBtn.onclick = () => {
+        // Dispatch a custom event to notify main app to go back to menu
+        window.dispatchEvent(new CustomEvent("editor-back-to-menu"));
+      };
+    }
+
     // Wire up controls
     this.recordingControls = hudClone.querySelector<HTMLElement>("#recording-controls")!;
     this.playbackBar = hudClone.querySelector<HTMLElement>("#playback-bar")!;
