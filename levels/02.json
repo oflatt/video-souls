@@ -1,0 +1,187 @@
+{
+  "video": "vF2KdyPb4C8",
+  "attackData": [
+    {
+      "time": 8.980152000000006,
+      "direction": 7,
+      "damage": 0.1
+    },
+    {
+      "time": 12.030152000000014,
+      "direction": 0,
+      "damage": 0.1
+    },
+    {
+      "time": 15.048437000000009,
+      "direction": 7,
+      "damage": 0.1
+    },
+    {
+      "time": 17.65985600000001,
+      "direction": 3,
+      "damage": 0.1
+    },
+    {
+      "time": 20.85985600000001,
+      "direction": 0,
+      "damage": 0.1
+    },
+    {
+      "time": 23.009856000000013,
+      "direction": 8,
+      "damage": 0.2
+    },
+    {
+      "time": 34.07733199999998,
+      "direction": 7,
+      "damage": 0.1
+    },
+    {
+      "time": 36.61661300000002,
+      "direction": 1,
+      "damage": 0.1
+    },
+    {
+      "time": 39.26734399999998,
+      "direction": 5,
+      "damage": 0.1
+    },
+    {
+      "time": 41.574316999999965,
+      "direction": 0,
+      "damage": 0.1
+    },
+    {
+      "time": 44.907788,
+      "direction": 8,
+      "damage": 0.2
+    },
+    {
+      "time": 62.94506999999995,
+      "direction": 6,
+      "damage": 0.1
+    },
+    {
+      "time": 65.74506999999996,
+      "direction": 6,
+      "damage": 0.1
+    },
+    {
+      "time": 68.89506999999989,
+      "direction": 6,
+      "damage": 0.1
+    },
+    {
+      "time": 71.4953370249024,
+      "direction": 6,
+      "damage": 0.1
+    }
+  ],
+  "criticals": [
+    {
+      "time": 19.460847,
+      "direction": 0,
+      "multiplier": 1.5
+    },
+    {
+      "time": 24.960847,
+      "direction": 6,
+      "multiplier": 1.5
+    },
+    {
+      "time": 25.960847,
+      "direction": 2,
+      "multiplier": 1.5
+    },
+    {
+      "time": 35.460847,
+      "direction": 0,
+      "multiplier": 1.5
+    },
+    {
+      "time": 37.960847,
+      "direction": 4,
+      "multiplier": 1.5
+    },
+    {
+      "time": 43.460847,
+      "direction": 8,
+      "multiplier": 1.5
+    }
+  ],
+  "attackIntervals": {
+    "__type": "Map",
+    "entries": [
+      [
+        "intro",
+        {
+          "start": 0,
+          "end": 7.518884337901347,
+          "name": "intro"
+        }
+      ],
+      [
+        "0",
+        {
+          "start": 7.556583479748899,
+          "end": 16.114288679143144,
+          "name": "0"
+        }
+      ],
+      [
+        "1",
+        {
+          "start": 16.2273861046858,
+          "end": 21.65606253073325,
+          "name": "1"
+        }
+      ],
+      [
+        "4",
+        {
+          "start": 32.42696953373639,
+          "end": 46.06349603550318,
+          "name": "4"
+        }
+      ],
+      [
+        "death",
+        {
+          "start": 94.87067776190399,
+          "end": 103.92659497543251,
+          "name": "death"
+        }
+      ],
+      [
+        "5",
+        {
+          "start": 59.33731802120142,
+          "end": 74.49486403146481,
+          "name": "5"
+        }
+      ],
+      [
+        "2",
+        {
+          "start": 21.637212959809474,
+          "end": 24.47491143070935,
+          "name": "2"
+        }
+      ],
+      [
+        "6",
+        {
+          "start": 24.360423799049723,
+          "end": 26.614840806819522,
+          "name": "6"
+        }
+      ]
+    ]
+  },
+  "attackSchedule": "function(state) {\n  // Get all attack intervals (not intro/death)\n  var attackIntervals = [];\n  var intervalNames = Object.keys(state.availableIntervals);\n  for (var i = 0; i < intervalNames.length; i++) {\n    var name = intervalNames[i];\n    if (name !== \"intro\" && name !== \"death\") {\n      attackIntervals.push(name);\n    }\n  }\n  \n  // If we're in the death interval, continue normally\n  if (state.currentInterval === \"death\") {\n    return { continueNormal: true };\n  }\n  \n  // If we're not in any interval, start with intro\n  if (!state.currentInterval || state.currentInterval === \"\") {\n    return {\n      continueNormal: false,\n      transitionToInterval: \"intro\",\n      intervalOffset: 0\n    };\n  }\n  \n  // If no attack intervals available, go to death\n  if (attackIntervals.length === 0) {\n    return {\n      continueNormal: false,\n      transitionToInterval: \"death\",\n      intervalOffset: 0\n    };\n  }\n  \n  // Check if current interval is completed (reached the end time)\n  var currentInterval = state.availableIntervals[state.currentInterval];\n  if (currentInterval) {\n    // Check if we've reached or passed the end time of the current interval\n    if (state.currentTime >= currentInterval.end) {\n      // Pick a random attack interval\n      var randomIndex = Math.floor(Math.random() * attackIntervals.length);\n      var nextInterval = attackIntervals[randomIndex];\n      \n      return {\n        continueNormal: false,\n        transitionToInterval: nextInterval,\n        intervalOffset: 0\n      };\n    }\n  }\n  \n  // Continue with current behavior\n  return { continueNormal: true };\n}",
+  "version": "0.0.0",
+  "title": "crab",
+  "arrowless": false,
+  "bossDamageMultiplier": 2.0,
+  "bossHealth": 6.0
+}
