@@ -336,6 +336,7 @@ export class Editor {
     let top = -arrowSize / 2 + rotated_vector[1];
     arrowElement.style.left = `${left}px`;
     arrowElement.style.bottom = `calc(var(--height) + ${top}px)`;
+    arrowElement.style.pointerEvents = "none"; // allow clicks to pass through
     element.appendChild(arrowElement);
 
     // For criticals, show multiplier label (already drawn by drawArrowOrX, but keep for accessibility)
