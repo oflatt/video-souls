@@ -248,7 +248,6 @@ export class BattleRenderer {
         // Apply gravity as acceleration toward sword (reduce effect)
         p.vx += dx * p.gravity * 0.02;
         p.vy += dy * p.gravity * 0.02;
-        // No velocity clamp
         // Apply friction to slow down over time
         p.vx *= 0.98;
         p.vy *= 0.98;
@@ -258,51 +257,24 @@ export class BattleRenderer {
         // Fade out over 1 second
         p.life -= 1 / 60;
 
-        // Absorption effect: if close to sword, wink out with a burst
+        // Despawn if close to sword
         const distToSword = Math.hypot(dx, dy);
-        let absorb = false;
         if (distToSword < 0.04 && p.life > 0) {
-          absorb = true;
-          // Absorption lasts longer and fades out gently
-          // Use a separate absorbLife property for smooth fade
-          if (!('absorbLife' in p)) {
-            (p as any).absorbLife = 0.35; // lasts ~20 frames
-          }
-          (p as any).absorbLife -= 1 / 60;
-          // Fade out and grow slightly, but not too much
-          p.life = Math.max(0, (p as any).absorbLife);
+          p.life = 0;
         }
 
         // Draw particle
         const px = this.canvas.width * p.x;
         const py = this.canvas.height * (1 - p.y);
         ctx.save();
-        if (absorb) {
-          // Absorption: fade out and grow slightly, but not huge
-          const absorbLife = (p as any).absorbLife ?? 0;
-          const absorbAlpha = Math.max(0, absorbLife / 0.35);
-          const absorbRadius = 10 + 8 * absorbAlpha; // max radius 18, not huge
-          ctx.globalAlpha = absorbAlpha;
-          ctx.beginPath();
-          ctx.arc(px, py, absorbRadius, 0, 2 * Math.PI);
-          ctx.fillStyle = "#ffd700";
-          ctx.shadowColor = "#fff700";
-          ctx.shadowBlur = 14;
-          ctx.fill();
-        } else {
-          ctx.globalAlpha = Math.max(0, p.life / 1.0);
-          ctx.beginPath();
-          ctx.arc(px, py, 7 * Math.max(0.5, p.life / 1.0), 0, 2 * Math.PI);
-          ctx.fillStyle = "#ffd700";
-          ctx.shadowColor = "#fff700";
-          ctx.shadowBlur = 12;
-          ctx.fill();
-        }
+        ctx.globalAlpha = Math.max(0, p.life / 1.0);
+        ctx.beginPath();
+        ctx.arc(px, py, 7 * Math.max(0.5, p.life / 1.0), 0, 2 * Math.PI);
+        ctx.fillStyle = "#ffd700";
+        ctx.shadowColor = "#fff700";
+        ctx.shadowBlur = 12;
+        ctx.fill();
         ctx.restore();
-        // If absorbed and finished, set life to zero to remove next frame
-        if (absorb && (p as any).absorbLife <= 0) {
-          p.life = 0;
-        }
       }
       if (particles.particles.every(p => p.life <= 0)) {
         battle.criticalAnimParticles = undefined;

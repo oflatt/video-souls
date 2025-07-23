@@ -110,7 +110,7 @@ export class BattleLogic {
           vx: Math.cos(angle + (i - 3) * 0.18) * 0.01,
           vy: Math.sin(angle + (i - 3) * 0.18) * 0.01,
           life: 2.0, // particles last 2 seconds
-          gravity: 0.04 // <-- lower gravity
+          gravity: 0.07
         }))
       };
       battle.anim = BattleAnim.criticalHit(
