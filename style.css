@@ -15,7 +15,8 @@
   padding: 0;
 }
 
-html, body {
+html,
+body {
   width: 100%;
   height: 100%;
   overflow: hidden;
@@ -62,11 +63,20 @@ html, body {
 }
 
 #levels-container {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
   margin-bottom: 20px;
 }
 
-#floating-menu h1 { margin-bottom: 20px; }
-#floating-menu h2 { margin-bottom: 10px; }
+#floating-menu h1 {
+  margin-bottom: 20px;
+}
+
+#floating-menu h2 {
+  margin-bottom: 10px;
+}
 
 #record-button,
 #custom-level-play-button,
@@ -111,7 +121,9 @@ html, body {
 }
 
 /* HUD styles */
-#game-hud, #battle-end-hud, #record-hud {
+#game-hud,
+#battle-end-hud,
+#record-hud {
   position: absolute;
   top: 0;
   left: 0;
@@ -134,16 +146,13 @@ html, body {
   align-items: center;
 }
 
-input, textarea {
+input,
+textarea {
   width: 300px;
   padding: 5px;
   border: none;
   border-radius: var(--input-radius);
   font-size: 1em;
-}
-
-textarea {
-  /* ...existing code... */
 }
 
 #validation-error {
@@ -152,8 +161,13 @@ textarea {
   display: none;
 }
 
-h1 { font-size: 40px; }
-h2 { font-size: 30px; }
+h1 {
+  font-size: 40px;
+}
+
+h2 {
+  font-size: 30px;
+}
 
 button {
   padding: 5px 10px;
@@ -165,6 +179,7 @@ button {
   color: var(--color-white);
   transition: background 0.2s;
 }
+
 #record-button:hover {
   background: var(--btn-bg-hover);
 }
@@ -181,13 +196,52 @@ button {
   opacity: 100%;
 }
 
-#recording-controls { overflow-x: auto; }
-#current-time { position: absolute; bottom: 10px; right: 10px; }
-#wkey { position: absolute; bottom: 80px; left: 80px; }
-#akey { position: absolute; bottom: 50px; left: 50px; }
-#skey { position: absolute; bottom: 50px; left: 90px; }
-#dkey { position: absolute; bottom: 50px; left: 120px; }
-#parrykey { position: absolute; bottom: 100px; right: 100px; }
-#attackkey { position: absolute; bottom: 50px; right: 100px; }
+#recording-controls {
+  overflow-x: auto;
+}
 
-#export-button { display: none; }
+#current-time {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+}
+
+#wkey {
+  position: absolute;
+  bottom: 80px;
+  left: 80px;
+}
+
+#akey {
+  position: absolute;
+  bottom: 50px;
+  left: 50px;
+}
+
+#skey {
+  position: absolute;
+  bottom: 50px;
+  left: 90px;
+}
+
+#dkey {
+  position: absolute;
+  bottom: 50px;
+  left: 120px;
+}
+
+#parrykey {
+  position: absolute;
+  bottom: 100px;
+  right: 100px;
+}
+
+#attackkey {
+  position: absolute;
+  bottom: 50px;
+  right: 100px;
+}
+
+#export-button {
+  display: none;
+}

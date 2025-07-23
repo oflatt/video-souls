@@ -41,6 +41,18 @@ const attackedAngle = Math.PI / 2;
 // Create a global graphics instance and export it
 export const graphics = new Graphics(document.querySelector<HTMLCanvasElement>("#game-canvas")!);
 
+// Register global instance for playtest event
+(window as any).videoSoulsInstance = null;
+
+// Listen for playtest event from editor HUD
+window.addEventListener("editor-playtest-level", () => {
+  // Use global instance if available
+  const instance = (window as any).videoSoulsInstance;
+  if (instance && instance instanceof VideoSouls) {
+    instance.setGameMode(GameMode.PLAYING);
+  }
+});
+
 export class VideoSouls {
   elements;
   gameMode: GameMode;
@@ -126,6 +138,30 @@ export class VideoSouls {
         this.audio.setVolume(this.settings.getNormalizedVolume());
       }
     }, 500);
+
+    // Add Exit to Menu button to game HUD (top left, shared style)
+    const exitBtn = document.createElement("button");
+    exitBtn.id = "exit-to-menu-button";
+    exitBtn.className = "exit-to-menu-button"; // <-- shared CSS class
+    exitBtn.textContent = "Exit to Menu";
+    exitBtn.addEventListener("click", () => {
+      this.setGameMode(GameMode.MENU);
+    });
+    this.elements.gameHUD.appendChild(exitBtn);
+
+    // Add Edit Level button to game HUD (top left, next to exit)
+    const editBtn = document.createElement("button");
+    editBtn.id = "game-edit-level-button";
+    editBtn.className = "game-edit-level-button";
+    editBtn.textContent = "Edit Level";
+    editBtn.style.display = "none";
+    editBtn.onclick = () => {
+      this.setGameMode(GameMode.EDITING);
+    };
+    this.elements.gameHUD.appendChild(editBtn);
+
+    // Register this instance globally for playtest event
+    (window as any).videoSoulsInstance = this;
 
     this.initializeEventListeners();
     this.loadLevelButtons();
@@ -561,6 +597,17 @@ export class VideoSouls {
       this.videoPlayer.playVideo();
     }
 
+    // Show/hide Exit to Menu button based on game mode
+    const exitBtn = document.getElementById("exit-to-menu-button");
+    if (exitBtn) {
+      exitBtn.style.display = (mode === GameMode.PLAYING) ? "block" : "none";
+    }
+    // Show/hide Edit Level button based on game mode
+    const editBtn = document.getElementById("game-edit-level-button");
+    if (editBtn) {
+      editBtn.style.display = (mode === GameMode.PLAYING) ? "block" : "none";
+    }
+
     this.gameMode = mode;
 
     // Always keep YouTube player volume in sync with settings
@@ -655,3 +702,16 @@ function extractVideoID(url: string) {
   const match = url.match(regex);
   return match ? match[1] : null;
 }
+
+// Listen for playtest event from editor HUD
+window.addEventListener("editor-playtest-level", () => {
+  // Find the VideoSouls instance and set game mode to PLAYING
+  // If you use a global, replace with your instance reference
+  for (const k in window) {
+    const v = (window as any)[k];
+    if (v instanceof VideoSouls) {
+      v.setGameMode(GameMode.PLAYING);
+      break;
+    }
+  }
+});

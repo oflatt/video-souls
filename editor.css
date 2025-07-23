@@ -43,7 +43,8 @@
   border-radius: 8px 8px 15px 15px / 15px 15px 8px 8px;
   z-index: 10;
   transform: translateX(-50%);
-  pointer-events: none; /* <-- add this line */
+  pointer-events: none;
+  /* <-- add this line */
 }
 
 /* --- Attack Marker --- */
@@ -56,12 +57,17 @@
   --damage-color: hsl(5, 75%, 60%);
   --damage-offset: 10px;
 }
-.attack-marker.template { display: none !important; }
+
+.attack-marker.template {
+  display: none !important;
+}
+
 .attack-marker.selected {
   --height: 70px !important;
   --marker-color: hsl(130, 70%, 35%);
   --highlight-color: hsl(130, 55%, 50%);
 }
+
 .attack-marker .marker-line {
   position: absolute;
   bottom: 0;
@@ -71,6 +77,7 @@
   background-color: var(--marker-color);
   cursor: default;
 }
+
 .attack-marker .marker-handle {
   position: absolute;
   top: -8px;
@@ -83,7 +90,11 @@
   border-radius: 50%;
   cursor: pointer;
 }
-.attack-marker:not(.selected) .marker-handle:hover { border-color: lightgray; }
+
+.attack-marker:not(.selected) .marker-handle:hover {
+  border-color: lightgray;
+}
+
 .attack-marker .marker-handle .damage-line {
   position: absolute;
   bottom: 50%;
@@ -94,6 +105,7 @@
   background-color: var(--damage-color);
   z-index: -10;
 }
+
 .attack-marker .marker-handle .damage-handle {
   position: absolute;
   top: -4px;
@@ -105,7 +117,10 @@
   border-radius: 25%;
   cursor: ew-resize;
 }
-.attack-marker:not(.selected) .marker-handle .damage-line { display: none; }
+
+.attack-marker:not(.selected) .marker-handle .damage-line {
+  display: none;
+}
 
 /* Multiplier label for critical markers */
 .critical-marker .mult-label {
@@ -121,31 +136,47 @@
 }
 
 /* --- Intervals --- */
-.interval-start, .interval-end {
+.interval-start,
+.interval-end {
   position: absolute;
   bottom: 20px;
   height: 40px;
   width: 10px;
 }
-.interval-start { border-radius: 8px 0 0 8px; }
+
+.interval-start {
+  border-radius: 8px 0 0 8px;
+}
+
 .interval-end {
   border-radius: 0 8px 8px 0;
   transform: translateX(-100%);
 }
+
 .interval-name {
   position: absolute;
   bottom: 0;
   height: 20px;
   transform: translateX(-50%);
 }
-.interval-start:not(.selected), .interval-end:not(.selected) {
+
+.interval-start:not(.selected),
+.interval-end:not(.selected) {
   background-image: linear-gradient(to bottom, hsl(210, 70%, 40%) 0%, hsl(210, 70%, 30%) 100%);
 }
-.interval-start.selected, .interval-end.selected {
+
+.interval-start.selected,
+.interval-end.selected {
   background-image: linear-gradient(to bottom, hsl(130, 70%, 40%) 0%, hsl(130, 70%, 30%) 100%);
 }
-.interval-name:not(.selected) { border: 1px solid hsl(210, 70%, 30%); }
-.interval-name.selected { border: 1px solid hsl(130, 70%, 30%); }
+
+.interval-name:not(.selected) {
+  border: 1px solid hsl(210, 70%, 30%);
+}
+
+.interval-name.selected {
+  border: 1px solid hsl(130, 70%, 30%);
+}
 
 /* --- Controls Info --- */
 #controls-info {
@@ -159,13 +190,18 @@
   border-bottom: 2px solid lightgray;
   color: #efefef;
 }
+
 #controls-info .controls-entry {
   margin: 0.4em 0;
   text-align: right;
 }
-#controls-info .controls-entry > kbd { float: left; }
 
-.interval-start.selected, .interval-end.selected {
+#controls-info .controls-entry>kbd {
+  float: left;
+}
+
+.interval-start.selected,
+.interval-end.selected {
   background-image: linear-gradient(to bottom, hsl(130, 70%, 40%) 0%, hsl(130, 70%, 30%) 100%);
 }
 
@@ -199,11 +235,11 @@
   text-align: right;
 }
 
-#controls-info .controls-entry > kbd {
+#controls-info .controls-entry>kbd {
   float: left;
 }
 
-#controls-info kbd > kbd {
+#controls-info kbd>kbd {
   border: #efefef 1px solid;
   border-radius: 0.3em;
   padding: 0.1em 0.4em;
@@ -279,7 +315,7 @@ div::-webkit-scrollbar-thumb {
   top: -65px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(0,0,0,0.95);
+  background: rgba(0, 0, 0, 0.95);
   color: #fff;
   padding: 7px 12px;
   border-radius: 4px;
@@ -287,7 +323,8 @@ div::-webkit-scrollbar-thumb {
   white-space: nowrap;
   z-index: 1001;
   opacity: 0;
-  pointer-events: none; /* <-- allow clicks through by default */
+  pointer-events: none;
+  /* <-- allow clicks through by default */
   transition: opacity 0.2s;
 }
 
@@ -295,26 +332,8 @@ div::-webkit-scrollbar-thumb {
 .attack-warning:hover .attack-warning-tooltip,
 .attack-warning .attack-warning-tooltip:hover {
   opacity: 1;
-  pointer-events: auto; /* <-- only interactable when hovered */
-}
-
-#editor-exit-to-menu-button {
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  z-index: 100;
-  font-size: 18px;
-  padding: 8px 16px;
-  background-color: #444;
-  color: #fff;
-  border-radius: 6px;
-  border: none;
-  cursor: pointer;
-  display: none;
-}
-
-#editor-exit-to-menu-button:hover {
-  background-color: #666;
+  pointer-events: auto;
+  /* <-- only interactable when hovered */
 }
 
 #editor-title-input {
@@ -346,38 +365,48 @@ div::-webkit-scrollbar-thumb {
 #floating-menu h1 {
   margin-bottom: 20px;
 }
+
 #levels-container {
   margin-bottom: 20px;
 }
+
 #floating-menu h2 {
   margin-bottom: 10px;
 }
+
 #record-button,
 #custom-level-play-button,
 #custom-level-edit-button,
 #export-button {
   margin-bottom: 20px;
 }
+
 #custom-level-input {
   /* Add any needed styles here */
 }
-#floating-menu > div {
+
+#floating-menu>div {
   display: flex;
 }
-#floating-menu > div > div {
+
+#floating-menu>div>div {
   width: 20px;
 }
+
 #export-button {
   display: none;
 }
+
 #validation-error {
   display: none;
 }
+
 #main-menu-volume-container label {
   margin-right: 10px;
   color: #fff;
   font-size: 18px;
 }
+
 #main-menu-volume-slider {
   width: 200px;
   margin-bottom: 10px;
@@ -389,31 +418,37 @@ div::-webkit-scrollbar-thumb {
   bottom: 10px;
   right: 10px;
 }
+
 #wkey {
   position: absolute;
   bottom: 80px;
   left: 80px;
 }
+
 #akey {
   position: absolute;
   bottom: 50px;
   left: 50px;
 }
+
 #skey {
   position: absolute;
   bottom: 50px;
   left: 90px;
 }
+
 #dkey {
   position: absolute;
   bottom: 50px;
   left: 120px;
 }
+
 #parrykey {
   position: absolute;
   bottom: 100px;
   right: 100px;
 }
+
 #attackkey {
   position: absolute;
   bottom: 50px;
@@ -427,3 +462,92 @@ div::-webkit-scrollbar-thumb {
   left: 0;
   pointer-events: none;
 }
+
+/* Shared CSS for exit-to-menu button */
+.exit-to-menu-button {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 100;
+  font-size: 18px;
+  padding: 8px 16px;
+  background-color: #444;
+  color: #fff;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  display: none;
+}
+
+.exit-to-menu-button:hover {
+  background-color: #666;
+}
+
+.editor-export-level-button {
+  position: absolute;
+  top: 20px;
+  left: 160px;
+  /* next to exit-to-menu-button */
+  z-index: 101;
+  font-size: 18px;
+  padding: 8px 16px;
+  background-color: #444;
+  color: #fff;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  display: none;
+}
+
+.editor-export-level-button:hover {
+  background-color: #666;
+}
+
+/* Show export button in editor HUD */
+#record-hud .editor-export-level-button {
+  display: block;
+}
+
+.editor-playtest-level-button {
+  position: absolute;
+  top: 20px;
+  left: 320px;
+  z-index: 101;
+  font-size: 18px;
+  padding: 8px 16px;
+  background-color: #444;
+  color: #fff;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+}
+
+.editor-playtest-level-button:hover {
+  background-color: #666;
+}
+
+/* Show playtest button in editor HUD */
+#record-hud .editor-playtest-level-button {
+  display: block;
+}
+
+.game-edit-level-button {
+  position: absolute;
+  top: 20px;
+  left: 160px;
+  z-index: 101;
+  font-size: 18px;
+  padding: 8px 16px;
+  background-color: #444;
+  color: #fff;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  display: none;
+}
+
+.game-edit-level-button:hover {
+  background-color: #666;
+}
+
+/* Show edit button in game HUD when appropriate (handled by JS) */
