@@ -24,73 +24,71 @@ function adjustColorOpacity(color: Color, opacity: number): Color {
   return { ...color, a: opacity };
 }
 
-export function drawArrowOrX(
+export function drawArrow(
   ctx: CanvasRenderingContext2D,
   arrowSprite: HTMLCanvasElement,
   direction: number,
   x: number,
   y: number,
   size: number,
-  multiplier?: number,
-  xSprite?: HTMLCanvasElement, // <-- new optional param
-  damage?: number // <-- new optional param
+  damage: number
 ) {
   ctx.save();
   ctx.translate(x, y);
 
-  // Aura scaling logic
   let auraScale = 1.0;
-  if (typeof damage === "number" && damage > 0.1) {
+  if (damage > 0.1) {
     auraScale = 1.0 + Math.min((damage - 0.1) * 4, 2.0); // scale up, max 3x
   }
 
-  if (direction === 8 && xSprite) {
-    // Use the xSprite image with glow
-    ctx.globalAlpha = multiplier ? 0.85 : 1.0;
-    ctx.shadowColor = multiplier ? "#ff0000" : "#a00";
-    ctx.shadowBlur = (multiplier ? 15 : 8) * auraScale;
-    ctx.drawImage(xSprite, -size / 2, -size / 2, size, size);
-    ctx.shadowBlur = 0;
-    if (multiplier) {
-      ctx.globalCompositeOperation = "source-atop";
-      ctx.fillStyle = "#ffd700";
-      ctx.globalAlpha = 0.5;
-      ctx.fillRect(-size / 2, -size / 2, size, size);
-      ctx.globalCompositeOperation = "source-over";
-      ctx.globalAlpha = 1.0;
-      ctx.font = "bold 22px Arial";
-      ctx.fillStyle = "#ffd700";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "bottom";
-      ctx.shadowColor = "#fff700";
-      ctx.shadowBlur = 8;
-      ctx.fillText(`x${multiplier.toFixed(1)}`, 0, -size / 2 - 2);
-      ctx.shadowBlur = 0;
-    }
+  ctx.globalAlpha = 1.0;
+  ctx.shadowColor = "#a00";
+  ctx.shadowBlur = 8 * auraScale;
+
+  if (direction === 8) {
+    ctx.drawImage(graphics.xSprite, -size / 2, -size / 2, size, size);
   } else {
     ctx.rotate(direction * Math.PI / 4);
-    ctx.globalAlpha = multiplier ? 0.85 : 1.0;
-    ctx.shadowColor = multiplier ? "#ff0000" : "#a00";
-    ctx.shadowBlur = (multiplier ? 15 : 8) * auraScale;
     ctx.drawImage(arrowSprite, -size / 2, -size / 2, size, size);
-    ctx.shadowBlur = 0;
-    if (multiplier) {
-      ctx.globalCompositeOperation = "source-atop";
-      ctx.fillStyle = "#ffd700";
-      ctx.globalAlpha = 0.5;
-      ctx.fillRect(-size / 2, -size / 2, size, size);
-      ctx.globalCompositeOperation = "source-over";
-      ctx.globalAlpha = 1.0;
-      ctx.font = "bold 22px Arial";
-      ctx.fillStyle = "#ffd700";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "bottom";
-      ctx.shadowColor = "#fff700";
-      ctx.shadowBlur = 8;
-      ctx.fillText(`x${multiplier.toFixed(1)}`, 0, -size / 2 - 2);
-      ctx.shadowBlur = 0;
-    }
   }
+
+  ctx.shadowBlur = 0;
+  ctx.restore();
+}
+
+export function drawCritical(
+  ctx: CanvasRenderingContext2D,
+  arrowSprite: HTMLCanvasElement,
+  direction: number,
+  x: number,
+  y: number,
+  size: number,
+  multiplier: number
+) {
+  ctx.save();
+  ctx.translate(x, y);
+
+  ctx.globalAlpha = 0.85;
+
+  if (direction === 8) {
+    ctx.drawImage(graphics.centerCriticalSprite, -size / 2, -size / 2, size, size);
+  } else {
+    ctx.rotate(direction * Math.PI / 4);
+    ctx.drawImage(arrowSprite, -size / 2, -size / 2, size, size);
+  }
+
+  ctx.globalCompositeOperation = "source-atop";
+  ctx.fillStyle = "#ffd700";
+  ctx.globalAlpha = 0.5;
+  ctx.fillRect(-size / 2, -size / 2, size, size);
+  ctx.globalCompositeOperation = "source-over";
+  ctx.globalAlpha = 1.0;
+  ctx.font = "bold 22px Arial";
+  ctx.fillStyle = "#ffd700";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "bottom";
+  ctx.fillText(`x${multiplier.toFixed(1)}`, 0, -size / 2 - 2);
+
   ctx.restore();
 }
 
@@ -139,16 +137,14 @@ export class BattleRenderer {
       // Draw arrow at half size in play mode
       const arrowDrawSize = graphics.arrowSprite.width / 2;
 
-      drawArrowOrX(
+      drawArrow(
         ctx,
         graphics.arrowSprite,
         attack.direction,
         attackX,
         attackY,
         arrowDrawSize,
-        undefined,
-        graphics.xSprite, // <-- pass xSprite
-        attack.damage // <-- pass damage for aura scaling
+        attack.damage
       );
 
       ctx.restore();
@@ -289,20 +285,24 @@ export class BattleRenderer {
     const ctx = this.canvas.getContext('2d')!;
     const dir = battle.currentCritical.direction;
     const pos = [...directionNumToSwordPos.get(dir)!];
-    // Use criticalSprite instead of arrowSprite for criticals
-    const sprite = graphics.criticalSprite ?? graphics.arrowSprite;
+    // Use centerCriticalSprite for direction 8, otherwise criticalSprite
+    let sprite: HTMLCanvasElement;
+    if (dir === 8) {
+      sprite = graphics.centerCriticalSprite;
+    } else {
+      sprite = graphics.criticalSprite ?? graphics.arrowSprite;
+    }
     const size = graphics.arrowSprite.width / 2;
     const x = this.canvas.width * (0.5 + pos[0] * 0.9);
     const y = this.canvas.height * (1 - (0.5 + pos[1] * 0.9));
-    drawArrowOrX(
+    drawCritical(
       ctx,
-      sprite, // <-- use criticalSprite
+      sprite,
       dir,
       x,
       y,
       size,
-      battle.currentCritical.multiplier,
-      graphics.xSprite
+      battle.currentCritical.multiplier
     );
   }
 

@@ -7,6 +7,7 @@ export class Graphics {
   arrowSprite: HTMLCanvasElement;
   xSprite: HTMLCanvasElement;
   criticalSprite: HTMLCanvasElement;
+  centerCriticalSprite: HTMLCanvasElement; // <-- new property
 
   constructor(canvas: HTMLCanvasElement) {
     // Load sword sprites
@@ -94,6 +95,26 @@ export class Graphics {
         (size - scaled.height) / 2
       );
       this.criticalSprite = finalCanvas;
+    });
+
+    // Load center critical sprite
+    const centerCriticalImage = new Image();
+    centerCriticalImage.src = 'centercritical.png';
+    this.centerCriticalSprite = document.createElement('canvas');
+    centerCriticalImage.addEventListener('load', () => {
+      const size = 200;
+      let scale_factor = size / centerCriticalImage.width;
+      const scaled = scaleImage(centerCriticalImage, scale_factor, scale_factor);
+      const finalCanvas = document.createElement('canvas');
+      finalCanvas.width = size;
+      finalCanvas.height = size;
+      const finalCtx = finalCanvas.getContext('2d')!;
+      finalCtx.drawImage(
+        scaled,
+        (size - scaled.width) / 2,
+        (size - scaled.height) / 2
+      );
+      this.centerCriticalSprite = finalCanvas;
     });
 
     const xSize = 200;

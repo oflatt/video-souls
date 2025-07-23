@@ -19,7 +19,7 @@ import {
   CriticalData // <-- import CriticalData
 } from './leveldata';
 import { EditorHud } from './editorHud';
-import { drawArrowOrX } from './battleRenderer'; // <-- add this import
+import { drawArrow, drawCritical } from './battleRenderer'; // <-- update import
 import { graphics } from './videosouls'; // <-- import global graphics
 
 const FRAME_LENGTH = 0.05;
@@ -307,24 +307,41 @@ export class Editor {
       this.frameToAttack.set(this.frameIndex(data as AttackData), data as AttackData);
     }
 
-    // Draw arrow for direction using drawArrowOrX
-    let arrowImg = isCritical ? graphics.criticalSprite ?? graphics.arrowSprite : graphics.arrowSprite;
-    let xImg = graphics.xSprite;
+    // Draw arrow for direction using drawArrow/drawCritical
+    let arrowImg: HTMLCanvasElement;
+    if (isCritical) {
+      arrowImg = (data.direction === 8)
+        ? graphics.centerCriticalSprite
+        : (graphics.criticalSprite ?? graphics.arrowSprite);
+    } else {
+      arrowImg = graphics.arrowSprite;
+    }
     let arrowSize = 70;
     let arrowCanvas = document.createElement("canvas");
     arrowCanvas.width = arrowSize;
     arrowCanvas.height = arrowSize;
     let arrowCtx = arrowCanvas.getContext("2d")!;
-    drawArrowOrX(
-      arrowCtx,
-      arrowImg, // <-- use criticalSprite for criticals
-      data.direction,
-      arrowSize / 2,
-      arrowSize / 2,
-      arrowSize,
-      isCritical ? (data as CriticalData).multiplier : undefined,
-      xImg
-    );
+    if (isCritical) {
+      drawCritical(
+        arrowCtx,
+        arrowImg,
+        data.direction,
+        arrowSize / 2,
+        arrowSize / 2,
+        arrowSize,
+        (data as CriticalData).multiplier
+      );
+    } else {
+      drawArrow(
+        arrowCtx,
+        arrowImg,
+        data.direction,
+        arrowSize / 2,
+        arrowSize / 2,
+        arrowSize,
+        (data as AttackData).damage
+      );
+    }
 
     let arrowElement = document.createElement("div");
     arrowElement.appendChild(arrowCanvas);
