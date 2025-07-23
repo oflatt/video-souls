@@ -141,4 +141,26 @@ export class BattleAnim {
     anim.endXScale = 1.0;
     return anim;
   }
+
+  static criticalHit(
+    startPos: [number, number],
+    endPos: [number, number],
+    startAngle: number,
+    endAngle: number,
+    duration: number = 0.18 // very quick
+  ): BattleAnim {
+    const anim = new BattleAnim();
+    anim.state = AttackAnimation.ATTACKING; // reuse ATTACKING state for now
+    anim.timeElapsed = 0;
+    anim.duration = duration;
+    anim.startPos = [...startPos];
+    anim.endPos = [...endPos];
+    anim.startAngle = startAngle;
+    anim.endAngle = endAngle;
+    anim.startYScale = 1.2;
+    anim.endYScale = -1.2;
+    anim.startXScale = 1.2;
+    anim.endXScale = 1.2;
+    return anim;
+  }
 }

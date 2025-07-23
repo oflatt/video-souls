@@ -394,7 +394,7 @@ export class VideoSouls {
       currentTime,
       prevTime,
       this.editor.level.attackData,
-      this.inputManager.getCurrentTargetDirection.bind(this.inputManager)
+      this.inputManager
     );
   }
 
@@ -441,7 +441,7 @@ export class VideoSouls {
       }
 
       // check if we finished an animation
-      this.battleLogic.handleAnimations(this.battle);
+      this.battleLogic.handleAnimations(this.battle, this.inputManager);
 
       // ready for new buffered action
       if (this.battle.bufferedInput !== null && this.battle.anim.state === AttackAnimation.NONE) {

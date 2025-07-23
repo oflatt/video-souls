@@ -4,6 +4,20 @@ export enum AttackAnimation {
   NONE, PARRYING, ATTACK_STARTING, ATTACKING, ATTACK_END_LAG, STAGGERING
 }
 
+export type CriticalAnimParticle = {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  life: number;
+  gravity: number; // <-- new property
+};
+
+export type CriticalAnimParticles = {
+  t: number;
+  particles: CriticalAnimParticle[];
+};
+
 export type BattleState = {
   anim: BattleAnim,
   timeSinceLastParry: number;
@@ -17,7 +31,8 @@ export type BattleState = {
   lastBossHealth: number,
   timeSinceBossHit: number,
   currentInterval: string,
-  currentCritical: { direction: number, multiplier: number, timeLeft: number } | null, // <-- updated
+  currentCritical: { direction: number, multiplier: number, timeLeft: number } | null,
+  criticalAnimParticles?: CriticalAnimParticles // <-- typed property
 };
 
 const directionNumToSwordAngle = new Map<number, number>([
@@ -58,7 +73,8 @@ export function initialBattleState(): BattleState {
     hitCombo: 0,
     timeSinceLastHit: 1000,  // Large initial value
     currentInterval: "intro",
-    currentCritical: null, // <-- updated
+    currentCritical: null,
+    criticalAnimParticles: undefined // <-- initialize as undefined
   };
 }
 

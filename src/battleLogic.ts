@@ -5,6 +5,7 @@ import { AttackInterval } from './editor';
 import { VideoPlayer } from './videoPlayer';
 import { LevelDataV0 } from './leveldata';
 import { BattleAnim } from './battleAnim';
+import { InputManager } from './inputmanager';
 
 const ATTACK_COMBO_STARTUP_TIMES = [0.2, 0.2, 0.3, 0.2, 0.4];
 const ATTACK_COMBO_DAMAGE_MULT = [1.0, 1.1, 1.3, 1.0, 2.2];
@@ -35,12 +36,12 @@ export class BattleLogic {
     currentTime: number,
     prevTime: number,
     attackData: any[],
-    getCurrentTargetDirection: () => number
+    inputManager: InputManager
   ) {
     const attacks = this.getAttacksInInterval(attackData, prevTime, currentTime);
     if (attacks.length > 0) {
       const attack = attacks[0];
-      if (battle.anim.state === AttackAnimation.PARRYING && getCurrentTargetDirection() === attack.direction) {
+      if (battle.anim.state === AttackAnimation.PARRYING && inputManager.getCurrentTargetDirection() === attack.direction) {
         this.successParry(battle, currentTime);
       } else {
         this.playerTakeDamage(battle, currentTime);
@@ -72,22 +73,24 @@ export class BattleLogic {
     return criticalData.filter(crit => crit.time > startTime && crit.time <= endTime);
   }
 
-  doAttack(battle: BattleState) {
+  doAttack(battle: BattleState, inputManager: InputManager) {
     battle.lastBossHealth = battle.bossHealth;
 
-    // Check for critical hit
     let damageMult = ATTACK_COMBO_DAMAGE_MULT[battle.hitCombo % ATTACK_COMBO_DAMAGE_MULT.length];
     const closestDir = this.currentClosestDir(battle);
+    const currentDir = inputManager.getCurrentTargetDirection();
+    let didCritical = false;
     if (
       battle.currentCritical &&
-      battle.currentCritical.direction === closestDir
+      battle.currentCritical.direction === currentDir
     ) {
       damageMult *= battle.currentCritical.multiplier;
-      battle.currentCritical = null; // Remove critical after use
+      battle.currentCritical = null;
+      didCritical = true;
     }
 
     battle.bossHealth -= 0.1 * damageMult;
-    battle.timeSinceBossHit = 0;  // Reset duration
+    battle.timeSinceBossHit = 0;
 
     const attackStartPosition: [number, number] = [...battle.anim.endPos];
     const attackEndPosition = directionNumToSwordPos.get((closestDir + 4) % 8)!;
@@ -96,13 +99,35 @@ export class BattleLogic {
     endPos[1] += (Math.random() - 0.5) * 0.1;
 
     const angle = battle.anim.endAngle;
-    // First, ATTACKING animation
-    battle.anim = BattleAnim.attacking(
-      attackStartPosition,
-      endPos,
-      angle,
-      ATTACK_DURATION
-    );
+
+    if (didCritical) {
+      console.log("Critical hit detected, applying critical animation");
+      battle.criticalAnimParticles = {
+        t: 0,
+        particles: Array.from({ length: 7 }, (_, i) => ({
+          x: attackStartPosition[0],
+          y: attackStartPosition[1],
+          vx: Math.cos(angle + (i - 3) * 0.18) * 0.04,
+          vy: Math.sin(angle + (i - 3) * 0.18) * 0.04,
+          life: 2.0, // particles last 2 seconds
+          gravity: 0.1 // <-- gravity strength
+        }))
+      };
+      battle.anim = BattleAnim.criticalHit(
+        attackStartPosition,
+        endPos,
+        angle,
+        angle,
+        0.18
+      );
+    } else {
+      battle.anim = BattleAnim.attacking(
+        attackStartPosition,
+        endPos,
+        angle,
+        ATTACK_DURATION
+      );
+    }
 
     this.audio.enemyHit.play();
   }
@@ -240,10 +265,11 @@ export class BattleLogic {
 
   handleAnimations(
     battle: BattleState,
+    inputManager: InputManager
   ) {
     if (battle.anim.state !== AttackAnimation.NONE && battle.anim.isOver()) {
       if (battle.anim.state === AttackAnimation.ATTACK_STARTING) {
-        this.doAttack(battle);
+        this.doAttack(battle, inputManager);
       } else if (battle.anim.state === AttackAnimation.ATTACKING) {
         // Transition to ATTACK_END_LAG animation
         battle.anim = BattleAnim.attackEndLag(

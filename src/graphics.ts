@@ -6,6 +6,7 @@ export class Graphics {
   };
   arrowSprite: HTMLCanvasElement;
   xSprite: HTMLCanvasElement;
+  criticalSprite: HTMLCanvasElement;
 
   constructor(canvas: HTMLCanvasElement) {
     // Load sword sprites
@@ -72,6 +73,36 @@ export class Graphics {
       );
 
       this.arrowSprite = finalCanvas;
+    });
+
+    // Load critical sprite
+    const criticalImage = new Image();
+    criticalImage.src = 'critical.png';
+    this.criticalSprite = document.createElement('canvas');
+    criticalImage.addEventListener('load', () => {
+      const size = 200;
+      let scale_factor = size / criticalImage.width;
+      const scaled = scaleImage(criticalImage, scale_factor, scale_factor);
+      // Add a glow similar to arrow
+      const glowBefore = makeGlow(scaled, 0.12);
+      const glow = tintImage(glowBefore, [1.0, 1.0, 0.2]);
+      const margin = Math.ceil(Math.max(glow.width, glow.height) * 0.15);
+      const finalSize = Math.max(size, glow.width, glow.height) + margin * 2;
+      const finalCanvas = document.createElement('canvas');
+      finalCanvas.width = finalSize;
+      finalCanvas.height = finalSize;
+      const finalCtx = finalCanvas.getContext('2d')!;
+      finalCtx.drawImage(
+        glow,
+        (finalSize - glow.width) / 2,
+        (finalSize - glow.height) / 2
+      );
+      finalCtx.drawImage(
+        scaled,
+        (finalSize - scaled.width) / 2,
+        (finalSize - scaled.height) / 2
+      );
+      this.criticalSprite = finalCanvas;
     });
 
     const xSize = 200;

@@ -32,15 +32,23 @@ export function drawArrowOrX(
   y: number,
   size: number,
   multiplier?: number,
-  xSprite?: HTMLCanvasElement // <-- new optional param
+  xSprite?: HTMLCanvasElement, // <-- new optional param
+  damage?: number // <-- new optional param
 ) {
   ctx.save();
   ctx.translate(x, y);
+
+  // Aura scaling logic
+  let auraScale = 1.0;
+  if (typeof damage === "number" && damage > 0.1) {
+    auraScale = 1.0 + Math.min((damage - 0.1) * 4, 2.0); // scale up, max 3x
+  }
+
   if (direction === 8 && xSprite) {
     // Use the xSprite image with glow
     ctx.globalAlpha = multiplier ? 0.85 : 1.0;
     ctx.shadowColor = multiplier ? "#ff0000" : "#a00";
-    ctx.shadowBlur = multiplier ? 15 : 8;
+    ctx.shadowBlur = (multiplier ? 15 : 8) * auraScale;
     ctx.drawImage(xSprite, -size / 2, -size / 2, size, size);
     ctx.shadowBlur = 0;
     if (multiplier) {
@@ -63,7 +71,7 @@ export function drawArrowOrX(
     ctx.rotate(direction * Math.PI / 4);
     ctx.globalAlpha = multiplier ? 0.85 : 1.0;
     ctx.shadowColor = multiplier ? "#ff0000" : "#a00";
-    ctx.shadowBlur = multiplier ? 15 : 8;
+    ctx.shadowBlur = (multiplier ? 15 : 8) * auraScale;
     ctx.drawImage(arrowSprite, -size / 2, -size / 2, size, size);
     ctx.shadowBlur = 0;
     if (multiplier) {
@@ -139,7 +147,8 @@ export class BattleRenderer {
         attackY,
         arrowDrawSize,
         undefined,
-        graphics.xSprite // <-- pass xSprite
+        graphics.xSprite, // <-- pass xSprite
+        attack.damage // <-- pass damage for aura scaling
       );
 
       ctx.restore();
@@ -223,6 +232,49 @@ export class BattleRenderer {
     );
   }
 
+  drawCriticalParticles(battle: BattleState) {
+    const particles = battle.criticalAnimParticles;
+    if (particles && Array.isArray(particles.particles)) {
+      const ctx = this.canvas.getContext('2d')!;
+      particles.t += 1 / 60;
+      // Get sword position to attract particles
+      const swordPos = battle.anim.endPos;
+      for (const p of particles.particles) {
+        // Gravity: pull toward sword position
+        const swordX = swordPos[0];
+        const swordY = swordPos[1];
+        const dx = swordX - p.x;
+        const dy = swordY - p.y;
+        // Apply gravity as acceleration toward sword
+        p.vx += dx * p.gravity * 0.04;
+        p.vy += dy * p.gravity * 0.04;
+        // Apply friction to slow down over time
+        p.vx *= 0.98;
+        p.vy *= 0.98;
+        // Update position
+        p.x += p.vx;
+        p.y += p.vy;
+        // Fade out over 1 second
+        p.life -= 1 / 60;
+        // Draw particle
+        const px = this.canvas.width * p.x;
+        const py = this.canvas.height * (1 - p.y);
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.life / 1.0);
+        ctx.beginPath();
+        ctx.arc(px, py, 7 * Math.max(0.5, p.life / 1.0), 0, 2 * Math.PI); // <-- smaller radius
+        ctx.fillStyle = "#ffd700";
+        ctx.shadowColor = "#fff700";
+        ctx.shadowBlur = 12;
+        ctx.fill();
+        ctx.restore();
+      }
+      if (particles.particles.every(p => p.life <= 0)) {
+        battle.criticalAnimParticles = undefined;
+      }
+    }
+  }
+
   drawCriticalMarker(
     battle: BattleState
   ) {
@@ -230,15 +282,14 @@ export class BattleRenderer {
     const ctx = this.canvas.getContext('2d')!;
     const dir = battle.currentCritical.direction;
     const pos = [...directionNumToSwordPos.get(dir)!];
-    const arrowSprite = graphics.arrowSprite;
-    // Draw critical marker at half size in play mode
+    // Use criticalSprite instead of arrowSprite for criticals
+    const sprite = graphics.criticalSprite ?? graphics.arrowSprite;
     const size = graphics.arrowSprite.width / 2;
-    // Place critical marker closer to the center than attack warnings/arrows
     const x = this.canvas.width * (0.5 + pos[0] * 0.9);
     const y = this.canvas.height * (1 - (0.5 + pos[1] * 0.9));
     drawArrowOrX(
       ctx,
-      arrowSprite,
+      sprite, // <-- use criticalSprite
       dir,
       x,
       y,
@@ -258,9 +309,10 @@ export class BattleRenderer {
     youtubeVideoName: string,
     arrowless?: boolean // <-- new param
   ) {
-    this.drawAttackWarning(currentTime, prevTime, getAttacksInInterval, playWarningSound, arrowless);
     this.drawCriticalMarker(battle); // <-- draw critical marker if present
     this.drawSword(currentTime, battle, getCurrentTargetDirection);
+    this.drawCriticalParticles(battle); // <-- always draw particles if present
+    this.drawAttackWarning(currentTime, prevTime, getAttacksInInterval, playWarningSound, arrowless);
 
     animateBossName(youtubeVideoName, this.canvas, currentTime, 0.15);
 

@@ -308,7 +308,7 @@ export class Editor {
     }
 
     // Draw arrow for direction using drawArrowOrX
-    let arrowImg = graphics.arrowSprite;
+    let arrowImg = isCritical ? graphics.criticalSprite ?? graphics.arrowSprite : graphics.arrowSprite;
     let xImg = graphics.xSprite;
     let arrowSize = 70;
     let arrowCanvas = document.createElement("canvas");
@@ -317,7 +317,7 @@ export class Editor {
     let arrowCtx = arrowCanvas.getContext("2d")!;
     drawArrowOrX(
       arrowCtx,
-      arrowImg,
+      arrowImg, // <-- use criticalSprite for criticals
       data.direction,
       arrowSize / 2,
       arrowSize / 2,
