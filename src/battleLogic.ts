@@ -41,7 +41,38 @@ export class BattleLogic {
     const attacks = this.getAttacksInInterval(attackData, prevTime, currentTime);
     if (attacks.length > 0) {
       const attack = attacks[0];
-      if (battle.anim.state === AttackAnimation.PARRYING && inputManager.getCurrentTargetDirection() === attack.direction) {
+      // Only allow parry if sword is in the correct region
+      const swordPos = battle.anim.endPos;
+      const targetPos = directionNumToSwordPos.get(attack.direction)!;
+      const swordX = swordPos[0] - 0.5;
+      const swordY = swordPos[1] - 0.5;
+      const attackX = targetPos[0];
+      const attackY = targetPos[1];
+      let regionOk = true;
+      // For diagonal directions, require quadrant match
+      if (
+        attack.direction === 1 || attack.direction === 3 ||
+        attack.direction === 5 || attack.direction === 7
+      ) {
+        regionOk =
+          (swordX === 0 || attackX === 0 || Math.sign(swordX) === Math.sign(attackX)) &&
+          (swordY === 0 || attackY === 0 || Math.sign(swordY) === Math.sign(attackY));
+      } else if (attack.direction === 0) { // UP
+        regionOk = swordY > 0;
+      } else if (attack.direction === 4) { // DOWN
+        regionOk = swordY < 0;
+      } else if (attack.direction === 2) { // RIGHT
+        regionOk = swordX > 0;
+      } else if (attack.direction === 6) { // LEFT
+        regionOk = swordX < 0;
+      } else if (attack.direction === 8) { // CENTER
+        regionOk = Math.abs(swordX) < 0.15 && Math.abs(swordY) < 0.15;
+      }
+      if (
+        battle.anim.state === AttackAnimation.PARRYING &&
+        inputManager.getCurrentTargetDirection() === attack.direction &&
+        regionOk
+      ) {
         this.successParry(battle, currentTime);
       } else {
         this.playerTakeDamage(battle, currentTime);
