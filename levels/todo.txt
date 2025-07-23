@@ -1,4 +1,8 @@
 
+- refactor bots so they can save state, simplify default bot code
+- make crab bot better- don't do the easy one very often
+
+
 videos
 - https://www.youtube.com/watch?v=2xHf2uKoAXY
 - https://www.youtube.com/shorts/9mHPkTubOnc

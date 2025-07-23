@@ -13,29 +13,6 @@ export const DEFAULT_ATTACK_SCHEDULE = `function(state) {
     }
   }
   
-  // If we're in the death interval, continue normally
-  if (state.currentInterval === "death") {
-    return { continueNormal: true };
-  }
-  
-  // If we're not in any interval, start with intro
-  if (!state.currentInterval || state.currentInterval === "") {
-    return {
-      continueNormal: false,
-      transitionToInterval: "intro",
-      intervalOffset: 0
-    };
-  }
-  
-  // If no attack intervals available, go to death
-  if (attackIntervals.length === 0) {
-    return {
-      continueNormal: false,
-      transitionToInterval: "death",
-      intervalOffset: 0
-    };
-  }
-  
   // Check if current interval is completed (reached the end time)
   var currentInterval = state.availableIntervals[state.currentInterval];
   if (currentInterval) {
@@ -65,6 +42,11 @@ export class AttackSchedule {
     attackIntervals: Map<string, AttackInterval>,
     attackSchedule: string
   ) {
+    // If we're in the death interval, do nothing (handled outside schedule)
+    if (battle.currentInterval === "death") {
+      return;
+    }
+
     // Check if boss health is zero or lower and transition to death
     if (battle.bossHealth <= 0) {
       const deathInterval = attackIntervals.get("death");
