@@ -27,8 +27,8 @@ export class BattleLogic {
 
   constructor(audio: AudioPlayer, level: LevelDataV0) {
     this.audio = audio;
-    this.attackSchedule = new AttackSchedule();
     this.level = level;
+    this.attackSchedule = new AttackSchedule(level.attackSchedule); // <-- pass schedule string
   }
 
   handleBossAttacks(
@@ -282,15 +282,14 @@ export class BattleLogic {
     battle: BattleState,
     currentTime: number,
     videoPlayer: VideoPlayer,
-    attackIntervals: Map<string, AttackInterval>,
-    attackSchedule: string
+    attackIntervals: Map<string, AttackInterval>
   ) {
     this.attackSchedule.handleAttackSchedule(
       battle,
       currentTime,
       videoPlayer,
       attackIntervals,
-      attackSchedule
+      this.level.attackSchedule // <-- pass for API compatibility, not used
     );
   }
 

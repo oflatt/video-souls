@@ -460,8 +460,7 @@ export class VideoSouls {
         this.battle,
         currentTime,
         this.videoPlayer,
-        this.editor.level.attackIntervals,
-        this.editor.level.attackSchedule
+        this.editor.level.attackIntervals
       );
 
       // TODO move key handling input to battle logic file

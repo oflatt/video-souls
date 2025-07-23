@@ -2,32 +2,57 @@ import { BattleState } from './battle';
 import { BossState, BossScheduleResult, AttackInterval } from './editor';
 import { VideoPlayer } from './videoPlayer';
 
-export const DEFAULT_ATTACK_SCHEDULE = `function(state) {
-  // Get all attack intervals (not intro/death)
-  var attackIntervals = [];
-  var intervalNames = Object.keys(state.availableIntervals);
-  for (var i = 0; i < intervalNames.length; i++) {
-    var name = intervalNames[i];
-    if (name !== "intro" && name !== "death") {
-      attackIntervals.push(name);
-    }
-  }
-  
+export const DEFAULT_ATTACK_SCHEDULE = `
+return function(state) {
   // Check if current interval is completed (reached the end time)
   var currentInterval = state.availableIntervals[state.currentInterval];
-  if (currentInterval) {
-    // Check if we've reached or passed the end time of the current interval
-    if (state.currentTime >= currentInterval.end) {
-      // Pick a random attack interval
-      var randomIndex = Math.floor(Math.random() * attackIntervals.length);
-      var nextInterval = attackIntervals[randomIndex];
-      
-      return {
-        continueNormal: false,
-        transitionToInterval: nextInterval,
-        intervalOffset: 0
-      };
+
+  // Check if we've reached or passed the end time of the current interval
+  if (state.currentTime >= currentInterval.end) {
+    // Pick a random attack interval
+    var randomIndex = Math.floor(Math.random() * state.intervalNamesAlpha.length);
+    var nextInterval = state.intervalNamesAlpha[randomIndex];
+    
+    return {
+      continueNormal: false,
+      transitionToInterval: nextInterval,
+      intervalOffset: 0
+    };
+  }
+  
+  // Continue with current behavior
+  return { continueNormal: true };
+}`;
+
+
+export const RUN_EACH_ONCE_FIRST = `
+var run_each_once = "uninitialized";
+
+return function(state) {
+  if (run_each_once === "uninitialized") {
+    run_each_once = state.intervalNamesAlpha.slice();
+  }
+
+  // Check if current interval is completed (reached the end time)
+  var currentInterval = state.availableIntervals[state.currentInterval];
+
+  // Check if we've reached or passed the end time of the current interval
+  if (state.currentTime >= currentInterval.end) {
+    // If run_each_once is not empty, pick the next interval from it
+    var nextInterval;
+    if (run_each_once.length > 0) {
+      nextInterval = run_each_once.shift();
+    } else {
+      // Fallback: pick a random attack interval
+      var randomIndex = Math.floor(Math.random() * state.intervalNamesAlpha.length);
+      nextInterval = state.intervalNamesAlpha[randomIndex];
     }
+    
+    return {
+      continueNormal: false,
+      transitionToInterval: nextInterval,
+      intervalOffset: 0
+    };
   }
   
   // Continue with current behavior
@@ -35,12 +60,31 @@ export const DEFAULT_ATTACK_SCHEDULE = `function(state) {
 }`;
 
 export class AttackSchedule {
+  private interpreter: any;
+  private globalObject: any;
+  private scheduleFunctionName: string;
+
+  constructor(attackSchedule: string) {
+    this.scheduleFunctionName = "evaluateSchedule";
+    const functionCode = `
+      var ${this.scheduleFunctionName} = (function () {
+        ${attackSchedule}
+      })();
+    `;
+    // Create interpreter with the schedule function loaded and init function
+    this.interpreter = new (window as any).Interpreter(functionCode, (interpreter: any, globalObject: any) => {
+      this.globalObject = globalObject;
+      // Example: add alert API if needed
+      // interpreter.setProperty(globalObject, 'alert', interpreter.createNativeFunction(window.alert));
+    });
+  }
+
   handleAttackSchedule(
     battle: BattleState,
     currentTime: number,
     videoPlayer: VideoPlayer,
     attackIntervals: Map<string, AttackInterval>,
-    attackSchedule: string
+    attackSchedule: string // kept for API compatibility, but not used
   ) {
     // If we're in the death interval, do nothing (handled outside schedule)
     if (battle.currentInterval === "death") {
@@ -60,8 +104,7 @@ export class AttackSchedule {
     const scheduleResult = this.evaluateAttackSchedule(
       battle,
       currentTime,
-      attackIntervals,
-      attackSchedule
+      attackIntervals
     );
 
     // Handle schedule result
@@ -82,8 +125,7 @@ export class AttackSchedule {
   private evaluateAttackSchedule(
     battle: BattleState,
     currentTime: number,
-    attackIntervals: Map<string, AttackInterval>,
-    attackSchedule: string
+    attackIntervals: Map<string, AttackInterval>
   ): BossScheduleResult {
     try {
       // Create available intervals map
@@ -101,9 +143,25 @@ export class AttackSchedule {
 
       // Create boss state - convert Map to plain object for the interpreter
       const availableIntervalsObj: Record<string, AttackInterval> = {};
+      const intervalEntries: [string, AttackInterval][] = [];
       for (const [key, value] of availableIntervals) {
         availableIntervalsObj[key] = value;
+        if (key !== "intro" && key !== "death") {
+          intervalEntries.push([key, value]);
+        }
       }
+      // Alphabetical
+      const intervalNamesAlpha: string[] = [...intervalEntries]
+        .map(([key]) => key)
+        .sort((a, b) => a.localeCompare(b));
+      // By start time
+      const intervalNamesByStart: string[] = [...intervalEntries]
+        .sort((a, b) => a[1].start - b[1].start)
+        .map(([key]) => key);
+      // By end time
+      const intervalNamesByEnd: string[] = [...intervalEntries]
+        .sort((a, b) => a[1].end - b[1].end)
+        .map(([key]) => key);
 
       const bossState = {
         healthPercentage: battle.bossHealth,
@@ -111,36 +169,33 @@ export class AttackSchedule {
         currentTime: currentTime,
         intervalElapsedTime: intervalElapsedTime,
         playerHealthPercentage: battle.playerHealth,
-        availableIntervals: availableIntervalsObj
+        availableIntervals: availableIntervalsObj,
+        intervalNamesAlpha: intervalNamesAlpha,
+        intervalNamesByStart: intervalNamesByStart,
+        intervalNamesByEnd: intervalNamesByEnd
       };
 
-      // Serialize boss state to JSON for the interpreter
-      const bossStateJson = JSON.stringify(bossState);
+      // Pass bossState as a global variable
+      this.interpreter.setProperty(
+        this.globalObject,
+        'bossStateArg',
+        JSON.stringify(bossState)
+      );
 
-      // Create the function code that wraps the schedule function and passes data as parameters
-      const functionCode = `
-        function evaluateSchedule(bossStateJson) {
-          var bossState = JSON.parse(bossStateJson);
-          var result = (${attackSchedule.toString()})(bossState);
-          return JSON.stringify(result);
-        }
-        evaluateSchedule(bossStateJsonArg);
-      `;
+      // Append code to call the schedule function and store result
+      this.interpreter.appendCode(`
+        var __scheduleResult = ${this.scheduleFunctionName}(JSON.parse(bossStateArg));
+      `);
 
-      // Create interpreter with initialization function
-      const interpreter = new (window as any).Interpreter(functionCode, (interpreter: any, globalObject: any) => {
-        // Add bossState JSON as a parameter
-        interpreter.setProperty(globalObject, 'bossStateJsonArg', bossStateJson);
-      });
+      // Run the interpreter to completion
+      this.interpreter.run();
 
-      // Run the interpreter
-      interpreter.run();
-      
-      // Get the result and parse it back to native object
-      const resultJson = interpreter.value;
-      const result = JSON.parse(resultJson);
-      
-      return result as BossScheduleResult;
+      // Get the result from the global object
+      const result = this.interpreter.getProperty(this.globalObject, '__scheduleResult');
+      // Convert result to native object
+      const nativeResult = this.interpreter.pseudoToNative(result);
+
+      return nativeResult as BossScheduleResult;
     } catch (error) {
       console.error('Error evaluating attack schedule:', error);
       return { continueNormal: true };
