@@ -107,10 +107,10 @@ export class BattleLogic {
         particles: Array.from({ length: 7 }, (_, i) => ({
           x: attackStartPosition[0],
           y: attackStartPosition[1],
-          vx: Math.cos(angle + (i - 3) * 0.18) * 0.04,
-          vy: Math.sin(angle + (i - 3) * 0.18) * 0.04,
+          vx: Math.cos(angle + (i - 3) * 0.18) * 0.01,
+          vy: Math.sin(angle + (i - 3) * 0.18) * 0.01,
           life: 2.0, // particles last 2 seconds
-          gravity: 0.1 // <-- gravity strength
+          gravity: 0.04 // <-- lower gravity
         }))
       };
       battle.anim = BattleAnim.criticalHit(

@@ -83,24 +83,15 @@ export class Graphics {
       const size = 200;
       let scale_factor = size / criticalImage.width;
       const scaled = scaleImage(criticalImage, scale_factor, scale_factor);
-      // Add a glow similar to arrow
-      const glowBefore = makeGlow(scaled, 0.12);
-      const glow = tintImage(glowBefore, [1.0, 1.0, 0.2]);
-      const margin = Math.ceil(Math.max(glow.width, glow.height) * 0.15);
-      const finalSize = Math.max(size, glow.width, glow.height) + margin * 2;
+      // Remove glow: just draw the scaled image centered
       const finalCanvas = document.createElement('canvas');
-      finalCanvas.width = finalSize;
-      finalCanvas.height = finalSize;
+      finalCanvas.width = size;
+      finalCanvas.height = size;
       const finalCtx = finalCanvas.getContext('2d')!;
       finalCtx.drawImage(
-        glow,
-        (finalSize - glow.width) / 2,
-        (finalSize - glow.height) / 2
-      );
-      finalCtx.drawImage(
         scaled,
-        (finalSize - scaled.width) / 2,
-        (finalSize - scaled.height) / 2
+        (size - scaled.width) / 2,
+        (size - scaled.height) / 2
       );
       this.criticalSprite = finalCanvas;
     });
