@@ -149,7 +149,6 @@ export class BattleLogic {
         endPos,
         angle,
         angle,
-        0.18
       );
     } else {
       battle.anim = BattleAnim.attacking(

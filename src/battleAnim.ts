@@ -147,8 +147,8 @@ export class BattleAnim {
     endPos: [number, number],
     startAngle: number,
     endAngle: number,
-    duration: number = 0.18 // very quick
   ): BattleAnim {
+    const duration = 0.18 // very quick
     const anim = new BattleAnim();
     anim.state = AttackAnimation.ATTACKING; // reuse ATTACKING state for now
     anim.timeElapsed = 0;
