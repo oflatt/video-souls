@@ -435,8 +435,7 @@ export class VideoSouls {
   }
 
   startAttack() {
-    const currentTime = this.currentTime();
-    this.battleLogic.startAttack(this.battle, currentTime);
+    this.battleLogic.startAttack(this.battle, this.inputManager);
   }
 
   doParry() {

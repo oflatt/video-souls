@@ -32,7 +32,7 @@ export class BattleLogic {
   }
 
   handleBossAttacks(
-    battle: BattleState, 
+    battle: BattleState,
     currentTime: number,
     prevTime: number,
     attackData: any[],
@@ -109,17 +109,8 @@ export class BattleLogic {
 
     let damageMult = ATTACK_COMBO_DAMAGE_MULT[battle.hitCombo % ATTACK_COMBO_DAMAGE_MULT.length];
     const closestDir = this.currentClosestDir(battle);
-    const currentDir = inputManager.getCurrentTargetDirection();
-    let didCritical = false;
-    if (
-      battle.currentCritical &&
-      battle.currentCritical.direction === currentDir
-    ) {
-      damageMult *= battle.currentCritical.multiplier;
-      battle.currentCritical = null;
-      didCritical = true;
-    }
 
+    // No critical logic here
     battle.bossHealth -= 0.1 * damageMult;
     battle.timeSinceBossHit = 0;
 
@@ -131,38 +122,17 @@ export class BattleLogic {
 
     const angle = battle.anim.endAngle;
 
-    if (didCritical) {
-      console.log("Critical hit detected, applying critical animation");
-      battle.criticalAnimParticles = {
-        t: 0,
-        particles: Array.from({ length: 7 }, (_, i) => ({
-          x: attackStartPosition[0],
-          y: attackStartPosition[1],
-          vx: Math.cos(angle + (i - 3) * 0.18) * 0.01,
-          vy: Math.sin(angle + (i - 3) * 0.18) * 0.01,
-          life: 2.0, // particles last 2 seconds
-          gravity: 0.07
-        }))
-      };
-      battle.anim = BattleAnim.criticalHit(
-        attackStartPosition,
-        endPos,
-        angle,
-        angle,
-      );
-    } else {
-      battle.anim = BattleAnim.attacking(
-        attackStartPosition,
-        endPos,
-        angle,
-        ATTACK_DURATION
-      );
-    }
+    battle.anim = BattleAnim.attacking(
+      attackStartPosition,
+      endPos,
+      angle,
+      ATTACK_DURATION
+    );
 
     this.audio.enemyHit.play();
   }
 
-  startAttack(battle: BattleState, currentTime: number) {
+  startAttack(battle: BattleState, inputManager: InputManager) {
     var currentCombo = 0;
     if (battle.timeSinceLastHit > COMBO_EXTEND_TIME) {  // Use duration instead of time comparison
       battle.hitCombo = 1;
@@ -174,27 +144,64 @@ export class BattleLogic {
 
     const closestDir = this.currentClosestDir(battle);
     const startPos = [...battle.anim.endPos];
-    const attackEndPosition = directionNumToSwordPos.get(closestDir)!;
-    const endPos: [number, number] = [
-      0.5 + attackEndPosition[0] * 1.2,
-      0.5 + attackEndPosition[1] * 1.2
-    ];
-    endPos[0] += (Math.random() - 0.5) * 0.1;
-    endPos[1] += (Math.random() - 0.5) * 0.1;
 
-    const attackDir = this.normalize(directionNumToSwordPos.get(closestDir)!);
-    const targetDir = Math.atan2(attackDir[1], attackDir[0]);
-    const currentDir = battle.anim.endAngle;
+    if (
+      battle.currentCritical &&
+      battle.currentCritical.direction === closestDir
+    ) {
+      const attackEndPosition = directionNumToSwordPos.get((closestDir + 4) % 8)!;
+      const endPos: [number, number] = [0.5 + attackEndPosition[0], 0.5 + attackEndPosition[1]];
+      endPos[0] += (Math.random() - 0.5) * 0.1;
+      endPos[1] += (Math.random() - 0.5) * 0.1;
+      const currentDir = inputManager.getCurrentTargetDirection();
+      let damageMult = ATTACK_COMBO_DAMAGE_MULT[battle.hitCombo % ATTACK_COMBO_DAMAGE_MULT.length];
+      damageMult *= battle.currentCritical.multiplier;
+      battle.bossHealth -= 0.1 * damageMult;
+      battle.timeSinceBossHit = 0;
+      battle.lastBossHealth = battle.bossHealth;
+      battle.criticalAnimParticles = {
+        t: 0,
+        particles: Array.from({ length: 7 }, (_, i) => ({
+          x: startPos[0],
+          y: startPos[1],
+          vx: Math.cos(currentDir + (i - 3) * 0.18) * 0.01,
+          vy: Math.sin(currentDir + (i - 3) * 0.18) * 0.01,
+          life: 2.0,
+          gravity: 0.07
+        }))
+      };
+      battle.anim = BattleAnim.criticalHit(
+        [startPos[0], startPos[1]],
+        endPos,
+        currentDir,
+        currentDir
+      );
+      battle.currentCritical = null;
+      this.audio.enemyHit.play();
+    } else {
+      const attackEndPosition = directionNumToSwordPos.get(closestDir)!;
+      const endPos: [number, number] = [
+        0.5 + attackEndPosition[0] * 1.2,
+        0.5 + attackEndPosition[1] * 1.2
+      ];
+      endPos[0] += (Math.random() - 0.5) * 0.1;
+      endPos[1] += (Math.random() - 0.5) * 0.1;
 
-    battle.anim = BattleAnim.attackStarting(
-      [startPos[0], startPos[1]],
-      endPos,
-      currentDir,
-      targetDir,
-      ATTACK_COMBO_STARTUP_TIMES[currentCombo % ATTACK_COMBO_STARTUP_TIMES.length]
-    );
+      const attackDir = this.normalize(directionNumToSwordPos.get(closestDir)!);
+      const targetDir = Math.atan2(attackDir[1], attackDir[0]);
+      const currentDir = battle.anim.endAngle;
 
-    this.audio.playerAttack.play();
+
+      battle.anim = BattleAnim.attackStarting(
+        [startPos[0], startPos[1]],
+        endPos,
+        currentDir,
+        targetDir,
+        ATTACK_COMBO_STARTUP_TIMES[currentCombo % ATTACK_COMBO_STARTUP_TIMES.length]
+      );
+
+      this.audio.playerAttack.play();
+    }
   }
 
   doParry(battle: BattleState) {
