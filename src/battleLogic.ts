@@ -132,6 +132,43 @@ export class BattleLogic {
     this.audio.playEnemyHitSound();
   }
 
+  private doCriticalHit(
+    battle: BattleState,
+    startPos: [number, number],
+    currentDir: number,
+    closestDir: number
+  ) {
+    const attackEndPosition = directionNumToSwordPos.get((closestDir + 4) % 8)!;
+    const endPos: [number, number] = [0.5 + attackEndPosition[0], 0.5 + attackEndPosition[1]];
+    endPos[0] += (Math.random() - 0.5) * 0.1;
+    endPos[1] += (Math.random() - 0.5) * 0.1;
+
+    let damageMult = ATTACK_COMBO_DAMAGE_MULT[battle.hitCombo % ATTACK_COMBO_DAMAGE_MULT.length];
+    damageMult *= battle.currentCritical!.multiplier;
+    battle.bossHealth -= 0.1 * damageMult;
+    battle.timeSinceBossHit = 0;
+    battle.lastBossHealth = battle.bossHealth;
+    battle.criticalAnimParticles = {
+      t: 0,
+      particles: Array.from({ length: 7 }, (_, i) => ({
+        x: startPos[0],
+        y: startPos[1],
+        vx: Math.cos(currentDir + (i - 3) * 0.18) * 0.01,
+        vy: Math.sin(currentDir + (i - 3) * 0.18) * 0.01,
+        life: 2.0,
+        gravity: 0.07
+      }))
+    };
+    battle.anim = BattleAnim.criticalHit(
+      [startPos[0], startPos[1]],
+      endPos,
+      currentDir,
+      currentDir
+    );
+    battle.currentCritical = null;
+    this.audio.playEnemyHitSound();
+  }
+
   startAttack(battle: BattleState, inputManager: InputManager) {
     var currentCombo = 0;
     if (battle.timeSinceLastHit > COMBO_EXTEND_TIME) {  // Use duration instead of time comparison
@@ -142,42 +179,15 @@ export class BattleLogic {
     }
     battle.timeSinceLastHit = 0;  // Reset duration
 
-    const closestDir = this.currentClosestDir(battle);
     const startPos = [...battle.anim.endPos];
+    const currentDir = inputManager.getCurrentTargetDirection();
+    const closestDir = this.currentClosestDir(battle);
 
     if (
       battle.currentCritical &&
-      battle.currentCritical.direction === closestDir
+      battle.currentCritical.direction === currentDir
     ) {
-      const attackEndPosition = directionNumToSwordPos.get((closestDir + 4) % 8)!;
-      const endPos: [number, number] = [0.5 + attackEndPosition[0], 0.5 + attackEndPosition[1]];
-      endPos[0] += (Math.random() - 0.5) * 0.1;
-      endPos[1] += (Math.random() - 0.5) * 0.1;
-      const currentDir = inputManager.getCurrentTargetDirection();
-      let damageMult = ATTACK_COMBO_DAMAGE_MULT[battle.hitCombo % ATTACK_COMBO_DAMAGE_MULT.length];
-      damageMult *= battle.currentCritical.multiplier;
-      battle.bossHealth -= 0.1 * damageMult;
-      battle.timeSinceBossHit = 0;
-      battle.lastBossHealth = battle.bossHealth;
-      battle.criticalAnimParticles = {
-        t: 0,
-        particles: Array.from({ length: 7 }, (_, i) => ({
-          x: startPos[0],
-          y: startPos[1],
-          vx: Math.cos(currentDir + (i - 3) * 0.18) * 0.01,
-          vy: Math.sin(currentDir + (i - 3) * 0.18) * 0.01,
-          life: 2.0,
-          gravity: 0.07
-        }))
-      };
-      battle.anim = BattleAnim.criticalHit(
-        [startPos[0], startPos[1]],
-        endPos,
-        currentDir,
-        currentDir
-      );
-      battle.currentCritical = null;
-      this.audio.playEnemyHitSound();
+      this.doCriticalHit(battle, [startPos[0], startPos[1]], currentDir, closestDir);
     } else {
       const attackEndPosition = directionNumToSwordPos.get(closestDir)!;
       const endPos: [number, number] = [
