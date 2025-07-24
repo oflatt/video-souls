@@ -33,6 +33,7 @@
     <div id="floating-menu">
         <h1>Video Souls</h1>
         <div id="levels-container"></div>
+        <button id="community-levels-main-menu-button" style="font-size:20px;margin-bottom:10px;">Community Levels</button>
         <h2>New Custom Level</h2>
         <input id="video-url" type="text" placeholder="Enter YouTube video URL" />
         <button id="record-button">Edit New Custom Level</button>
@@ -143,6 +144,17 @@
                 <button id="back-button" style="font-size:30px;margin-right:30px;">Back</button>
                 <button id="retry-button" style="font-size:30px;">Retry</button>
             </div>
+        </div>
+    </template>
+    <template id="community-levels-template">
+        <div id="community-levels-page" style="position:fixed;top:0;left:0;width:100vw;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;background:rgba(34,34,34,0.85);z-index:9999;">
+            <h1 style="font-size:48px;margin-top:40px;font-family:'Cormorant Unicase',serif;">Community Levels</h1>
+            <div style="margin-bottom:20px;font-size:18px;">
+                Want to see your level here? Post it on <a href="https://lemmy.world/c/videosouls" target="_blank" style="color:#ffd700;">lemmy.world/c/videosouls</a>
+            </div>
+            <button id="community-levels-refresh" style="margin-bottom:20px;font-size:20px;">Refresh</button>
+            <div id="community-levels-list" style="width:80%;max-width:700px;display:flex;flex-direction:column;gap:12px;margin-bottom:30px;"></div>
+            <button id="community-levels-back" style="font-size:20px;">Back</button>
         </div>
     </template>
     <canvas id="game-canvas"></canvas>

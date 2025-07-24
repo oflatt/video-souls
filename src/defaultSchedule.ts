@@ -4,11 +4,11 @@ return function(state) {
 
   // Check if we've reached or passed the end time of the current interval
   if (state.currentTime >= currentInterval.end) {
-    var nextInterval = candidates[Math.floor(Math.random() * candidates.length)];
+    var nextInterval = state.intervalNamesAlpha[Math.floor(Math.random() * state.intervalNamesAlpha.length)];
 
     // pick again if the interval is the same as the current one
     if (nextInterval === state.currentInterval) {
-      nextInterval = candidates[Math.floor(Math.random() * candidates.length)];
+      nextInterval = state.intervalNamesAlpha[Math.floor(Math.random() * state.intervalNamesAlpha.length)];
     }
     
     return {

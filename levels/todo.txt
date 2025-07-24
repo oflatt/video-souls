@@ -1,6 +1,4 @@
-
-- refactor bots so they can save state, simplify default bot code
-- make crab bot better- don't do the easy one very often
+- configurable pngs
 
 
 videos

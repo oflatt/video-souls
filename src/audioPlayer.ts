@@ -17,9 +17,31 @@ export class AudioPlayer {
     this.parrySound = new Audio('audio/parry.wav');
   }
 
+  private cloneAndPlay(audio: HTMLAudioElement) {
+    const sound = audio.cloneNode(true) as HTMLAudioElement;
+    sound.volume = audio.volume;
+    sound.play();
+  }
+
   playWarningSound() {
     const sound = this.warnings[Math.floor(Math.random() * this.warnings.length)];
-    sound.play();
+    this.cloneAndPlay(sound);
+  }
+
+  playEnemyHitSound() {
+    this.cloneAndPlay(this.enemyHit);
+  }
+
+  playPlayerAttackSound() {
+    this.cloneAndPlay(this.playerAttack);
+  }
+
+  playPlayerHitSound() {
+    this.cloneAndPlay(this.playerHit);
+  }
+
+  playParrySound() {
+    this.cloneAndPlay(this.parrySound);
   }
 
   setVolume(normalizedVolume: number) {

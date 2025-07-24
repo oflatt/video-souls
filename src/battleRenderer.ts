@@ -101,6 +101,58 @@ export class BattleRenderer {
     this.level = level;
   }
 
+  private drawAttackWarningArrow(
+    attack: any,
+    directionCountMap: Map<number, number>,
+    currentTime: number,
+    arrowDrawSize: number,
+    canvasWidth: number,
+    canvasHeight: number
+  ) {
+    const count = directionCountMap.get(attack.direction) ?? 0;
+
+    let attackPos: [number, number];
+    if (attack.direction === 8) {
+      // For center, move to the right for each additional arrow
+      const baseX = 0.5;
+      const baseY = 0.5;
+      const spacing = 0.06 * count;
+      attackPos = [baseX + spacing, baseY];
+    } else {
+      // For other directions, move radially outward
+      const base = [...directionNumToSwordPos.get(attack.direction)!];
+      const baseDistance = 1.5;
+      const extraDistance = 0.7 * count;
+      const totalDistance = baseDistance + extraDistance;
+      attackPos = [
+        base[0] * totalDistance + 0.5,
+        base[1] * totalDistance + 0.5
+      ];
+    }
+
+    const animTime = (currentTime - attack.time) / ATTACK_WARNING_ADVANCE;
+    const opacity = Math.max(0, 1 - animTime);
+
+    const attackX = canvasWidth * attackPos[0];
+    const attackY = canvasHeight * (1 - attackPos[1]);
+
+    const ctx = this.canvas.getContext('2d')!;
+    ctx.save();
+    ctx.globalAlpha = opacity;
+    drawArrow(
+      ctx,
+      graphics.arrowSprite,
+      attack.direction,
+      attackX,
+      attackY,
+      arrowDrawSize,
+      attack.damage
+    );
+    ctx.restore();
+
+    directionCountMap.set(attack.direction, count + 1);
+  }
+
   drawAttackWarning(
     currentTime: number,
     prevTime: number,
@@ -118,36 +170,21 @@ export class BattleRenderer {
       playWarningSound();
     }
 
+    // Get all attacks in the warning window
     const animAttacks = getAttacksInInterval(currentTime, currentTime + ATTACK_WARNING_ADVANCE);
+
+    const arrowDrawSize = graphics.arrowSprite.width / 2;
+    // Map from direction number to how many arrows have been drawn for that direction
+    const directionCountMap = new Map<number, number>();
     for (const attack of animAttacks) {
-      const attackPos = [...directionNumToSwordPos.get(attack.direction)!];
-      attackPos[0] = attackPos[0] * 1.5;
-      attackPos[1] = attackPos[1] * 1.5;
-      attackPos[0] += 0.5;
-      attackPos[1] += 0.5;
-
-      const animTime = (currentTime - attack.time) / ATTACK_WARNING_ADVANCE;
-      const opacity = Math.max(0, 1 - animTime);
-
-      const attackX = this.canvas.width * attackPos[0];
-      const attackY = this.canvas.height * (1 - attackPos[1]);
-      ctx.save();
-      ctx.globalAlpha = opacity;
-
-      // Draw arrow at half size in play mode
-      const arrowDrawSize = graphics.arrowSprite.width / 2;
-
-      drawArrow(
-        ctx,
-        graphics.arrowSprite,
-        attack.direction,
-        attackX,
-        attackY,
+      this.drawAttackWarningArrow(
+        attack,
+        directionCountMap,
+        currentTime,
         arrowDrawSize,
-        attack.damage
+        this.canvas.width,
+        this.canvas.height
       );
-
-      ctx.restore();
     }
   }
 

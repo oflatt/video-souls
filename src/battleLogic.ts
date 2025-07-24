@@ -129,7 +129,7 @@ export class BattleLogic {
       ATTACK_DURATION
     );
 
-    this.audio.enemyHit.play();
+    this.audio.playEnemyHitSound();
   }
 
   startAttack(battle: BattleState, inputManager: InputManager) {
@@ -177,7 +177,7 @@ export class BattleLogic {
         currentDir
       );
       battle.currentCritical = null;
-      this.audio.enemyHit.play();
+      this.audio.playEnemyHitSound();
     } else {
       const attackEndPosition = directionNumToSwordPos.get(closestDir)!;
       const endPos: [number, number] = [
@@ -200,7 +200,7 @@ export class BattleLogic {
         ATTACK_COMBO_STARTUP_TIMES[currentCombo % ATTACK_COMBO_STARTUP_TIMES.length]
       );
 
-      this.audio.playerAttack.play();
+      this.audio.playPlayerAttackSound();
     }
   }
 
@@ -253,13 +253,13 @@ export class BattleLogic {
   }
 
   private successParry(battle: BattleState, currentTime: number) {
-    this.audio.parrySound.play();
+    this.audio.playParrySound();
     battle.timeSinceLastParry = 0;  // Reset duration
     battle.anim.state = AttackAnimation.NONE;
   }
 
   private playerTakeDamage(battle: BattleState, currentTime: number) {
-    this.audio.playerHit.play();
+    this.audio.playPlayerHitSound();
     battle.lastPlayerHealth = battle.playerHealth;
     // Use bossDamageMultiplier from level data
     battle.playerHealth -= 0.1 * this.level.bossDamageMultiplier;

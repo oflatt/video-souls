@@ -10,6 +10,7 @@ import { BattleLogic } from './battleLogic';
 import { AttackAnimation, BattleState, initialBattleState, directionNumToSwordAngle, updateBattleTime } from './battle';
 import { VideoPlayer } from './videoPlayer';
 import { Settings } from './settings';
+import { CommunityLevelsPage } from "./CommunityLevelsPage";
 
 // Load the interpreter from the local acorn_interpreter.js file
 declare const Interpreter: any;
@@ -68,6 +69,7 @@ export class VideoSouls {
   settings: Settings;
   volumeSlider: HTMLInputElement;
   battleEndHudElement: HTMLElement | null = null;
+  communityLevelsPage: CommunityLevelsPage | null = null;
 
   constructor(player: YT.Player) {
     this.videoPlayer = new VideoPlayer(player);
@@ -159,6 +161,14 @@ export class VideoSouls {
       this.setGameMode(GameMode.EDITING);
     };
     this.elements.gameHUD.appendChild(editBtn);
+
+    // Add Community Levels button event
+    const communityBtn = document.getElementById("community-levels-main-menu-button") as HTMLButtonElement;
+    if (communityBtn) {
+      communityBtn.onclick = () => {
+        this.showCommunityLevelsPage();
+      };
+    }
 
     // Register this instance globally for playtest event
     (window as any).videoSoulsInstance = this;
@@ -613,6 +623,37 @@ export class VideoSouls {
     this.audio.setVolume(this.settings.getNormalizedVolume());
   }
 
+  showCommunityLevelsPage() {
+    // Hide main menu
+    this.elements.floatingMenu.style.display = "none";
+    // Remove previous instance if present
+    if (this.communityLevelsPage) {
+      this.communityLevelsPage.cleanup();
+      this.communityLevelsPage = null;
+    }
+    // Create and show new page, wire up callbacks
+    this.communityLevelsPage = new CommunityLevelsPage(
+      () => this.hideCommunityLevelsPage(),
+      (level: LevelDataV0) => this.loadCommunityLevel(level)
+    );
+  }
+
+  hideCommunityLevelsPage() {
+    if (this.communityLevelsPage) {
+      this.communityLevelsPage.cleanup();
+      this.communityLevelsPage = null;
+    }
+    this.elements.floatingMenu.style.display = "flex";
+  }
+
+  loadCommunityLevel(level: LevelDataV0) {
+    this.editor.level = level;
+    this.battleLogic = new BattleLogic(this.audio, level);
+    this.battleRenderer = new BattleRenderer(this.elements.canvas, level);
+    this.hideCommunityLevelsPage();
+    this.setGameMode(GameMode.PLAYING);
+  }
+
   setCurrentVideo(videoId: string) {
     this.editor.level = levelDataFromVideo(videoId);
     // Recreate battleLogic with new level
@@ -694,9 +735,10 @@ export class VideoSouls {
   }
 }
 
-// Helper function to extract the video ID from a YouTube URL
+// Helper function to extract the video ID from a YouTube URL, including Shorts
 function extractVideoID(url: string) {
-  const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?/\s]{11})/;
+  // Match regular, short, and shorts URLs
+  const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:shorts\/|(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=))|youtu\.be\/)([^"&?/\s]{11})/;
   const match = url.match(regex);
   return match ? match[1] : null;
 }
