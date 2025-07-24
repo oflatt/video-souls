@@ -1,7 +1,6 @@
 import typia from "typia";
 
 import { Graphics } from './graphics';
-import { DEFAULT_ATTACK_SCHEDULE } from './attackSchedule';
 import { VideoPlayer } from './videoPlayer';
 import {
   LevelDataV0,

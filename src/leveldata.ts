@@ -1,5 +1,5 @@
 import typia from "typia";
-import { DEFAULT_ATTACK_SCHEDULE } from './attackSchedule';
+import { DEFAULT_ATTACK_SCHEDULE } from "./defaultSchedule";
 
 export enum AttackDirection {
   UP, UP_RIGHT, RIGHT, DOWN_RIGHT, DOWN, DOWN_LEFT, LEFT, UP_LEFT, CENTER

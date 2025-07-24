@@ -2,62 +2,6 @@ import { BattleState } from './battle';
 import { BossState, BossScheduleResult, AttackInterval } from './editor';
 import { VideoPlayer } from './videoPlayer';
 
-export const DEFAULT_ATTACK_SCHEDULE = `
-return function(state) {
-  // Check if current interval is completed (reached the end time)
-  var currentInterval = state.availableIntervals[state.currentInterval];
-
-  // Check if we've reached or passed the end time of the current interval
-  if (state.currentTime >= currentInterval.end) {
-    // Pick a random attack interval
-    var randomIndex = Math.floor(Math.random() * state.intervalNamesAlpha.length);
-    var nextInterval = state.intervalNamesAlpha[randomIndex];
-    
-    return {
-      continueNormal: false,
-      transitionToInterval: nextInterval,
-      intervalOffset: 0
-    };
-  }
-  
-  // Continue with current behavior
-  return { continueNormal: true };
-}`;
-
-
-export const RUN_EACH_ONCE_FIRST = `
-var run_each_once = "uninitialized";
-
-return function(state) {
-  if (run_each_once === "uninitialized") {
-    run_each_once = state.intervalNamesAlpha.slice();
-  }
-
-  // Check if current interval is completed (reached the end time)
-  var currentInterval = state.availableIntervals[state.currentInterval];
-
-  // Check if we've reached or passed the end time of the current interval
-  if (state.currentTime >= currentInterval.end) {
-    // If run_each_once is not empty, pick the next interval from it
-    var nextInterval;
-    if (run_each_once.length > 0) {
-      nextInterval = run_each_once.shift();
-    } else {
-      // Fallback: pick a random attack interval
-      var randomIndex = Math.floor(Math.random() * state.intervalNamesAlpha.length);
-      nextInterval = state.intervalNamesAlpha[randomIndex];
-    }
-    
-    return {
-      continueNormal: false,
-      transitionToInterval: nextInterval,
-      intervalOffset: 0
-    };
-  }
-  
-  // Continue with current behavior
-  return { continueNormal: true };
-}`;
 
 export class AttackSchedule {
   private interpreter: any;
