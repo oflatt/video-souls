@@ -10,11 +10,13 @@ import {
   BossScheduleResult,
   AttackData,
   AttackDirection,
-  CriticalData // <-- import CriticalData
+  CriticalData
 } from './leveldata';
 import { EditorHud } from './editorHud';
 import { drawArrow, drawCritical } from './battleRenderer'; // <-- update import
 import { graphics } from './videosouls'; // <-- import global graphics
+import { roatate_vec2 } from './utils';
+import { showFloatingAlert } from './utils';
 
 const FRAME_LENGTH = 0.05;
 const PLAYBACK_BAR_PADDING = 20;
@@ -1049,36 +1051,6 @@ export class Editor {
       showFloatingAlert('Failed to copy level data.', 30, "60px");
     });
   }
-}
-
-// rotate a vector by radians, clockwise
-function roatate_vec2(vec: [number, number], clockwise_angle: number): [number, number] {
-  let angle = -clockwise_angle;
-  let x = vec[0];
-  let y = vec[1];
-  let rotated_x = x * Math.cos(angle) - y * Math.sin(angle);
-  let rotated_y = x * Math.sin(angle) + y * Math.cos(angle);
-  return [rotated_x, rotated_y];
-}
-
-// Floating notification helper for editor
-function showFloatingAlert(message: string, fontSize: number = 40, position: string = "20px", color: string = 'white', font: string = 'Arial') {
-  const alertText = document.createElement('div');
-  alertText.classList.add("fading-alert");
-  alertText.style.fontSize = `${fontSize}px`;
-  alertText.style.top = position;
-  alertText.style.color = color;
-  alertText.style.fontFamily = font;
-  alertText.textContent = message;
-  alertText.style.position = "absolute";
-  alertText.style.left = "50%";
-  alertText.style.transform = "translateX(-50%)";
-  alertText.style.zIndex = "2000";
-  document.body.appendChild(alertText);
-  setTimeout(() => {
-    alertText.style.opacity = "0";
-    setTimeout(() => alertText.remove(), 600);
-  }, 1800);
 }
 
 export type { AttackInterval, BossState, BossScheduleResult };
