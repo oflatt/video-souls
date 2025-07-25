@@ -1,3 +1,4 @@
+// TODO file too big
 import typia from "typia";
 
 import { Graphics } from './graphics';
@@ -97,6 +98,9 @@ export class Editor {
   hudElement: HTMLElement; // <-- Store the HUD element
   videoPlayer: VideoPlayer;
 
+  // --- new fields for cursor management ---
+  private savedCursorTime: number | null = null; // time to restore after drag
+
   constructor(level: LevelDataV0, _graphics: Graphics, videoPlayer: VideoPlayer) {
     this.videoPlayer = videoPlayer;
     this.frameToAttack = new Map<number, AttackData>();
@@ -186,21 +190,30 @@ export class Editor {
     this.addCriticals(); // <-- add criticals to UI
 
     this.hud = new EditorHud();
+    this.savedCursorTime = null;
   }
 
   cleanup() {
-    console.log("Cleaning up editor state...");
     // Remove the entire HUD from DOM
     if (this.hudElement && this.hudElement.parentNode) {
       this.hudElement.parentNode.removeChild(this.hudElement);
     }
+    this.savedCursorTime = null;
   }
 
   private getCurrentTimeSafe(): number {
+    // If dragging, keep the cursor at the saved time
+    if (this.savedCursorTime !== null) {
+      return this.savedCursorTime;
+    }
     return this.videoPlayer.getCurrentTime();
   }
 
   mouseReleased(event: MouseEvent) {
+    if (this.savedCursorTime !== null) {
+      this.seek(this.savedCursorTime);
+      this.savedCursorTime = null; // Reset after seeking
+    }
     if (this.dragged != null) {
       // TODO evil hack with constructor name
       if (this.dragged.ty == "attack") {
@@ -453,6 +466,7 @@ export class Editor {
 
     // update the playback point
     const playbackPoint = document.querySelector<HTMLElement>("#playback-point")!;
+    // Use savedCursorTime if set, otherwise use video time
     const playbackPointLeft = this.timeToPx(this.getCurrentTimeSafe());
     playbackPoint.style.left = `${playbackPointLeft}px`;
 
@@ -827,17 +841,21 @@ export class Editor {
     this.deleteAttackOrCritical(crit, true);
   }
 
+  // --- Save cursor time when picking up a marker ---
   private attackMouseDown(attack: AttackData) {
+    this.savedCursorTime = this.getCurrentTimeSafe();
     this.selectAttack(attack);
     this.dragged = new DraggedAttack(attack);
   }
 
   private criticalMouseDown(crit: CriticalData) {
+    this.savedCursorTime = this.getCurrentTimeSafe();
     this.selectCritical(crit);
     this.dragged = new DraggedCritical(crit);
   }
 
   private intervalMouseDown(interval: AttackInterval, isStart: boolean) {
+    this.savedCursorTime = this.getCurrentTimeSafe();
     this.selectInterval(interval, isStart);
     this.dragged = new DraggedInterval(interval, isStart);
   }
@@ -854,6 +872,7 @@ export class Editor {
     for (let critElement of this.criticalElements.values()) {
       critElement.classList.remove("selected");
     }
+    // No need to clear savedCursorTime here
   }
 
   private selectInterval(interval: AttackInterval, isStart: boolean) {
@@ -864,13 +883,6 @@ export class Editor {
       this.intervalElements.get(interval)!.startElement.classList.add("selected");
       this.intervalElements.get(interval)!.endElement.classList.add("selected");
       this.intervalElements.get(interval)!.nameElement.classList.add("selected");
-      if (this.videoPlayer) {
-        if (isStart) {
-          this.seek(interval.start);
-        } else {
-          this.seek(interval.end);
-        }
-      }
     }
   }
 
@@ -880,7 +892,6 @@ export class Editor {
     if (attack != null) {
       this.selected = new DraggedAttack(attack);
       this.elements.get(attack)!.classList.add("selected");
-      this.seek(attack.time);
     }
   }
 
@@ -890,7 +901,6 @@ export class Editor {
     if (crit != null) {
       this.selected = new DraggedCritical(crit);
       this.criticalElements.get(crit)!.classList.add("selected");
-      this.seek(crit.time);
     }
   }
 
