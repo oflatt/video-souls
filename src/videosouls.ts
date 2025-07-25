@@ -447,7 +447,7 @@ export class VideoSouls {
     const currentTime = this.currentTime();
 
     // if the sword is not in an animation, move towards user input dir
-    this.battleLogic.updateSwordPosition(this.battle, this.inputManager.getCurrentTargetDirection.bind(this.inputManager));
+    this.battleLogic.update(this.battle, this.inputManager.getCurrentTargetDirection.bind(this.inputManager));
 
     // if the game mode is editing, update the editor
     if (this.gameMode == GameMode.EDITING) {

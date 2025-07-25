@@ -33,6 +33,8 @@ export type BattleState = {
   currentInterval: string,
   currentCritical: { direction: number, multiplier: number, timeLeft: number } | null,
   criticalAnimParticles?: CriticalAnimParticles // <-- typed property
+  numRecentMissedParries: number;
+  timeSinceLastMissedParry: number;
 };
 
 const directionNumToSwordAngle = new Map<number, number>([
@@ -74,7 +76,9 @@ export function initialBattleState(): BattleState {
     timeSinceLastHit: 1000,  // Large initial value
     currentInterval: "intro",
     currentCritical: null,
-    criticalAnimParticles: undefined // <-- initialize as undefined
+    criticalAnimParticles: undefined,
+    numRecentMissedParries: 0,
+    timeSinceLastMissedParry: 1000.0,
   };
 }
 
@@ -92,6 +96,8 @@ export function updateBattleTime(battle: BattleState, deltaTime: number) {
       battle.currentCritical = null;
     }
   }
+
+  battle.timeSinceLastMissedParry += deltaTime;
 }
 
 export { directionNumToSwordPos, directionNumToSwordAngle };

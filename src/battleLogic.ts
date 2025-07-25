@@ -6,7 +6,7 @@ import { VideoPlayer } from './videoPlayer';
 import { AttackData, LevelDataV0 } from './leveldata';
 import { BattleAnim } from './battleAnim';
 import { InputManager } from './inputmanager';
-import { ATTACK_COMBO_DAMAGE_MULT, ATTACK_COMBO_STARTUP_TIMES, ATTACK_DURATION, ATTACK_END_LAG, BLOCK_WINDOW, COMBO_EXTEND_TIME, CRITICAL_TIME, PARRY_TOTAL_DURATION, PARRY_WINDOW, STAGGER_TIME } from './constants';
+import { ATTACK_COMBO_DAMAGE_MULT, ATTACK_COMBO_STARTUP_TIMES, ATTACK_DURATION, ATTACK_END_LAG, BLOCK_WINDOW, COMBO_EXTEND_TIME, CRITICAL_TIME, PARRY_FORGIVENESS_TIME, PARRY_WINDOW, STAGGER_TIME } from './constants';
 
 
 const attackedPosition = [0.7, 0.4];
@@ -21,6 +21,12 @@ export class BattleLogic {
     this.audio = audio;
     this.level = level;
     this.attackSchedule = new AttackSchedule(level.attackSchedule); // <-- pass schedule string
+  }
+
+  // Helper to calculate total parry duration
+  private getParryTotalDuration(battle: BattleState): number {
+    let d = BLOCK_WINDOW + 0.1 + Math.min(0.2 * battle.numRecentMissedParries, 0.4);
+    return d;
   }
 
   handleBossAttacks(
@@ -40,8 +46,9 @@ export class BattleLogic {
       ) {
         // Only allow parry if within the parry window
         const parryProgress = battle.anim.timeElapsed / battle.anim.duration;
-        const parryWindowProportion = PARRY_WINDOW / (PARRY_TOTAL_DURATION);
-        const blockWindowProportion = BLOCK_WINDOW / (PARRY_TOTAL_DURATION);
+        const parryTotalDuration = this.getParryTotalDuration(battle);
+        const parryWindowProportion = PARRY_WINDOW / parryTotalDuration;
+        const blockWindowProportion = BLOCK_WINDOW / parryTotalDuration;
         if (parryProgress < parryWindowProportion) {
           this.successParry(battle, currentTime);
         }  else if (parryProgress < blockWindowProportion) {
@@ -59,7 +66,6 @@ export class BattleLogic {
     // Detect criticals in this frame
     const criticals = this.getCriticalsInInterval(this.level.criticals, prevTime, currentTime);
     if (criticals.length > 0) {
-      console.log("Critical detected:", criticals[0]);
       const crit = criticals[0];
       battle.currentCritical = {
         direction: crit.direction,
@@ -196,17 +202,18 @@ export class BattleLogic {
     const targetDir = inputManager.getCurrentTargetDirection();
     const targetPos = this.getTargetSwordPos(targetDir);
     const targetAngle = directionNumToSwordAngle.get(targetDir)!;
+    const parryTotalDuration = this.getParryTotalDuration(battle);
     battle.anim.endPos[0] = targetPos[0];
     battle.anim.endPos[1] = targetPos[1];
     battle.anim.endAngle = targetAngle;
     battle.anim = BattleAnim.parrying(
       [...battle.anim.endPos],
       battle.anim.endAngle,
-      PARRY_TOTAL_DURATION
+      parryTotalDuration
     );
   }
 
-  updateSwordPosition(battle: BattleState, getCurrentTargetDirection: () => number) {
+  update(battle: BattleState, getCurrentTargetDirection: () => number) {
     if (battle.anim.state === AttackAnimation.NONE) {
       const targetDir = getCurrentTargetDirection();
       const targetAngle = directionNumToSwordAngle.get(targetDir)!;
@@ -230,6 +237,11 @@ export class BattleLogic {
         battle.anim.endAngle = newAngle;
       }
     }
+
+    // reset missed parries if they haven't parried in a while
+    if (battle.timeSinceLastMissedParry > PARRY_FORGIVENESS_TIME) {
+      battle.numRecentMissedParries = 0;
+    }
   }
 
   currentClosestDir(battle: BattleState) {
@@ -249,6 +261,8 @@ export class BattleLogic {
     this.audio.playParrySound();
     battle.timeSinceLastParry = 0;  // Reset duration
     battle.anim.state = AttackAnimation.NONE;
+    // recent missed parries reset
+    battle.numRecentMissedParries = 0;
   }
 
   
@@ -258,6 +272,8 @@ export class BattleLogic {
     battle.lastPlayerHealth = battle.playerHealth;
     battle.playerHealth -= 0.2 * attackDamage * this.level.bossDamageMultiplier;
     battle.anim.state = AttackAnimation.NONE;
+    // recent missed parries reset
+    battle.numRecentMissedParries = 0;
   }
 
   private playerTakeDamage(battle: BattleState, attackDamage: number) {
@@ -322,6 +338,12 @@ export class BattleLogic {
           ATTACK_END_LAG
         );
       } else {
+        // if a parry animation is ending, add to recent missed parries
+        if (battle.anim.state === AttackAnimation.PARRYING) {
+          battle.numRecentMissedParries += 1;
+          battle.timeSinceLastMissedParry = 0; // Reset duration
+        }
+
         battle.anim.state = AttackAnimation.NONE;
       }
     }

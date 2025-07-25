@@ -6,5 +6,5 @@ export const COMBO_EXTEND_TIME = 3.0;
 export const STAGGER_TIME = 0.4;
 export const PARRY_WINDOW = 0.2;
 export const BLOCK_WINDOW = 0.3;
-export const PARRY_TOTAL_DURATION = 0.4;
 export const CRITICAL_TIME = 2.5; // Duration (seconds) a critical is active
+export const PARRY_FORGIVENESS_TIME = 2.0; // Time (seconds) after which missed parries are reset
