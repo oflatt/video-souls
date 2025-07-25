@@ -19,27 +19,27 @@
     {
       "time": 13.56725105232736,
       "direction": 8,
-      "damage": 1
+      "damage": 0.7
     },
     {
       "time": 13.817251052327364,
       "direction": 8,
-      "damage": 1
+      "damage": 0.7
     },
     {
       "time": 14.067251052327368,
       "direction": 8,
-      "damage": 1
+      "damage": 0.7
     },
     {
       "time": 14.317251052327371,
       "direction": 8,
-      "damage": 1
+      "damage": 0.7
     },
     {
       "time": 14.617251052327376,
       "direction": 8,
-      "damage": 1
+      "damage": 0.7
     },
     {
       "time": 17.562277771983286,
@@ -49,22 +49,22 @@
     {
       "time": 17.879497492982587,
       "direction": 2,
-      "damage": 1
+      "damage": 0.6
     },
     {
       "time": 18.17949749298259,
       "direction": 2,
-      "damage": 1
+      "damage": 0.6
     },
     {
       "time": 18.479497492982595,
       "direction": 2,
-      "damage": 1
+      "damage": 0.6
     },
     {
       "time": 18.7794974929826,
       "direction": 2,
-      "damage": 1
+      "damage": 0.6
     },
     {
       "time": 20.27949749298262,
@@ -99,27 +99,27 @@
     {
       "time": 29.653025216938225,
       "direction": 2,
-      "damage": 1
+      "damage": 0.6
     },
     {
       "time": 29.92949749298275,
       "direction": 2,
-      "damage": 1
+      "damage": 0.6
     },
     {
       "time": 30.229497492982755,
       "direction": 2,
-      "damage": 1
+      "damage": 0.6
     },
     {
       "time": 30.52949749298276,
       "direction": 2,
-      "damage": 1
+      "damage": 0.6
     },
     {
       "time": 30.829497492982764,
       "direction": 2,
-      "damage": 1
+      "damage": 0.6
     },
     {
       "time": 32.779497492982735,

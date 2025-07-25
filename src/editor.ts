@@ -396,7 +396,6 @@ export class Editor {
     input.value = isCritical
       ? String((data as CriticalData).multiplier)
       : String((data as AttackData).damage);
-    input.readOnly = true; // <-- prevent typing
     input.addEventListener("keydown", (e) => {
       // Prevent all keys except ArrowUp/ArrowDown
       if (
@@ -406,15 +405,6 @@ export class Editor {
       ) {
         e.preventDefault();
       }
-    });
-    input.addEventListener("mousedown", (e) => {
-      // Prevent selecting the input
-      e.preventDefault();
-      input.blur();
-    });
-    input.addEventListener("focus", () => {
-      // Immediately blur to prevent selection
-      input.blur();
     });
 
     input.addEventListener("input", () => {
