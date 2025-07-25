@@ -8,6 +8,15 @@ export function roatate_vec2(vec: [number, number], clockwise_angle: number): [n
   return [rotated_x, rotated_y];
 }
 
+const FRAME_LENGTH = 0.05; 
+
+export function frameIndex(timestamp: number | { time: number }): number {
+  if (typeof timestamp === "number") {
+    return Math.floor(timestamp / FRAME_LENGTH);
+  }
+  return Math.floor(timestamp.time / FRAME_LENGTH);
+}
+
 // Floating notification helper for editor
 export function showFloatingAlert(
   message: string,
@@ -33,3 +42,4 @@ export function showFloatingAlert(
     setTimeout(() => alertText.remove(), 600);
   }, 1800);
 }
+

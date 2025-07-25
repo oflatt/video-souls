@@ -1,5 +1,6 @@
 import typia from "typia";
 import { DEFAULT_ATTACK_SCHEDULE } from "./defaultSchedule";
+import { showFloatingAlert } from "./utils";
 
 export enum AttackDirection {
   UP, UP_RIGHT, RIGHT, DOWN_RIGHT, DOWN, DOWN_LEFT, LEFT, UP_LEFT, CENTER
@@ -173,4 +174,13 @@ export function validateLevelData(levelData: unknown): null | string {
       return `Error at ${error.path}: expected ${error.expected} but got ${error.value}`;
     }).join("\n");
   }
+}
+
+export function exportLevelToClipboard(levelData: LevelDataV0): void {
+  const levelString = stringifyLevelData(levelData);
+  navigator.clipboard.writeText(levelString).then(() => {
+    showFloatingAlert("Level data copied to clipboard!");
+  }).catch(err => {
+    showFloatingAlert("Failed to copy level data: " + err.message);
+  });
 }

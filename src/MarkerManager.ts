@@ -1,4 +1,4 @@
-import { AttackData, AttackInterval, CriticalData } from "./leveldata";
+import { AttackData, AttackInterval, CriticalData, LevelDataV0 } from "./leveldata";
 
 export class IntervalElements {
   startElement: HTMLElement;
@@ -50,13 +50,19 @@ export class MarkerManager {
   intervalElements: Map<AttackInterval, IntervalElements>;
   criticalElements: Map<CriticalData, HTMLElement>;
   selected: DraggedAttack | null | DraggedInterval | DraggedCritical;
+  playbackWrapper: HTMLElement;
+  savedCursorTime: number | null;
+  level: LevelDataV0;
 
-  constructor() {
+  constructor(playbackWrapper: HTMLElement, level: LevelDataV0) {
     this.frameToAttack = new Map<number, AttackData>();
     this.elements = new Map<AttackData, HTMLElement>();
     this.intervalElements = new Map<AttackInterval, IntervalElements>();
     this.criticalElements = new Map<CriticalData, HTMLElement>();
     this.selected = null;
+    this.playbackWrapper = playbackWrapper;
+    this.savedCursorTime = null;
+    this.level = level;
   }
 
   clearSelectClass() {
@@ -100,5 +106,22 @@ export class MarkerManager {
       this.selected = new DraggedCritical(crit);
       this.criticalElements.get(crit)!.classList.add("selected");
     }
+  }
+
+  intervalMouseDown(interval: AttackInterval, isStart: boolean) {
+    this.savedCursorTime = null;
+    this.selectInterval(interval, isStart);
+  }
+
+  attackMouseDown(attack: AttackData, editor: any) {
+    this.savedCursorTime = editor.getCurrentTimeSafe();
+    this.selectAttack(attack);
+    editor.dragged = new DraggedAttack(attack);
+  }
+
+  criticalMouseDown(crit: CriticalData, editor: any) {
+    this.savedCursorTime = editor.getCurrentTimeSafe();
+    this.selectCritical(crit);
+    editor.dragged = new DraggedCritical(crit);
   }
 }

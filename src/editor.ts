@@ -10,7 +10,8 @@ import {
   BossScheduleResult,
   AttackData,
   AttackDirection,
-  CriticalData
+  CriticalData,
+  exportLevelToClipboard
 } from './leveldata';
 import { EditorHud } from './editorHud';
 import { drawArrow, drawCritical } from './battleRenderer'; // <-- update import
@@ -18,8 +19,8 @@ import { graphics } from './videosouls'; // <-- import global graphics
 import { roatate_vec2 } from './utils';
 import { showFloatingAlert } from './utils';
 import { DraggedAttack, DraggedCritical, DraggedInterval, IntervalElements, MarkerManager } from './MarkerManager';
+import { frameIndex } from './utils'; // <-- import from utils
 
-const FRAME_LENGTH = 0.05;
 const PLAYBACK_BAR_PADDING = 20;
 
 
@@ -44,8 +45,6 @@ export class Editor {
   markerManager: MarkerManager;
   playbackBar: HTMLElement;
   recordingControls: HTMLElement;
-  playbackWrapper: HTMLElement;
-  level: LevelDataV0;
   zoom: number;
   dragged: DraggedAttack | null | DraggedInterval | DraggedCritical;
   freshName: number;
@@ -55,16 +54,13 @@ export class Editor {
   hud: EditorHud;
   hudElement: HTMLElement;
   videoPlayer: VideoPlayer;
-  private savedCursorTime: number | null = null;
 
   constructor(level: LevelDataV0, _graphics: Graphics, videoPlayer: VideoPlayer) {
-    this.markerManager = new MarkerManager(); // <-- initialize first!
     this.videoPlayer = videoPlayer;
-    this.level = level;
     this.zoom = 1.0;
     this.dragged = null;
     this.freshName = 0;
-    for (let [name, interval] of this.level.attackIntervals) {
+    for (let [name, interval] of level.attackIntervals) {
       let stringNum = parseInt(name);
       if (!isNaN(stringNum) && stringNum >= this.freshName) {
         this.freshName = stringNum + 1;
@@ -99,7 +95,7 @@ export class Editor {
     exportBtn.className = "editor-export-level-button";
     exportBtn.textContent = "Export Level";
     exportBtn.onclick = () => {
-      this.exportLevelToClipboard();
+      exportLevelToClipboard(this.markerManager.level);
     };
     hudClone.appendChild(exportBtn);
 
@@ -116,7 +112,8 @@ export class Editor {
     // Wire up controls
     this.recordingControls = hudClone.querySelector<HTMLElement>("#recording-controls")!;
     this.playbackBar = hudClone.querySelector<HTMLElement>("#playback-bar")!;
-    this.playbackWrapper = this.recordingControls.querySelector<HTMLElement>("#playback-bar-wrapper")!;
+
+    this.markerManager = new MarkerManager(this.recordingControls.querySelector<HTMLElement>("#playback-bar-wrapper")!, level);
 
     // Add mousewheel event listeners for zoom/scroll
     this.recordingControls.addEventListener("mousewheel", (event) => {
@@ -141,7 +138,7 @@ export class Editor {
     this.addCriticals(); // <-- add criticals to UI
 
     this.hud = new EditorHud();
-    this.savedCursorTime = null;
+    this.markerManager.savedCursorTime = null; // <-- initialize in markerManager
   }
 
   cleanup() {
@@ -149,21 +146,21 @@ export class Editor {
     if (this.hudElement && this.hudElement.parentNode) {
       this.hudElement.parentNode.removeChild(this.hudElement);
     }
-    this.savedCursorTime = null;
+    this.markerManager.savedCursorTime = null; // <-- clear in markerManager
   }
 
   private getCurrentTimeSafe(): number {
     // If dragging, keep the cursor at the saved time
-    if (this.savedCursorTime !== null) {
-      return this.savedCursorTime;
+    if (this.markerManager.savedCursorTime !== null) {
+      return this.markerManager.savedCursorTime;
     }
     return this.videoPlayer.getCurrentTime();
   }
 
   mouseReleased(event: MouseEvent) {
-    if (this.savedCursorTime !== null) {
-      this.seek(this.savedCursorTime);
-      this.savedCursorTime = null; // Reset after seeking
+    if (this.markerManager.savedCursorTime !== null) {
+      this.seek(this.markerManager.savedCursorTime);
+      this.markerManager.savedCursorTime = null;
     }
     if (this.dragged != null) {
       // TODO evil hack with constructor name
@@ -216,16 +213,16 @@ export class Editor {
   }
 
   addAttacks() {
-    for (let attack of this.level.attackData) {
+    for (let attack of this.markerManager.level.attackData) {
       this.addAttackOrCriticalElement(attack, false);
     }
-    for (let [name, interval] of this.level.attackIntervals) {
+    for (let [name, interval] of this.markerManager.level.attackIntervals) {
       this.addIntervalElements(interval);
     }
   }
 
   addCriticals() {
-    for (let crit of this.level.criticals) {
+    for (let crit of this.markerManager.level.criticals) {
       this.addAttackOrCriticalElement(crit, true);
     }
   }
@@ -235,7 +232,7 @@ export class Editor {
     data: AttackData | CriticalData,
     isCritical: boolean
   ) {
-    const parentElement = this.playbackWrapper;
+    const parentElement = this.markerManager.playbackWrapper; // <-- use from markerManager
     let templateElement: HTMLElement | null = null;
     if (isCritical) {
       const tpl = document.getElementById("critical-marker-template") as HTMLTemplateElement | null;
@@ -261,17 +258,17 @@ export class Editor {
       ? ((event: Event) => {
           event.stopPropagation();
           event.preventDefault();
-          this.criticalMouseDown(data as CriticalData);
+          this.markerManager.criticalMouseDown(data as CriticalData, this); // <-- call on markerManager
         }) as EventListener
       : ((event: Event) => {
           event.stopPropagation();
           event.preventDefault();
-          this.attackMouseDown(data as AttackData);
+          this.markerManager.attackMouseDown(data as AttackData, this); // <-- call on markerManager
         }) as EventListener;
     element.querySelector(".marker-handle")!.addEventListener("mousedown", handleMouseDown);
 
     // Insert chronologically
-    const arr = isCritical ? this.level.criticals : this.level.attackData;
+    const arr = isCritical ? this.markerManager.level.criticals : this.markerManager.level.attackData;
     const map = isCritical ? this.markerManager.criticalElements : this.markerManager.elements;
     let index = arr.findIndex(a => a.time > data.time);
     if (index == -1) {
@@ -284,7 +281,7 @@ export class Editor {
 
     // For attacks, update frameToAttack
     if (!isCritical) {
-      this.markerManager.frameToAttack.set(this.frameIndex(data as AttackData), data as AttackData);
+      this.markerManager.frameToAttack.set(frameIndex(data as AttackData), data as AttackData); // <-- use utils
     }
 
     // Draw arrow for direction using drawArrow/drawCritical
@@ -416,12 +413,12 @@ export class Editor {
     this.playbackBar.style.width = `${finalW}px`;
 
     // the recordins controls have a series of lines based on the zoom level using repeating linear gradient
-    this.playbackWrapper = this.recordingControls.querySelector<HTMLElement>("#playback-bar-wrapper")!;
+    this.markerManager.playbackWrapper = this.recordingControls.querySelector<HTMLElement>("#playback-bar-wrapper")!;
     // lines every 1 second
     let lineLength = 3;
     let lineSpacing = this.timeToPx(1.0) - lineLength;
     // make stripes- grey for lineLength, then transparent from lineLength to lineSpacing
-    this.playbackWrapper.style.backgroundImage = `repeating-linear-gradient(to right, grey 0px, grey ${lineLength}px, transparent ${lineLength}px, transparent ${lineSpacing}px, grey ${lineSpacing}px)`;
+    this.markerManager.playbackWrapper.style.backgroundImage = `repeating-linear-gradient(to right, grey 0px, grey ${lineLength}px, transparent ${lineLength}px, transparent ${lineSpacing}px, grey ${lineSpacing}px)`;
 
 
     // update all of the attack elements positions
@@ -478,7 +475,7 @@ export class Editor {
     playbackPoint.style.left = `${playbackPointLeft}px`;
 
     if (this.hud.titleInput.value) {
-      this.level.title = this.hud.titleInput.value; 
+      this.markerManager.level.title = this.hud.titleInput.value; 
     }
 
     // Update attack warnings every frame
@@ -568,10 +565,10 @@ export class Editor {
     }
 
     // now check if there is a "death" attack interval, if not, add one
-    var deathInterval = this.level.attackIntervals.get("death");
-    var introInterval = this.level.attackIntervals.get("intro");
+    var deathInterval = this.markerManager.level.attackIntervals.get("death");
+    var introInterval = this.markerManager.level.attackIntervals.get("intro");
     var hasNonSpecialInterval = false;
-    for (let [name, interval] of this.level.attackIntervals) {
+    for (let [name, interval] of this.markerManager.level.attackIntervals) {
       if (name !== "death" && name !== "intro") {
         hasNonSpecialInterval = true;
         break;
@@ -631,7 +628,7 @@ export class Editor {
 
   createAttackAt(timestamp: DOMHighResTimeStamp, targetDir: AttackDirection, damage: number) {
     // Disallow overlapping attacks
-    let existingAttack = this.markerManager.frameToAttack.get(this.frameIndex(timestamp));
+    let existingAttack = this.markerManager.frameToAttack.get(frameIndex(timestamp)); // <-- use utils
     if (existingAttack != null) {
       this.deleteAttack(existingAttack);
     }
@@ -684,7 +681,7 @@ export class Editor {
   }
 
   selectAttackAt(timestamp: number) {
-    let existingAttack = this.markerManager.frameToAttack.get(this.frameIndex(timestamp));
+    let existingAttack = this.markerManager.frameToAttack.get(frameIndex(timestamp)); // <-- use utils
     if (existingAttack != null) {
       this.markerManager.selectAttack(existingAttack);
     }
@@ -726,7 +723,7 @@ export class Editor {
   }
 
   private addIntervalElements(interval: AttackInterval) {
-    const parentElement = this.playbackWrapper;
+    const parentElement = this.markerManager.playbackWrapper; // <-- use from markerManager
     let startElement = document.createElement("div");
     startElement.classList.add("interval-start");
     let endElement = document.createElement("div");
@@ -746,12 +743,12 @@ export class Editor {
     startElement.addEventListener("mousedown", event => {
       event.stopPropagation();
       event.preventDefault();
-      this.intervalMouseDown(interval, true);
+      this.markerManager.intervalMouseDown(interval, true); // <-- use from markerManager
     });
     endElement.addEventListener("mousedown", event => {
       event.stopPropagation();
       event.preventDefault();
-      this.intervalMouseDown(interval, false);
+      this.markerManager.intervalMouseDown(interval, false); // <-- use from markerManager
     });
 
     parentElement.appendChild(startElement);
@@ -762,7 +759,7 @@ export class Editor {
   private createInterval(interval: AttackInterval) {
     // Check if any intervals have overlapping times
     let existingInterval: AttackInterval | undefined;
-    for (let [name, otherInterval] of this.level.attackIntervals) {
+    for (let [name, otherInterval] of this.markerManager.level.attackIntervals) {
       if (interval.start == otherInterval.start || interval.end == otherInterval.end) {
         existingInterval = otherInterval;
         break;
@@ -773,28 +770,28 @@ export class Editor {
     }
 
     // add interval to the map
-    this.level.attackIntervals.set(interval.name, interval);
+    this.markerManager.level.attackIntervals.set(interval.name, interval);
 
     // add the interval elements
     this.addIntervalElements(interval);
   }
 
   private createAttack(attack: AttackData) {
-    let index = this.level.attackData.findIndex(a => attack.time < a.time);
+    let index = this.markerManager.level.attackData.findIndex(a => attack.time < a.time);
     if (index == -1) {
-      this.level.attackData.push(attack);
+      this.markerManager.level.attackData.push(attack);
     } else {
-      this.level.attackData.splice(index, 0, attack);
+      this.markerManager.level.attackData.splice(index, 0, attack);
     }
     this.addAttackOrCriticalElement(attack, false);
   }
 
   private createCritical(crit: CriticalData) {
-    let index = this.level.criticals.findIndex(a => crit.time < a.time);
+    let index = this.markerManager.level.criticals.findIndex(a => crit.time < a.time);
     if (index == -1) {
-      this.level.criticals.push(crit);
+      this.markerManager.level.criticals.push(crit);
     } else {
-      this.level.criticals.splice(index, 0, crit);
+      this.markerManager.level.criticals.splice(index, 0, crit);
     }
     this.addAttackOrCriticalElement(crit, true);
   }
@@ -804,7 +801,7 @@ export class Editor {
     this.markerManager.intervalElements.get(interval)!.endElement.remove();
     this.markerManager.intervalElements.get(interval)!.nameElement.remove();
     this.markerManager.intervalElements.delete(interval);
-    this.level.attackIntervals.delete(interval.name);
+    this.markerManager.level.attackIntervals.delete(interval.name);
     if (this.markerManager.selected != null && this.markerManager.selected.ty == "interval" && this.markerManager.selected.interval == interval) {
       this.markerManager.selected = null;
     }
@@ -815,7 +812,7 @@ export class Editor {
     isCritical: boolean
   ) {
     const map = isCritical ? this.markerManager.criticalElements : this.markerManager.elements;
-    const arr = isCritical ? this.level.criticals : this.level.attackData;
+    const arr = isCritical ? this.markerManager.level.criticals : this.markerManager.level.attackData;
     const equals = isCritical ? criticalDataEquals : attackDataEquals;
     const element = map.get(data as any);
     if (element) {
@@ -826,8 +823,8 @@ export class Editor {
     if (index !== -1) {
       arr.splice(index, 1);
     }
-    if (!isCritical && this.markerManager.frameToAttack.get(this.frameIndex(data as AttackData)) == data) {
-      this.markerManager.frameToAttack.delete(this.frameIndex(data as AttackData));
+    if (!isCritical && this.markerManager.frameToAttack.get(frameIndex(data as AttackData)) == data) { // <-- use utils
+      this.markerManager.frameToAttack.delete(frameIndex(data as AttackData)); // <-- use utils
     }
     if (this.markerManager.selected != null) {
       if (
@@ -848,31 +845,12 @@ export class Editor {
     this.deleteAttackOrCritical(crit, true);
   }
 
-  // --- Save cursor time when picking up a marker ---
-  private attackMouseDown(attack: AttackData) {
-    this.savedCursorTime = this.getCurrentTimeSafe();
-    this.markerManager.selectAttack(attack);
-    this.dragged = new DraggedAttack(attack);
-  }
-
-  private criticalMouseDown(crit: CriticalData) {
-    this.savedCursorTime = this.getCurrentTimeSafe();
-    this.markerManager.selectCritical(crit);
-    this.dragged = new DraggedCritical(crit);
-  }
-
-  private intervalMouseDown(interval: AttackInterval, isStart: boolean) {
-    this.savedCursorTime = this.getCurrentTimeSafe();
-    this.markerManager.selectInterval(interval, isStart);
-    this.dragged = new DraggedInterval(interval, isStart);
-  }
-
   private updateCloseWarning() {
     // Track which attacks should have warnings
     const shouldWarn = new Set<AttackData>();
 
     // Sort attacks by time to make comparison easier
-    const sortedAttacks = [...this.level.attackData].sort((a, b) => a.time - b.time);
+    const sortedAttacks = [...this.markerManager.level.attackData].sort((a, b) => a.time - b.time);
 
     // Only mark the later attack in each close pair
     for (let i = 1; i < sortedAttacks.length; i++) {
@@ -913,15 +891,6 @@ export class Editor {
     }
   }
 
-  frameIndex(timestamp: number): number;
-  frameIndex(attack: AttackData): number;
-  frameIndex(timeOrAttack: number | AttackData) {
-    if (typeof timeOrAttack == "number") {
-      return Math.floor(timeOrAttack / FRAME_LENGTH);
-    }
-    return Math.floor(timeOrAttack.time / FRAME_LENGTH);
-  }
-
   // Helper for mousewheel event (Chrome/Edge/Safari)
   handleMouseWheelEvent(event: Event) {
     if (!(event instanceof WheelEvent)) return;
@@ -943,20 +912,7 @@ export class Editor {
       this.changeScroll(event);
     }
   }
-
-  exportLevelToClipboard() {
-    const json = JSON.stringify(this.level, (key, value) => {
-      if (value instanceof Map) {
-        return { __type: 'Map', entries: Array.from(value.entries()) };
-      }
-      return value;
-    }, 2);
-    navigator.clipboard.writeText(json).then(() => {
-      showFloatingAlert('Level data copied to clipboard.', 30, "60px");
-    }).catch(error => {
-      showFloatingAlert('Failed to copy level data.', 30, "60px");
-    });
-  }
 }
 
 export type { AttackInterval, BossState, BossScheduleResult };
+
