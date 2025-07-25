@@ -2,6 +2,7 @@ import { AttackData, AttackInterval, CriticalData, LevelDataV0 } from "./levelda
 import { drawArrow, drawCritical } from './battleRenderer';
 import { graphics } from './videosouls';
 import { roatate_vec2, frameIndex } from './utils';
+import { VideoPlayer } from "./videoPlayer";
 
 export class IntervalElements {
   startElement: HTMLElement;
@@ -56,8 +57,10 @@ export class MarkerManager {
   playbackWrapper: HTMLElement;
   savedCursorTime: number | null;
   level: LevelDataV0;
+  dragged: DraggedAttack | null | DraggedInterval | DraggedCritical;
+  videoPlayer: VideoPlayer;
 
-  constructor(playbackWrapper: HTMLElement, level: LevelDataV0) {
+  constructor(playbackWrapper: HTMLElement, level: LevelDataV0, videoPlayer: VideoPlayer) {
     this.frameToAttack = new Map<number, AttackData>();
     this.elements = new Map<AttackData, HTMLElement>();
     this.intervalElements = new Map<AttackInterval, IntervalElements>();
@@ -66,6 +69,8 @@ export class MarkerManager {
     this.playbackWrapper = playbackWrapper;
     this.savedCursorTime = null;
     this.level = level;
+    this.dragged = null;
+    this.videoPlayer = videoPlayer;
   }
 
   clearSelectClass() {
@@ -87,6 +92,7 @@ export class MarkerManager {
     this.clearSelectClass();
     if (interval != null) {
       this.selected = new DraggedInterval(interval, isStart);
+      console.log("selecting interval", interval, isStart);
       this.intervalElements.get(interval)!.startElement.classList.add("selected");
       this.intervalElements.get(interval)!.endElement.classList.add("selected");
       this.intervalElements.get(interval)!.nameElement.classList.add("selected");
@@ -114,18 +120,19 @@ export class MarkerManager {
   intervalMouseDown(interval: AttackInterval, isStart: boolean) {
     this.savedCursorTime = null;
     this.selectInterval(interval, isStart);
+    this.dragged = new DraggedInterval(interval, isStart);
   }
 
-  attackMouseDown(attack: AttackData, editor: any) {
-    this.savedCursorTime = editor.getCurrentTimeSafe();
+  attackMouseDown(attack: AttackData) {
+    this.savedCursorTime = this.cursorTime();
     this.selectAttack(attack);
-    editor.dragged = new DraggedAttack(attack);
+    this.dragged = new DraggedAttack(attack);
   }
 
-  criticalMouseDown(crit: CriticalData, editor: any) {
-    this.savedCursorTime = editor.getCurrentTimeSafe();
+  criticalMouseDown(crit: CriticalData) {
+    this.savedCursorTime = this.cursorTime();
     this.selectCritical(crit);
-    editor.dragged = new DraggedCritical(crit);
+    this.dragged = new DraggedCritical(crit);
   }
 
   addAttackOrCriticalElement(
@@ -159,13 +166,13 @@ export class MarkerManager {
           event.stopPropagation();
           event.preventDefault();
           // Use selectCritical only
-          this.criticalMouseDown(data as CriticalData, this);
+          this.criticalMouseDown(data as CriticalData);
         }) as EventListener
       : ((event: Event) => {
           event.stopPropagation();
           event.preventDefault();
           // Use selectAttack only
-          this.attackMouseDown(data as AttackData, this);
+          this.attackMouseDown(data as AttackData);
         }) as EventListener;
     element.querySelector(".marker-handle")!.addEventListener("mousedown", handleMouseDown);
 
@@ -414,6 +421,13 @@ export class MarkerManager {
     if (this.selected != null && this.selected.ty == "interval" && this.selected.interval == interval) {
       this.selected = null;
     }
+  }
+
+  cursorTime(): number {
+    if (this.savedCursorTime !== null) {
+      return this.savedCursorTime;
+    }
+    return this.videoPlayer.getCurrentTime();
   }
 }
 

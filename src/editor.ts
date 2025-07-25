@@ -23,19 +23,6 @@ import { frameIndex } from './utils'; // <-- import from utils
 
 const PLAYBACK_BAR_PADDING = 20;
 
-
-function attackDataEquals(a: AttackData, b: AttackData): boolean {
-  return a.time === b.time &&
-    a.direction === b.direction &&
-    a.damage === b.damage;
-}
-
-function criticalDataEquals(a: CriticalData, b: CriticalData): boolean {
-  return a.time === b.time &&
-    a.direction === b.direction &&
-    a.multiplier === b.multiplier;
-}
-
 export class Editor {
   static defaults = {
     attackDamage: 1.0,
@@ -46,19 +33,15 @@ export class Editor {
   playbackBar: HTMLElement;
   recordingControls: HTMLElement;
   zoom: number;
-  dragged: DraggedAttack | null | DraggedInterval | DraggedCritical;
   freshName: number;
   controlsInfoToggle: HTMLButtonElement | null = null;
   controlsInfoPanel: HTMLElement | null = null;
   controlsInfoVisible: boolean = true;
   hud: EditorHud;
   hudElement: HTMLElement;
-  videoPlayer: VideoPlayer;
 
   constructor(level: LevelDataV0, _graphics: Graphics, videoPlayer: VideoPlayer) {
-    this.videoPlayer = videoPlayer;
     this.zoom = 1.0;
-    this.dragged = null;
     this.freshName = 0;
     for (let [name, interval] of level.attackIntervals) {
       let stringNum = parseInt(name);
@@ -113,7 +96,11 @@ export class Editor {
     this.recordingControls = hudClone.querySelector<HTMLElement>("#recording-controls")!;
     this.playbackBar = hudClone.querySelector<HTMLElement>("#playback-bar")!;
 
-    this.markerManager = new MarkerManager(this.recordingControls.querySelector<HTMLElement>("#playback-bar-wrapper")!, level);
+    this.markerManager = new MarkerManager(
+      this.recordingControls.querySelector<HTMLElement>("#playback-bar-wrapper")!,
+      level,
+      videoPlayer // <-- pass videoPlayer to MarkerManager
+    );
 
     // Add mousewheel event listeners for zoom/scroll
     this.recordingControls.addEventListener("mousewheel", (event) => {
@@ -141,6 +128,10 @@ export class Editor {
     this.markerManager.savedCursorTime = null; // <-- initialize in markerManager
   }
 
+  level() : LevelDataV0 {
+    return this.markerManager.level;
+  }
+
   cleanup() {
     // Remove the entire HUD from DOM
     if (this.hudElement && this.hudElement.parentNode) {
@@ -149,64 +140,54 @@ export class Editor {
     this.markerManager.savedCursorTime = null; // <-- clear in markerManager
   }
 
-  private getCurrentTimeSafe(): number {
-    // If dragging, keep the cursor at the saved time
-    if (this.markerManager.savedCursorTime !== null) {
-      return this.markerManager.savedCursorTime;
-    }
-    return this.videoPlayer.getCurrentTime();
-  }
-
   mouseReleased(event: MouseEvent) {
     if (this.markerManager.savedCursorTime !== null) {
-      this.videoPlayer.seekTo(this.markerManager.savedCursorTime, true); // <-- fix reference
+      this.markerManager.videoPlayer.seekTo(this.markerManager.savedCursorTime, true); // <-- use from markerManager
       this.markerManager.savedCursorTime = null;
     }
-    if (this.dragged != null) {
+    if (this.markerManager.dragged != null) { // <-- use markerManager.dragged
       // TODO evil hack with constructor name
-      if (this.dragged.ty == "attack") {
-        this.dragged = <DraggedAttack>this.dragged;
+      if (this.markerManager.dragged.ty == "attack") {
+        this.markerManager.dragged = <DraggedAttack>this.markerManager.dragged;
         // remove the attack
-        this.markerManager.deleteAttackOrCritical(this.dragged.attack, false); // <-- fix reference
+        this.markerManager.deleteAttackOrCritical(this.markerManager.dragged.attack, false);
 
         // add the attack back at the mouse position
-        this.createAttackAtMousePosition(event.clientX, this.dragged.attack.direction, this.dragged.attack.damage);
+        this.createAttackAtMousePosition(event.clientX, this.markerManager.dragged.attack.direction, this.markerManager.dragged.attack.damage);
 
-        this.dragged = null;
-      } else if (this.dragged.ty == "critical") {
-        this.dragged = <DraggedCritical>this.dragged;
-        this.markerManager.deleteAttackOrCritical(this.dragged.critical, true); // <-- fix reference
-        this.createCriticalAtMousePosition(event.clientX, this.dragged.critical.direction, this.dragged.critical.multiplier);
-        this.dragged = null;
-      } else if (this.dragged.constructor.name == "DraggedInterval") {
-        this.dragged = <DraggedInterval>this.dragged;
+        this.markerManager.dragged = null;
+      } else if (this.markerManager.dragged.ty == "critical") {
+        this.markerManager.dragged = <DraggedCritical>this.markerManager.dragged;
+        this.markerManager.deleteAttackOrCritical(this.markerManager.dragged.critical, true);
+        this.createCriticalAtMousePosition(event.clientX, this.markerManager.dragged.critical.direction, this.markerManager.dragged.critical.multiplier);
+        this.markerManager.dragged = null;
+      } else if (this.markerManager.dragged.constructor.name == "DraggedInterval") {
+        this.markerManager.dragged = <DraggedInterval>this.markerManager.dragged;
         // remove the interval
-        this.markerManager.deleteInterval(this.dragged.interval); // <-- use markerManager
+        this.markerManager.deleteInterval(this.markerManager.dragged.interval);
 
         var newInterval: AttackInterval = {
           start: 0,
           end: 0,
-          name: this.dragged.interval.name
+          name: this.markerManager.dragged.interval.name
         };
-        newInterval.start = this.dragged.interval.start;
-        newInterval.end = this.dragged.interval.end;
-        if (this.dragged.isStart) {
+        newInterval.start = this.markerManager.dragged.interval.start;
+        newInterval.end = this.markerManager.dragged.interval.end;
+        if (this.markerManager.dragged.isStart) {
           newInterval.start = this.pxToTime(event.clientX - this.playbackBar.getBoundingClientRect().left);
-          // make sure the end is after or equal to the start
           if (newInterval.end < newInterval.start) {
             newInterval.end = newInterval.start;
           }
         } else {
           newInterval.end = this.pxToTime(event.clientX - this.playbackBar.getBoundingClientRect().left);
-          // make sure the start is before or eqaual to the end
           if (newInterval.start > newInterval.end) {
             newInterval.start = newInterval.end;
           }
         }
 
-        this.markerManager.createInterval(newInterval); // <-- use markerManager
-        this.markerManager.selectInterval(newInterval, this.dragged.isStart);
-        this.dragged = null;
+        this.markerManager.createInterval(newInterval);
+        this.markerManager.selectInterval(newInterval, this.markerManager.dragged.isStart);
+        this.markerManager.dragged = null;
       }
     }
   }
@@ -230,7 +211,7 @@ export class Editor {
   draw(mouseX: number, mouseY: number) {
     const clientWidth = this.recordingControls.clientWidth - PLAYBACK_BAR_PADDING * 2;
 
-    let duration = this.videoPlayer.getDuration();
+    let duration = this.markerManager.videoPlayer.getDuration(); // <-- use from markerManager
     let possibleW = this.timeToPx(duration);
     // if we are zoomed out too far, set zoom to a larger number
     if (possibleW < clientWidth && !Number.isNaN(duration) && duration != 0) {
@@ -253,8 +234,8 @@ export class Editor {
     for (let [attack, element] of this.markerManager.elements) {
       // if this one is being dragged, follow mouse
       var left = this.timeToPx(attack.time);
-      if (this.dragged != null && this.dragged.ty == "attack") {
-        if (this.dragged.attack == attack) {
+      if (this.markerManager.dragged != null && this.markerManager.dragged.ty == "attack") {
+        if ((this.markerManager.dragged as DraggedAttack).attack == attack) {
           left = mouseX - this.playbackBar.getBoundingClientRect().left;
         }
       }
@@ -267,10 +248,10 @@ export class Editor {
     for (let [interval, elements] of this.markerManager.intervalElements) {
       var startLeft = this.timeToPx(interval.start);
       var endLeft = this.timeToPx(interval.end);
-      if (this.dragged != null && this.dragged.constructor.name == "DraggedInterval") {
-        this.dragged = <DraggedInterval>this.dragged;
-        if (this.dragged.interval == interval) {
-          if (this.dragged.isStart) {
+      if (this.markerManager.dragged != null && this.markerManager.dragged.constructor.name == "DraggedInterval") {
+        this.markerManager.dragged = <DraggedInterval>this.markerManager.dragged;
+        if (this.markerManager.dragged.interval == interval) {
+          if (this.markerManager.dragged.isStart) {
             startLeft = mouseX - this.playbackBar.getBoundingClientRect().left;
           } else {
             endLeft = mouseX - this.playbackBar.getBoundingClientRect().left;
@@ -287,8 +268,8 @@ export class Editor {
     // update all of the critical elements positions
     for (let [crit, element] of this.markerManager.criticalElements) {
       var left = this.timeToPx(crit.time);
-      if (this.dragged != null && this.dragged.ty == "critical") {
-        if ((this.dragged as DraggedCritical).critical == crit) {
+      if (this.markerManager.dragged != null && this.markerManager.dragged.ty == "critical") {
+        if ((this.markerManager.dragged as DraggedCritical).critical == crit) {
           left = mouseX - this.playbackBar.getBoundingClientRect().left;
         }
       }
@@ -299,7 +280,7 @@ export class Editor {
     // update the playback point
     const playbackPoint = document.querySelector<HTMLElement>("#playback-point")!;
     // Use savedCursorTime if set, otherwise use video time
-    const playbackPointLeft = this.timeToPx(this.getCurrentTimeSafe());
+    const playbackPointLeft = this.timeToPx(this.markerManager.cursorTime());
     playbackPoint.style.left = `${playbackPointLeft}px`;
 
     if (this.hud.titleInput.value) {
@@ -344,13 +325,13 @@ export class Editor {
   }
 
   update(keyJustPressed: Set<string>, currentTargetDir: AttackDirection, mouseX: number) {
-    this.videoPlayer.updateTime();
+    this.markerManager.videoPlayer.updateTime(); // <-- use from markerManager
 
     if (keyJustPressed.has(" ")) {
-      if (this.videoPlayer.getPlayerState() == YT.PlayerState.PLAYING) {
-        this.videoPlayer.pauseVideo();
+      if (this.markerManager.videoPlayer.getPlayerState() == YT.PlayerState.PLAYING) {
+        this.markerManager.videoPlayer.pauseVideo();
       } else {
-        this.videoPlayer.playVideo();
+        this.markerManager.videoPlayer.playVideo();
       }
     }
     if (keyJustPressed.has("ArrowLeft")) {
@@ -372,13 +353,13 @@ export class Editor {
       this.seekForward(0.5);
     }
     if (keyJustPressed.has("Enter") || keyJustPressed.has("k")) {
-      this.createAttackAt(this.getCurrentTimeSafe(), currentTargetDir, Editor.defaults.attackDamage);
+      this.createAttackAt(this.markerManager.cursorTime(), currentTargetDir, Editor.defaults.attackDamage);
     }
     if (keyJustPressed.has("i")) {
-      this.createIntervalAt(this.getCurrentTimeSafe());
+      this.createIntervalAt(this.markerManager.cursorTime());
     }
     if (keyJustPressed.has("o")) {
-      this.createCriticalAt(this.getCurrentTimeSafe(), currentTargetDir, 1.5);
+      this.createCriticalAt(this.markerManager.cursorTime(), currentTargetDir, 1.5);
     }
     if (keyJustPressed.has("x") || keyJustPressed.has("Backspace") || keyJustPressed.has("Delete")) {
       this.removeSelected();
@@ -386,10 +367,10 @@ export class Editor {
 
 
     // if an attack is being dragged, seek to mouse cursor
-    if (this.dragged != null) {
+    if (this.markerManager.dragged != null) {
       let posRelative = mouseX - this.playbackBar.getBoundingClientRect().left;
       let time = this.pxToTime(posRelative);
-      this.videoPlayer.seekTo(time, true);
+      this.markerManager.videoPlayer.seekTo(time, true);
     }
 
     // now check if there is a "death" attack interval, if not, add one
@@ -403,12 +384,12 @@ export class Editor {
       }
     }
 
-    let playerReady = (this.videoPlayer.getPlayerState() == YT.PlayerState.PAUSED || this.videoPlayer.getPlayerState() == YT.PlayerState.PLAYING);
+    let playerReady = (this.markerManager.videoPlayer.getPlayerState() == YT.PlayerState.PAUSED || this.markerManager.videoPlayer.getPlayerState() == YT.PlayerState.PLAYING);
 
     // check the state of the player so duration is valid
     if (!deathInterval && playerReady) {
-      let startTime = Math.max(this.videoPlayer.getDuration() - 2, 0);
-      let endTime = this.videoPlayer.getDuration();
+      let startTime = Math.max(this.markerManager.videoPlayer.getDuration() - 2, 0);
+      let endTime = this.markerManager.videoPlayer.getDuration();
       let newDeathInterval = {
         start: startTime,
         end: endTime,
@@ -419,7 +400,7 @@ export class Editor {
 
     if (!introInterval && playerReady) {
       let startTime = 0;
-      let endTime = Math.min(2, this.videoPlayer.getDuration());
+      let endTime = Math.min(2, this.markerManager.videoPlayer.getDuration());
       let newIntroInterval = {
         start: startTime,
         end: endTime,
@@ -430,8 +411,8 @@ export class Editor {
 
     // if there's no non-special intervals, add a default one
     if (!hasNonSpecialInterval && playerReady) {
-      let startTime = Math.min(2, this.videoPlayer.getDuration());
-      let endTime = Math.max(this.videoPlayer.getDuration() - 2, startTime + 1);
+      let startTime = Math.min(2, this.markerManager.videoPlayer.getDuration());
+      let endTime = Math.max(this.markerManager.videoPlayer.getDuration() - 2, startTime + 1);
       let defaultInterval = {
         start: startTime,
         end: endTime,
@@ -484,14 +465,14 @@ export class Editor {
     let newCrit: CriticalData = {
       time: timestamp,
       direction: targetDir,
-      multiplier: multiplier
+      multiplier
     };
     this.markerManager.createCritical(newCrit);
     this.markerManager.selectCritical(newCrit);
   }
 
   createIntervalAt(timestamp: DOMHighResTimeStamp) {
-    let endTime = Math.min(timestamp + 2, this.videoPlayer.getDuration());
+    let endTime = Math.min(timestamp + 2, this.markerManager.videoPlayer.getDuration()); // <-- use from markerManager
     if (endTime == timestamp) {
       return;
     }
@@ -533,13 +514,13 @@ export class Editor {
       // deselect the current attack
       this.markerManager.selectAttack(null);
       // seek to that time
-      this.videoPlayer.seekTo(time, true); // <-- fix reference
+      this.markerManager.videoPlayer.seekTo(time, true); // <-- use from markerManager
     }
   }
 
   seekForward(seconds: number) {
-    let targetTime = Math.min(Math.max(this.getCurrentTimeSafe() + seconds, 0), this.videoPlayer.getDuration() - 0.05 * seconds);
-    this.videoPlayer.seekTo(targetTime, true);
+    let targetTime = Math.min(Math.max(this.markerManager.cursorTime() + seconds, 0), this.markerManager.videoPlayer.getDuration() - 0.05 * seconds);
+    this.markerManager.videoPlayer.seekTo(targetTime, true);
   }
 
   private updateCloseWarning() {

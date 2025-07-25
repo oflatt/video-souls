@@ -102,8 +102,8 @@ export class VideoSouls {
     } as const;
 
     this.editor = new Editor(new LevelDataV0(), graphics, this.videoPlayer);
-    this.battleRenderer = new BattleRenderer(this.elements.canvas, this.editor.level);
-    this.battleLogic = new BattleLogic(this.audio, this.editor.level);
+    this.battleRenderer = new BattleRenderer(this.elements.canvas, this.editor.level());
+    this.battleLogic = new BattleLogic(this.audio, this.editor.level());
     this.gameMode = GameMode.MENU;
     this.battle = initialBattleState();
     this.alerts = [];
@@ -227,7 +227,7 @@ export class VideoSouls {
       console.log(`Loading level from file: ${levelFile}`);
       const level = await this.fetchAndParseLevelFile(levelFile);
       if (level) {
-        this.editor.level = level;
+        this.editor.markerManager.level = level;
         // Recreate battleLogic with new level
         this.battleLogic = new BattleLogic(this.audio, level);
         // Recreate battleRenderer with new level
@@ -327,7 +327,7 @@ export class VideoSouls {
 
     const currentTime = this.currentTime();
     const timeInMilliseconds = Math.floor(currentTime * 1000);
-    this.elements.currentTimeDebug.textContent = `Time: ${timeInMilliseconds} ms data: ${this.editor.level.attackData.length}`;
+    this.elements.currentTimeDebug.textContent = `Time: ${timeInMilliseconds} ms data: ${this.editor.level().attackData.length}`;
 
     this.updateState();
 
@@ -423,7 +423,7 @@ export class VideoSouls {
   // gets the attack direction, if any, for this time period
   // starttime exclusive, endtime inclusive
   getAttacksInInterval(startTime: number, endTime: number) {
-    return this.editor.level.attackData.filter(attack => attack.time > startTime && attack.time <= endTime);
+    return this.editor.level().attackData.filter(attack => attack.time > startTime && attack.time <= endTime);
   }
 
   currentTime(): number {
@@ -437,7 +437,7 @@ export class VideoSouls {
       this.battle,
       currentTime,
       prevTime,
-      this.editor.level.attackData,
+      this.editor.level().attackData,
       this.inputManager
     );
   }
@@ -460,7 +460,7 @@ export class VideoSouls {
         this.battle,
         currentTime,
         this.videoPlayer,
-        this.editor.level.attackIntervals
+        this.editor.level().attackIntervals
       );
 
       // TODO move key handling input to battle logic file
@@ -498,7 +498,7 @@ export class VideoSouls {
       if (this.battle.playerHealth <= 0) {
         this.setGameMode(GameMode.BATTLE_END);
       } else if (this.battle.bossHealth <= 0 && this.battle.currentInterval === "death") {
-        const deathInterval = this.editor.level.attackIntervals.get("death");
+        const deathInterval = this.editor.level().attackIntervals.get("death");
         if (deathInterval && currentTime >= deathInterval.end || this.videoPlayer.getPlayerState() === YT.PlayerState.ENDED) {
           this.setGameMode(GameMode.BATTLE_END);
         }
@@ -543,8 +543,8 @@ export class VideoSouls {
     // reset the sword state
     this.battle = initialBattleState();
     // Set bossHealth from level data
-    this.battle.bossHealth = this.editor.level.bossHealth;
-    this.battle.lastBossHealth = this.editor.level.bossHealth;
+    this.battle.bossHealth = this.editor.level().bossHealth;
+    this.battle.lastBossHealth = this.editor.level().bossHealth;
 
     // if the new mode is game, show the game hud
     if (mode === GameMode.PLAYING) {
@@ -562,17 +562,18 @@ export class VideoSouls {
 
     // load the video for editing, make new editor
     if (mode === GameMode.EDITING) {
-      if (this.editor.level.video != null) {
-        this.videoPlayer.cueVideoById(this.editor.level.video);
+      let vid = this.editor.level().video;
+      if (vid != null) {
+        this.videoPlayer.cueVideoById(vid);
       }
 
       // Clean up old editor
       this.editor.cleanup();
       // Create new Editor, which now creates HUD itself
-      this.editor = new Editor(this.editor.level, graphics, this.videoPlayer);
+      this.editor = new Editor(this.editor.level(), graphics, this.videoPlayer);
 
       // Set the editor title input to the level's title
-      const title = this.editor.level.title ?? "";
+      const title = this.editor.level().title ?? "";
       if (this.editor.hud && this.editor.hud.titleInput) {
         this.editor.hud.titleInput.value = title;
       }
@@ -587,8 +588,9 @@ export class VideoSouls {
 
     // load the video for playing
     if (mode === GameMode.PLAYING) {
-      if (this.editor.level.video != null) {
-        this.videoPlayer.loadVideoById(this.editor.level.video);
+      let vid = this.editor.level().video;
+      if (vid != null) {
+        this.videoPlayer.loadVideoById(vid);
       }
       this.videoPlayer.pauseVideo();
       this.videoPlayer.setPlaybackRate(1.0);
@@ -638,7 +640,7 @@ export class VideoSouls {
   }
 
   loadCommunityLevel(level: LevelDataV0) {
-    this.editor.level = level;
+    this.editor.markerManager.level = level;
     this.battleLogic = new BattleLogic(this.audio, level);
     this.battleRenderer = new BattleRenderer(this.elements.canvas, level);
     this.hideCommunityLevelsPage();
@@ -646,11 +648,11 @@ export class VideoSouls {
   }
 
   setCurrentVideo(videoId: string) {
-    this.editor.level = levelDataFromVideo(videoId);
+    this.editor.markerManager.level = levelDataFromVideo(videoId);
     // Recreate battleLogic with new level
-    this.battleLogic = new BattleLogic(this.audio, this.editor.level);
+    this.battleLogic = new BattleLogic(this.audio, this.editor.markerManager.level);
     // Recreate battleRenderer with new level
-    this.battleRenderer = new BattleRenderer(this.elements.canvas, this.editor.level);
+    this.battleRenderer = new BattleRenderer(this.elements.canvas, this.editor.markerManager.level);
   }
 
   // Function to play a YouTube video by extracting the video ID from the URL
@@ -666,8 +668,8 @@ export class VideoSouls {
 
   private drawCanvas() {
     const currentTime = this.currentTime();
-    const displayTitle = this.editor.level.title || this.elements.player.getIframe().title;
-    const arrowless = !!this.editor.level.arrowless;
+    const displayTitle = this.editor.level().title || this.elements.player.getIframe().title;
+    const arrowless = !!this.editor.level().arrowless;
 
     this.battleRenderer.drawCanvas(
       currentTime,
