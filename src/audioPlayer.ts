@@ -5,6 +5,7 @@ export class AudioPlayer {
   playerAttack: HTMLAudioElement;
   playerHit: HTMLAudioElement;
   parrySound: HTMLAudioElement;
+  blocked: HTMLAudioElement; // <-- new property
 
   constructor() {
     for (let i = 1; i <= 3; i++) {
@@ -15,6 +16,7 @@ export class AudioPlayer {
     this.playerAttack = new Audio('audio/playerAttack.wav');
     this.playerHit = new Audio('audio/playerHit.wav');
     this.parrySound = new Audio('audio/parry.wav');
+    this.blocked = new Audio('audio/blocked.wav'); // <-- load blocked.wav
   }
 
   private cloneAndPlay(audio: HTMLAudioElement) {
@@ -44,6 +46,10 @@ export class AudioPlayer {
     this.cloneAndPlay(this.parrySound);
   }
 
+  playBlockedSound() {
+    this.cloneAndPlay(this.blocked);
+  }
+
   setVolume(normalizedVolume: number) {
     // Ensure volume is finite and in [0, 1]
     const safeVolume = Number.isFinite(normalizedVolume) ? Math.max(0, Math.min(1, normalizedVolume)) : 1;
@@ -51,6 +57,7 @@ export class AudioPlayer {
     this.enemyHit.volume = safeVolume;
     this.playerHit.volume = safeVolume;
     this.parrySound.volume = safeVolume;
+    this.blocked.volume = safeVolume; // <-- set volume for blocked sound
     this.warnings.forEach(warning => warning.volume = safeVolume);
     // Add any other sound effects here
   }

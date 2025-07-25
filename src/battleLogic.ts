@@ -3,19 +3,11 @@ import { AudioPlayer } from './audioPlayer';
 import { AttackSchedule } from './attackSchedule';
 import { AttackInterval } from './editor';
 import { VideoPlayer } from './videoPlayer';
-import { LevelDataV0 } from './leveldata';
+import { AttackData, LevelDataV0 } from './leveldata';
 import { BattleAnim } from './battleAnim';
 import { InputManager } from './inputmanager';
+import { ATTACK_COMBO_DAMAGE_MULT, ATTACK_COMBO_STARTUP_TIMES, ATTACK_DURATION, ATTACK_END_LAG, BLOCK_WINDOW, COMBO_EXTEND_TIME, CRITICAL_TIME, PARRY_TOTAL_DURATION, PARRY_WINDOW, STAGGER_TIME } from './constants';
 
-const ATTACK_COMBO_STARTUP_TIMES = [0.2, 0.2, 0.3, 0.2, 0.4];
-const ATTACK_COMBO_DAMAGE_MULT = [1.0, 1.1, 1.3, 1.0, 2.2];
-const ATTACK_DURATION = 0.3;
-const ATTACK_END_LAG = 0.3;
-const COMBO_EXTEND_TIME = 3.0;
-const STAGGER_TIME = 0.4;
-const PARRY_WINDOW = 0.2;
-const PARRY_END_LAG = 0.2;
-const CRITICAL_TIME = 2.5; // Duration (seconds) a critical is active
 
 const attackedPosition = [0.7, 0.4];
 const attackedAngle = Math.PI / 2;
@@ -41,41 +33,26 @@ export class BattleLogic {
     const attacks = this.getAttacksInInterval(attackData, prevTime, currentTime);
     if (attacks.length > 0) {
       const attack = attacks[0];
-      // Only allow parry if sword is in the correct region
-      const swordPos = battle.anim.endPos;
-      const targetPos = directionNumToSwordPos.get(attack.direction)!;
-      const swordX = swordPos[0] - 0.5;
-      const swordY = swordPos[1] - 0.5;
-      const attackX = targetPos[0];
-      const attackY = targetPos[1];
-      let regionOk = true;
-      // For diagonal directions, require quadrant match
-      if (
-        attack.direction === 1 || attack.direction === 3 ||
-        attack.direction === 5 || attack.direction === 7
-      ) {
-        regionOk =
-          (swordX === 0 || attackX === 0 || Math.sign(swordX) === Math.sign(attackX)) &&
-          (swordY === 0 || attackY === 0 || Math.sign(swordY) === Math.sign(attackY));
-      } else if (attack.direction === 0) { // UP
-        regionOk = swordY > 0;
-      } else if (attack.direction === 4) { // DOWN
-        regionOk = swordY < 0;
-      } else if (attack.direction === 2) { // RIGHT
-        regionOk = swordX > 0;
-      } else if (attack.direction === 6) { // LEFT
-        regionOk = swordX < 0;
-      } else if (attack.direction === 8) { // CENTER
-        regionOk = Math.abs(swordX) < 0.15 && Math.abs(swordY) < 0.15;
-      }
+      
       if (
         battle.anim.state === AttackAnimation.PARRYING &&
-        inputManager.getCurrentTargetDirection() === attack.direction &&
-        regionOk
+        inputManager.getCurrentTargetDirection() === attack.direction
       ) {
-        this.successParry(battle, currentTime);
+        // Only allow parry if within the parry window
+        const parryProgress = battle.anim.timeElapsed / battle.anim.duration;
+        const parryWindowProportion = PARRY_WINDOW / (PARRY_TOTAL_DURATION);
+        const blockWindowProportion = BLOCK_WINDOW / (PARRY_TOTAL_DURATION);
+        if (parryProgress < parryWindowProportion) {
+          this.successParry(battle, currentTime);
+        }  else if (parryProgress < blockWindowProportion) {
+          this.blockAttack(battle, attack.damage);
+        }
+        
+        else {
+          this.playerTakeDamage(battle, attack.damage);
+        }
       } else {
-        this.playerTakeDamage(battle, currentTime);
+        this.playerTakeDamage(battle, attack.damage);
       }
     }
 
@@ -94,7 +71,7 @@ export class BattleLogic {
 
   // gets the attack direction, if any, for this time period
   // starttime exclusive, endtime inclusive
-  getAttacksInInterval(attackData: any[], startTime: number, endTime: number) {
+  getAttacksInInterval(attackData: AttackData[], startTime: number, endTime: number): AttackData[] {
     return attackData.filter(attack => attack.time > startTime && attack.time <= endTime);
   }
 
@@ -214,20 +191,26 @@ export class BattleLogic {
     }
   }
 
-  doParry(battle: BattleState) {
+  doParry(battle: BattleState, inputManager: InputManager) {
+    // Teleport sword to the destination based on current input direction
+    const targetDir = inputManager.getCurrentTargetDirection();
+    const targetPos = this.getTargetSwordPos(targetDir);
+    const targetAngle = directionNumToSwordAngle.get(targetDir)!;
+    battle.anim.endPos[0] = targetPos[0];
+    battle.anim.endPos[1] = targetPos[1];
+    battle.anim.endAngle = targetAngle;
     battle.anim = BattleAnim.parrying(
       [...battle.anim.endPos],
       battle.anim.endAngle,
-      PARRY_WINDOW + PARRY_END_LAG
+      PARRY_TOTAL_DURATION
     );
   }
 
   updateSwordPosition(battle: BattleState, getCurrentTargetDirection: () => number) {
     if (battle.anim.state === AttackAnimation.NONE) {
-      const targetAngle = directionNumToSwordAngle.get(getCurrentTargetDirection())!;
-      var targetPos = [...directionNumToSwordPos.get(getCurrentTargetDirection())!];
-      targetPos[0] += 0.5;
-      targetPos[1] += 0.5;
+      const targetDir = getCurrentTargetDirection();
+      const targetAngle = directionNumToSwordAngle.get(targetDir)!;
+      const targetPos = this.getTargetSwordPos(targetDir);
 
       if (Math.abs(battle.anim.endPos[0] - targetPos[0]) < 0.01 && Math.abs(battle.anim.endPos[1] - targetPos[1]) < 0.01) {
         battle.anim.endPos[0] = targetPos[0];
@@ -268,11 +251,20 @@ export class BattleLogic {
     battle.anim.state = AttackAnimation.NONE;
   }
 
-  private playerTakeDamage(battle: BattleState, currentTime: number) {
+  
+  // take half damage, cancel animation
+  private blockAttack(battle: BattleState, attackDamage: number) {
+    this.audio.playBlockedSound(); 
+    battle.lastPlayerHealth = battle.playerHealth;
+    battle.playerHealth -= 0.2 * attackDamage * this.level.bossDamageMultiplier;
+    battle.anim.state = AttackAnimation.NONE;
+  }
+
+  private playerTakeDamage(battle: BattleState, attackDamage: number) {
     this.audio.playPlayerHitSound();
     battle.lastPlayerHealth = battle.playerHealth;
     // Use bossDamageMultiplier from level data
-    battle.playerHealth -= 0.1 * this.level.bossDamageMultiplier;
+    battle.playerHealth -= attackDamage * this.level.bossDamageMultiplier;
     battle.timeSincePlayerHit = 0;  // Reset duration
     battle.hitCombo = 0;
 
@@ -292,6 +284,12 @@ export class BattleLogic {
     const [x, y] = vec;
     const length = Math.sqrt(x * x + y * y);
     return [x / length, y / length];
+  }
+
+  // Helper to get sword position for a direction (centered at 0.5, 0.5)
+  private getTargetSwordPos(direction: number): [number, number] {
+    const pos = directionNumToSwordPos.get(direction)!;
+    return [0.5 + pos[0], 0.5 + pos[1]];
   }
 
   handleAttackSchedule(

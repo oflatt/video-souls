@@ -26,8 +26,6 @@ const COMBO_EXTEND_TIME = 3.0; // number of seconds before combo lapses
 
 const STAGGER_TIME = 0.4;
 
-const PARRY_WINDOW = 0.2;
-const PARRY_END_LAG = 0.2;
 
 type AlertData = {
   message: HTMLElement,
@@ -444,13 +442,6 @@ export class VideoSouls {
     );
   }
 
-  startAttack() {
-    this.battleLogic.startAttack(this.battle, this.inputManager);
-  }
-
-  doParry() {
-    this.battleLogic.doParry(this.battle);
-  }
 
   updateState() {
     const currentTime = this.currentTime();
@@ -490,10 +481,10 @@ export class VideoSouls {
       // ready for new buffered action
       if (this.battle.bufferedInput !== null && this.battle.anim.state === AttackAnimation.NONE) {
         if (this.battle.bufferedInput === this.inputManager.parryKey) {
-          this.doParry();
+          this.battleLogic.doParry(this.battle, this.inputManager);
           this.battle.bufferedInput = null;
         } else if (this.battle.bufferedInput === this.inputManager.attackKey) {
-          this.startAttack();
+          this.battleLogic.startAttack(this.battle, this.inputManager);
           this.battle.bufferedInput = null;
         }
       }

@@ -2,9 +2,8 @@ import { Graphics } from './graphics';
 import { AttackAnimation, BattleState, directionNumToSwordPos, directionNumToSwordAngle } from './battle';
 import { LevelDataV0 } from './leveldata';
 import { graphics } from './videosouls'; // <-- import global graphics
+import { PARRY_TOTAL_DURATION, PARRY_WINDOW } from './constants';
 
-const PARRY_WINDOW = 0.2;
-const PARRY_END_LAG = 0.2;
 const SUCCESS_PARRY_ANIM_FADE = 0.2;
 const ATTACK_WARNING_ADVANCE = 0.5;
 
@@ -216,7 +215,7 @@ export class BattleRenderer {
       var currentAngle = battle.anim.startAngle + (targetAngle - battle.anim.startAngle) * fastExponentialAnimProgress;
       swordAngle = currentAngle;
   
-      const parryWindowProportion = PARRY_WINDOW / (PARRY_WINDOW + PARRY_END_LAG);
+      const parryWindowProportion = PARRY_WINDOW / (PARRY_TOTAL_DURATION);
       if (battle.anim.state === AttackAnimation.PARRYING && animProgress < parryWindowProportion) {
         redSwordOutlineStrength = Math.sqrt(1.0 - (animProgress / parryWindowProportion));
       }

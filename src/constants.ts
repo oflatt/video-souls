@@ -1,0 +1,10 @@
+export const ATTACK_COMBO_STARTUP_TIMES = [0.2, 0.2, 0.3, 0.2, 0.4];
+export const ATTACK_COMBO_DAMAGE_MULT = [1.0, 1.1, 1.3, 1.0, 2.2];
+export const ATTACK_DURATION = 0.3;
+export const ATTACK_END_LAG = 0.3;
+export const COMBO_EXTEND_TIME = 3.0;
+export const STAGGER_TIME = 0.4;
+export const PARRY_WINDOW = 0.2;
+export const BLOCK_WINDOW = 0.3;
+export const PARRY_TOTAL_DURATION = 0.4;
+export const CRITICAL_TIME = 2.5; // Duration (seconds) a critical is active
