@@ -135,6 +135,29 @@
   pointer-events: none;
 }
 
+/* Damage/multiplier input spinner for attack/critical markers */
+.damage-input {
+  position: absolute;
+  top: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 48px;
+  font-size: 14px;
+  text-align: center;
+  z-index: 20;
+  background: #222;
+  color: #ffd700;
+  border: 1px solid #ffd700;
+  border-radius: 4px;
+  pointer-events: auto;
+}
+
+/* Arrow canvas for attack/critical markers */
+.attack-arrow {
+  position: absolute;
+  /* left and bottom set dynamically by JS */
+}
+
 /* --- Intervals --- */
 .interval-start,
 .interval-end {

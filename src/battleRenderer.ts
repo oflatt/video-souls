@@ -132,7 +132,8 @@ export class BattleRenderer {
     const animTime = (currentTime - attack.time) / ATTACK_WARNING_ADVANCE;
     const opacity = Math.max(0, 1 - animTime);
 
-    const attackX = canvasWidth * attackPos[0];
+    // Center horizontally, offset using height for symmetry, scale by 1.5
+    const attackX = canvasWidth / 2 + 1.5 * canvasHeight * (attackPos[0] - 0.5);
     const attackY = canvasHeight * (1 - attackPos[1]);
 
     const ctx = this.canvas.getContext('2d')!;
@@ -229,7 +230,8 @@ export class BattleRenderer {
       greenSwordOutlineStrength = Math.sqrt(1.0 - (battle.timeSinceLastParry / SUCCESS_PARRY_ANIM_FADE));
     }
 
-    const topLeftX = this.canvas.width * swordPos[0];
+    // Center horizontally, offset using height for symmetry, scale by 1.5
+    const topLeftX = this.canvas.width / 2 + 1.5 * this.canvas.height * (swordPos[0] - 0.5);
     const topLeftY = this.canvas.height * swordPos[1];
     var swordOutlineX = topLeftX;
     var swordOutlineY = topLeftY; 
@@ -330,7 +332,8 @@ export class BattleRenderer {
       sprite = graphics.criticalSprite ?? graphics.arrowSprite;
     }
     const size = graphics.arrowSprite.width / 2;
-    const x = this.canvas.width * (0.5 + pos[0] * 0.9);
+    // Center horizontally, offset using height for symmetry, scale by 1.5
+    const x = this.canvas.width / 2 + 1.5 * this.canvas.height * (pos[0] * 0.9);
     const y = this.canvas.height * (1 - (0.5 + pos[1] * 0.9));
     drawCritical(
       ctx,

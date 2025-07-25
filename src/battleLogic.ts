@@ -270,7 +270,7 @@ export class BattleLogic {
   private blockAttack(battle: BattleState, attackDamage: number) {
     this.audio.playBlockedSound(); 
     battle.lastPlayerHealth = battle.playerHealth;
-    battle.playerHealth -= 0.2 * attackDamage * this.level.bossDamageMultiplier;
+    battle.playerHealth -= 0.2 * attackDamage * 0.1 * this.level.bossDamageMultiplier;
     battle.anim.state = AttackAnimation.NONE;
     // recent missed parries reset
     battle.numRecentMissedParries = 0;
@@ -280,7 +280,7 @@ export class BattleLogic {
     this.audio.playPlayerHitSound();
     battle.lastPlayerHealth = battle.playerHealth;
     // Use bossDamageMultiplier from level data
-    battle.playerHealth -= attackDamage * this.level.bossDamageMultiplier;
+    battle.playerHealth -= attackDamage * 0.1 * this.level.bossDamageMultiplier;
     battle.timeSincePlayerHit = 0;  // Reset duration
     battle.hitCombo = 0;
 

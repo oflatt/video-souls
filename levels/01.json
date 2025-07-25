@@ -8,52 +8,52 @@
     {
       "time": 6.653170117011701,
       "direction": 0,
-      "damage": 0.1
+      "damage": 1.0
     },
     {
       "time": 11.081739999999987,
       "direction": 0,
-      "damage": 0.1
+      "damage": 1.0
     },
     {
       "time": 11.953170117011712,
       "direction": 0,
-      "damage": 0.1
+      "damage": 1.0
     },
     {
       "time": 17.153170117011722,
       "direction": 2,
-      "damage": 0.1
+      "damage": 1.0
     },
     {
       "time": 19.803170117011724,
       "direction": 2,
-      "damage": 0.1
+      "damage": 1.0
     },
     {
       "time": 23.40317011701176,
       "direction": 0,
-      "damage": 0.1
+      "damage": 1.0
     },
     {
       "time": 27.353170117011782,
       "direction": 0,
-      "damage": 0.1
+      "damage": 1.0
     },
     {
       "time": 28.40317011701179,
       "direction": 0,
-      "damage": 0.1
+      "damage": 1.0
     },
     {
       "time": 29.503170117011805,
       "direction": 6,
-      "damage": 0.1
+      "damage": 1.0
     },
     {
       "time": 32.78521199999998,
       "direction": 0,
-      "damage": 0.1
+      "damage": 1.0
     }
   ],
   "attackIntervals": {

@@ -76,7 +76,7 @@ function criticalDataEquals(a: CriticalData, b: CriticalData): boolean {
 
 export class Editor {
   static defaults = {
-    attackDamage: 0.1,
+    attackDamage: 1.0,
     minAttackDistance: 0.1  // minimum seconds between attacks
   } as const;
   frameToAttack: Map<number, AttackData>;
@@ -349,6 +349,7 @@ export class Editor {
     let arrowCanvas = document.createElement("canvas");
     arrowCanvas.width = arrowSize;
     arrowCanvas.height = arrowSize;
+
     let arrowCtx = arrowCanvas.getContext("2d")!;
     if (isCritical) {
       drawCritical(
@@ -374,7 +375,6 @@ export class Editor {
 
     let arrowElement = document.createElement("div");
     arrowElement.appendChild(arrowCanvas);
-    arrowElement.style.position = "absolute";
     let pos_vector: [number, number] = [0, 30];
     let angle = (Math.PI / 4) * data.direction;
     let rotated_vector = roatate_vec2(pos_vector, angle);
@@ -382,8 +382,74 @@ export class Editor {
     let top = -arrowSize / 2 + rotated_vector[1];
     arrowElement.style.left = `${left}px`;
     arrowElement.style.bottom = `calc(var(--height) + ${top}px)`;
+
+
+    arrowElement.className = "attack-arrow"; // <-- add class for CSS
     arrowElement.style.pointerEvents = "none"; // allow clicks to pass through
     element.appendChild(arrowElement);
+
+    // --- Editable input for damage/multiplier ---
+    let input = document.createElement("input");
+    input.type = "number";
+    input.step = "0.1";
+    input.className = "damage-input"; // <-- add class for CSS
+    input.value = isCritical
+      ? String((data as CriticalData).multiplier)
+      : String((data as AttackData).damage);
+    input.readOnly = true; // <-- prevent typing
+    input.addEventListener("keydown", (e) => {
+      // Prevent all keys except ArrowUp/ArrowDown
+      if (
+        e.key !== "ArrowUp" &&
+        e.key !== "ArrowDown" &&
+        e.key !== "Tab"
+      ) {
+        e.preventDefault();
+      }
+    });
+    input.addEventListener("mousedown", (e) => {
+      // Prevent selecting the input
+      e.preventDefault();
+      input.blur();
+    });
+    input.addEventListener("focus", () => {
+      // Immediately blur to prevent selection
+      input.blur();
+    });
+
+    input.addEventListener("input", () => {
+      if (isCritical) {
+        let crit = data as CriticalData;
+        let val = Number(input.value);
+        if (Number.isFinite(val)) {
+          // Remove old critical and add new one with updated multiplier
+          this.deleteCritical(crit);
+          const newCrit: CriticalData = {
+            time: crit.time,
+            direction: crit.direction,
+            multiplier: val
+          };
+          this.createCritical(newCrit);
+          this.selectCritical(newCrit);
+        }
+      } else {
+        let attack = data as AttackData;
+        let val = Number(input.value);
+        if (Number.isFinite(val)) {
+          // Remove old attack and add new one with updated damage
+          this.deleteAttack(attack);
+          const newAttack: AttackData = {
+            time: attack.time,
+            direction: attack.direction,
+            damage: val
+          };
+          this.createAttack(newAttack);
+          this.selectAttack(newAttack);
+        }
+      }
+    });
+
+    element.appendChild(input);
 
     // For criticals, show multiplier label (already drawn by drawArrowOrX, but keep for accessibility)
     if (isCritical) {
@@ -729,8 +795,7 @@ export class Editor {
     let nameElement = document.createElement("input");
     nameElement.type = "text";
     nameElement.value = interval.name;
-    // make it not editable for now
-    nameElement.readOnly = true;
+    nameElement.readOnly = true; // read only for now
     nameElement.classList.add("interval-name");
 
     let elements = new IntervalElements(startElement, endElement, nameElement);
