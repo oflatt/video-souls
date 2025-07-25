@@ -17,52 +17,11 @@ import { drawArrow, drawCritical } from './battleRenderer'; // <-- update import
 import { graphics } from './videosouls'; // <-- import global graphics
 import { roatate_vec2 } from './utils';
 import { showFloatingAlert } from './utils';
+import { DraggedAttack, DraggedCritical, DraggedInterval, IntervalElements, MarkerManager } from './MarkerManager';
 
 const FRAME_LENGTH = 0.05;
 const PLAYBACK_BAR_PADDING = 20;
 
-class IntervalElements {
-  startElement: HTMLElement;
-  endElement: HTMLElement;
-  nameElement: HTMLElement;
-
-  constructor(startElement: HTMLElement, endElement: HTMLElement, nameElement: HTMLElement) {
-    this.startElement = startElement;
-    this.endElement = endElement;
-    this.nameElement = nameElement;
-  }
-}
-
-class DraggedInterval {
-  interval: AttackInterval;
-  isStart: boolean;
-  ty: "interval";
-
-  constructor(interval: AttackInterval, isStart: boolean) {
-    this.interval = interval;
-    this.isStart = isStart;
-    this.ty = "interval";
-  }
-}
-
-class DraggedAttack {
-  attack: AttackData;
-  ty: "attack";
-
-  constructor(attack: AttackData) {
-    this.attack = attack;
-    this.ty = "attack";
-  }
-}
-
-class DraggedCritical {
-  critical: CriticalData;
-  ty: "critical";
-  constructor(critical: CriticalData) {
-    this.critical = critical;
-    this.ty = "critical";
-  }
-}
 
 function attackDataEquals(a: AttackData, b: AttackData): boolean {
   return a.time === b.time &&
@@ -81,11 +40,8 @@ export class Editor {
     attackDamage: 1.0,
     minAttackDistance: 0.1  // minimum seconds between attacks
   } as const;
-  frameToAttack: Map<number, AttackData>;
-  elements: Map<AttackData, HTMLElement>;
-  intervalElements: Map<AttackInterval, IntervalElements>;
-  criticalElements: Map<CriticalData, HTMLElement>;
-  selected: DraggedAttack | null | DraggedInterval | DraggedCritical;
+
+  markerManager: MarkerManager;
   playbackBar: HTMLElement;
   recordingControls: HTMLElement;
   playbackWrapper: HTMLElement;
@@ -97,23 +53,16 @@ export class Editor {
   controlsInfoPanel: HTMLElement | null = null;
   controlsInfoVisible: boolean = true;
   hud: EditorHud;
-  hudElement: HTMLElement; // <-- Store the HUD element
+  hudElement: HTMLElement;
   videoPlayer: VideoPlayer;
-
-  // --- new fields for cursor management ---
-  private savedCursorTime: number | null = null; // time to restore after drag
+  private savedCursorTime: number | null = null;
 
   constructor(level: LevelDataV0, _graphics: Graphics, videoPlayer: VideoPlayer) {
+    this.markerManager = new MarkerManager(); // <-- initialize first!
     this.videoPlayer = videoPlayer;
-    this.frameToAttack = new Map<number, AttackData>();
-    this.elements = new Map<AttackData, HTMLElement>();
-    this.intervalElements = new Map<AttackInterval, IntervalElements>();
-    this.criticalElements = new Map<CriticalData, HTMLElement>();
-    this.selected = null;
     this.level = level;
     this.zoom = 1.0;
     this.dragged = null;
-    // find a number greater than all the existing ones to avoid name collisions
     this.freshName = 0;
     for (let [name, interval] of this.level.attackIntervals) {
       let stringNum = parseInt(name);
@@ -260,7 +209,7 @@ export class Editor {
 
         this.createInterval(newInterval);
         // select the new interval at the same endpoint
-        this.selectInterval(newInterval, this.dragged.isStart);
+        this.markerManager.selectInterval(newInterval, this.dragged.isStart);
         this.dragged = null;
       }
     }
@@ -323,7 +272,7 @@ export class Editor {
 
     // Insert chronologically
     const arr = isCritical ? this.level.criticals : this.level.attackData;
-    const map = isCritical ? this.criticalElements : this.elements;
+    const map = isCritical ? this.markerManager.criticalElements : this.markerManager.elements;
     let index = arr.findIndex(a => a.time > data.time);
     if (index == -1) {
       parentElement.insertBefore(element, null);
@@ -335,7 +284,7 @@ export class Editor {
 
     // For attacks, update frameToAttack
     if (!isCritical) {
-      this.frameToAttack.set(this.frameIndex(data as AttackData), data as AttackData);
+      this.markerManager.frameToAttack.set(this.frameIndex(data as AttackData), data as AttackData);
     }
 
     // Draw arrow for direction using drawArrow/drawCritical
@@ -422,7 +371,7 @@ export class Editor {
             multiplier: val
           };
           this.createCritical(newCrit);
-          this.selectCritical(newCrit);
+          this.markerManager.selectCritical(newCrit);
         }
       } else {
         let attack = data as AttackData;
@@ -436,7 +385,7 @@ export class Editor {
             damage: val
           };
           this.createAttack(newAttack);
-          this.selectAttack(newAttack);
+          this.markerManager.selectAttack(newAttack);
         }
       }
     });
@@ -476,7 +425,7 @@ export class Editor {
 
 
     // update all of the attack elements positions
-    for (let [attack, element] of this.elements) {
+    for (let [attack, element] of this.markerManager.elements) {
       // if this one is being dragged, follow mouse
       var left = this.timeToPx(attack.time);
       if (this.dragged != null && this.dragged.ty == "attack") {
@@ -490,7 +439,7 @@ export class Editor {
     }
 
     // update all the interval elements positions
-    for (let [interval, elements] of this.intervalElements) {
+    for (let [interval, elements] of this.markerManager.intervalElements) {
       var startLeft = this.timeToPx(interval.start);
       var endLeft = this.timeToPx(interval.end);
       if (this.dragged != null && this.dragged.constructor.name == "DraggedInterval") {
@@ -511,7 +460,7 @@ export class Editor {
     }
 
     // update all of the critical elements positions
-    for (let [crit, element] of this.criticalElements) {
+    for (let [crit, element] of this.markerManager.criticalElements) {
       var left = this.timeToPx(crit.time);
       if (this.dragged != null && this.dragged.ty == "critical") {
         if ((this.dragged as DraggedCritical).critical == crit) {
@@ -677,12 +626,12 @@ export class Editor {
       damage: damage
     };
     this.createAttack(newAttack);
-    this.selectAttack(newAttack);
+    this.markerManager.selectAttack(newAttack);
   }
 
   createAttackAt(timestamp: DOMHighResTimeStamp, targetDir: AttackDirection, damage: number) {
     // Disallow overlapping attacks
-    let existingAttack = this.frameToAttack.get(this.frameIndex(timestamp));
+    let existingAttack = this.markerManager.frameToAttack.get(this.frameIndex(timestamp));
     if (existingAttack != null) {
       this.deleteAttack(existingAttack);
     }
@@ -692,7 +641,7 @@ export class Editor {
       damage: damage
     };
     this.createAttack(newAttack);
-    this.selectAttack(newAttack);
+    this.markerManager.selectAttack(newAttack);
   }
 
   createCriticalAtMousePosition(pos: number, targetDir: AttackDirection, multiplier: number) {
@@ -704,7 +653,7 @@ export class Editor {
       multiplier: multiplier
     };
     this.createCritical(newCrit);
-    this.selectCritical(newCrit);
+    this.markerManager.selectCritical(newCrit);
   }
 
   createCriticalAt(timestamp: number, targetDir: AttackDirection, multiplier: number) {
@@ -714,7 +663,7 @@ export class Editor {
       multiplier: multiplier
     };
     this.createCritical(newCrit);
-    this.selectCritical(newCrit);
+    this.markerManager.selectCritical(newCrit);
   }
 
   createIntervalAt(timestamp: DOMHighResTimeStamp) {
@@ -735,20 +684,20 @@ export class Editor {
   }
 
   selectAttackAt(timestamp: number) {
-    let existingAttack = this.frameToAttack.get(this.frameIndex(timestamp));
+    let existingAttack = this.markerManager.frameToAttack.get(this.frameIndex(timestamp));
     if (existingAttack != null) {
-      this.selectAttack(existingAttack);
+      this.markerManager.selectAttack(existingAttack);
     }
   }
 
   removeSelected() {
-    if (this.selected != null) {
-      if (this.selected.ty == "attack") {
-        this.deleteAttack(this.selected.attack);
-      } else if (this.selected.ty == "interval") {
-        this.deleteInterval(this.selected.interval);
-      } else if (this.selected.ty == "critical") {
-        this.deleteCritical((this.selected as DraggedCritical).critical);
+    if (this.markerManager.selected != null) {
+      if (this.markerManager.selected.ty == "attack") {
+        this.deleteAttack(this.markerManager.selected.attack);
+      } else if (this.markerManager.selected.ty == "interval") {
+        this.deleteInterval(this.markerManager.selected.interval);
+      } else if (this.markerManager.selected.ty == "critical") {
+        this.deleteCritical((this.markerManager.selected as DraggedCritical).critical);
       }
     }
   }
@@ -761,7 +710,7 @@ export class Editor {
       // convert the x position to a time
       let time = this.pxToTime(mouseX);
       // deselect the current attack
-      this.selectAttack(null);
+      this.markerManager.selectAttack(null);
       // seek to that time
       this.seek(time);
     }
@@ -792,7 +741,7 @@ export class Editor {
 
     let elements = new IntervalElements(startElement, endElement, nameElement);
 
-    this.intervalElements.set(interval, elements);
+    this.markerManager.intervalElements.set(interval, elements);
 
     startElement.addEventListener("mousedown", event => {
       event.stopPropagation();
@@ -851,13 +800,13 @@ export class Editor {
   }
 
   private deleteInterval(interval: AttackInterval) {
-    this.intervalElements.get(interval)!.startElement.remove();
-    this.intervalElements.get(interval)!.endElement.remove();
-    this.intervalElements.get(interval)!.nameElement.remove();
-    this.intervalElements.delete(interval);
+    this.markerManager.intervalElements.get(interval)!.startElement.remove();
+    this.markerManager.intervalElements.get(interval)!.endElement.remove();
+    this.markerManager.intervalElements.get(interval)!.nameElement.remove();
+    this.markerManager.intervalElements.delete(interval);
     this.level.attackIntervals.delete(interval.name);
-    if (this.selected != null && this.selected.ty == "interval" && this.selected.interval == interval) {
-      this.selected = null;
+    if (this.markerManager.selected != null && this.markerManager.selected.ty == "interval" && this.markerManager.selected.interval == interval) {
+      this.markerManager.selected = null;
     }
   }
 
@@ -865,7 +814,7 @@ export class Editor {
     data: AttackData | CriticalData,
     isCritical: boolean
   ) {
-    const map = isCritical ? this.criticalElements : this.elements;
+    const map = isCritical ? this.markerManager.criticalElements : this.markerManager.elements;
     const arr = isCritical ? this.level.criticals : this.level.attackData;
     const equals = isCritical ? criticalDataEquals : attackDataEquals;
     const element = map.get(data as any);
@@ -877,17 +826,18 @@ export class Editor {
     if (index !== -1) {
       arr.splice(index, 1);
     }
-    if (!isCritical && this.frameToAttack.get(this.frameIndex(data as AttackData)) == data) {
-      this.frameToAttack.delete(this.frameIndex(data as AttackData));
+    if (!isCritical && this.markerManager.frameToAttack.get(this.frameIndex(data as AttackData)) == data) {
+      this.markerManager.frameToAttack.delete(this.frameIndex(data as AttackData));
     }
-    if (this.selected != null) {
+    if (this.markerManager.selected != null) {
       if (
-        (!isCritical && this.selected.ty == "attack" && (this.selected as DraggedAttack).attack == data) ||
-        (isCritical && this.selected.ty == "critical" && (this.selected as DraggedCritical).critical == data)
+        (!isCritical && this.markerManager.selected.ty == "attack" && (this.markerManager.selected as DraggedAttack).attack == data) ||
+        (isCritical && this.markerManager.selected.ty == "critical" && (this.markerManager.selected as DraggedCritical).critical == data)
       ) {
-        this.selected = null;
+        this.markerManager.selected = null;
       }
     }
+
   }
 
   private deleteAttack(attack: AttackData) {
@@ -901,64 +851,20 @@ export class Editor {
   // --- Save cursor time when picking up a marker ---
   private attackMouseDown(attack: AttackData) {
     this.savedCursorTime = this.getCurrentTimeSafe();
-    this.selectAttack(attack);
+    this.markerManager.selectAttack(attack);
     this.dragged = new DraggedAttack(attack);
   }
 
   private criticalMouseDown(crit: CriticalData) {
     this.savedCursorTime = this.getCurrentTimeSafe();
-    this.selectCritical(crit);
+    this.markerManager.selectCritical(crit);
     this.dragged = new DraggedCritical(crit);
   }
 
   private intervalMouseDown(interval: AttackInterval, isStart: boolean) {
     this.savedCursorTime = this.getCurrentTimeSafe();
-    this.selectInterval(interval, isStart);
+    this.markerManager.selectInterval(interval, isStart);
     this.dragged = new DraggedInterval(interval, isStart);
-  }
-
-  private clearSelectClass() {
-    for (let elements of this.intervalElements.values()) {
-      elements.startElement.classList.remove("selected");
-      elements.endElement.classList.remove("selected");
-      elements.nameElement.classList.remove("selected");
-    }
-    for (let attackElement of this.elements.values()) {
-      attackElement.classList.remove("selected");
-    }
-    for (let critElement of this.criticalElements.values()) {
-      critElement.classList.remove("selected");
-    }
-    // No need to clear savedCursorTime here
-  }
-
-  private selectInterval(interval: AttackInterval, isStart: boolean) {
-    this.selected = null;
-    this.clearSelectClass();
-    if (interval != null) {
-      this.selected = new DraggedInterval(interval, isStart);
-      this.intervalElements.get(interval)!.startElement.classList.add("selected");
-      this.intervalElements.get(interval)!.endElement.classList.add("selected");
-      this.intervalElements.get(interval)!.nameElement.classList.add("selected");
-    }
-  }
-
-  private selectAttack(attack: AttackData | null) {
-    this.selected = null;
-    this.clearSelectClass();
-    if (attack != null) {
-      this.selected = new DraggedAttack(attack);
-      this.elements.get(attack)!.classList.add("selected");
-    }
-  }
-
-  private selectCritical(crit: CriticalData | null) {
-    this.selected = null;
-    this.clearSelectClass();
-    if (crit != null) {
-      this.selected = new DraggedCritical(crit);
-      this.criticalElements.get(crit)!.classList.add("selected");
-    }
   }
 
   private updateCloseWarning() {
@@ -980,7 +886,7 @@ export class Editor {
     }
 
     // Add missing warnings and remove obsolete ones
-    for (let [attack, element] of this.elements) {
+    for (let [attack, element] of this.markerManager.elements) {
       const existingWarning = element.querySelector('.attack-warning');
       if (shouldWarn.has(attack)) {
         // Add warning if missing
