@@ -96,6 +96,8 @@ body {
   right: 0;
   width: 100%;
   display: flex;
+  flex-direction: column;
+  /* <-- stack vertically */
   justify-content: center;
   align-items: center;
   background: none;
@@ -103,12 +105,13 @@ body {
   pointer-events: auto;
 }
 
-#main-menu-volume-container {
+#main-menu-volume-container,
+#main-menu-sfx-volume-container {
   display: flex;
+  flex-direction: row;
   align-items: center;
   margin-bottom: 10px;
 }
-
 
 .slider {
   width: 200px;
