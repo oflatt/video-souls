@@ -257,7 +257,7 @@ export class VideoSouls {
 
   setGameMode(mode: GameMode) {
     // always sync the custom level input with the level data using generic stringify
-    this.elements.customLevelInput.value = stringifyWithMaps(this.editor.level);
+    this.elements.customLevelInput.value = stringifyWithMaps(this.editor.level());
 
     // clear validation errors
     this.elements.validationError.textContent = '';
