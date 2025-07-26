@@ -12,31 +12,7 @@ import { Settings } from './settings';
 import { CommunityLevelsPage } from "./CommunityLevelsPage";
 import { extractVideoID, showFloatingAlert } from './utils';
 import { MainMenu } from './MainMenu'; // <-- import MainMenu
-
-// Load the interpreter from the local acorn_interpreter.js file
-declare const Interpreter: any;
-
-enum GameMode {
-  MENU, PLAYING, BATTLE_END, EDITING
-}
-
-const ATTACK_COMBO_STARTUP_TIMES = [0.2, 0.2, 0.3, 0.2, 0.4];
-const ATTACK_COMBO_DAMAGE_MULT = [1.0, 1.1, 1.3, 1.0, 2.2];
-const ATTACK_END_LAG = 0.15;
-const COMBO_EXTEND_TIME = 3.0; // number of seconds before combo lapses
-
-const STAGGER_TIME = 0.4;
-
-
-type AlertData = {
-  message: HTMLElement,
-  startTime: number,
-  lifetime: number
-};
-
-// position relative to bottom left of screen
-const attackedPosition = [0.7, 0.4];
-const attackedAngle = Math.PI / 2;
+import { GameMode } from './GameMode';
 
 // Create a global graphics instance and export it
 export const graphics = new Graphics(document.querySelector<HTMLCanvasElement>("#game-canvas")!);
@@ -57,7 +33,6 @@ export class VideoSouls {
   elements;
   gameMode: GameMode;
   battle: BattleState;
-  alerts: AlertData[];
   inputManager: InputManager;
   battleRenderer: BattleRenderer;
   battleLogic: BattleLogic;
@@ -65,11 +40,9 @@ export class VideoSouls {
   // only defined when in editing mode
   editor: Editor;
   settings: Settings;
-  volumeSlider: HTMLInputElement;
-  soundEffectVolumeSlider: HTMLInputElement; // <-- add property
   battleEndHudElement: HTMLElement | null = null;
   communityLevelsPage: CommunityLevelsPage | null = null;
-  mainMenu: MainMenu; // <-- new property
+  mainMenu: MainMenu;
 
   constructor(player: YT.Player) {
     this.videoPlayer = new VideoPlayer(player);
@@ -77,104 +50,36 @@ export class VideoSouls {
 
     this.elements = {
       player: player,
-
       canvas: document.querySelector<HTMLCanvasElement>("#game-canvas")!,
-
       gameHUD: document.querySelector<HTMLInputElement>("#game-hud")!,
       battleEndHUD: document.querySelector<HTMLInputElement>("#battle-end-hud")!,
       floatingMenu: document.querySelector<HTMLInputElement>("#floating-menu")!,
       currentTimeDebug: document.querySelector<HTMLDivElement>("#current-time")!,
-      playbackRecordHUD: document.querySelector<HTMLInputElement>("#playback-record-hud")!,
-      recordHUD: document.querySelector<HTMLInputElement>("#record-hud")!,
-
       videoUrlInput: document.querySelector<HTMLInputElement>("#video-url")!,
-
-      retryButton: document.querySelector<HTMLButtonElement>("#retry-button")!,
-      backButton: document.querySelector<HTMLButtonElement>("#back-button")!,
       recordButton: document.querySelector<HTMLButtonElement>("#record-button")!,
-      customLevelPlayButton: document.querySelector<HTMLButtonElement>("#custom-level-play-button")!,
-      exportButton: document.querySelector<HTMLButtonElement>("#export-button")!,
-      playbackBar: document.querySelector<HTMLInputElement>("#playback-bar")!,
-      recordingControls: document.querySelector<HTMLInputElement>("#recording-controls")!,
       customLevelInput: document.querySelector<HTMLInputElement>("#custom-level-input")!,
-      customLevelEditButton: document.querySelector<HTMLInputElement>("#custom-level-edit-button")!,
       validationError: document.querySelector<HTMLInputElement>("#validation-error")!,
-      levelsContainer: document.querySelector<HTMLDivElement>("#levels-container")!,
-
     } as const;
 
     this.mainMenu = new MainMenu(); 
+    this.mainMenu.onLoadLevel = (level: LevelDataV0) => {
+      this.editor.markerManager.level = level;
+      this.battleLogic = new BattleLogic(this.mainMenu.audio, level);
+      this.battleRenderer = new BattleRenderer(this.elements.canvas, level);
+    };
+    this.mainMenu.onSetGameMode = (mode: GameMode) => {
+      this.setGameMode(mode);
+    };
     this.editor = new Editor(new LevelDataV0(), graphics, this.videoPlayer);
     this.battleRenderer = new BattleRenderer(this.elements.canvas, this.editor.level());
     this.battleLogic = new BattleLogic(this.mainMenu.audio, this.editor.level());
     this.gameMode = GameMode.MENU;
     this.battle = initialBattleState();
-    this.alerts = [];
     this.settings = Settings.load();
-    
-
-    // Use the volume slider from the DOM
-    this.volumeSlider = document.getElementById("main-menu-volume-slider") as HTMLInputElement;
-    this.volumeSlider.value = String(this.mainMenu.settings.volume);
-
-    // Wire up sound effect volume slider
-    this.soundEffectVolumeSlider = document.getElementById("main-menu-sfx-volume-slider") as HTMLInputElement;
-    this.soundEffectVolumeSlider.value = String(this.mainMenu.settings.soundEffectVolume);
-
-    // Set initial YouTube player volume
-    player.setVolume(this.mainMenu.settings.volume);
 
     // Set initial sound effect volume
     this.mainMenu.audio.setVolume(this.mainMenu.getNormalizedSoundEffectVolume());
 
-    // Listen for main volume slider changes
-    this.volumeSlider.addEventListener("input", () => {
-      const vol = Number(this.volumeSlider.value);
-      this.mainMenu.settings.volume = vol;
-      this.mainMenu.saveSettings();
-      player.setVolume(vol);
-      // Only set YouTube volume here
-    });
-
-    // Listen for sound effect volume slider changes
-    this.soundEffectVolumeSlider.addEventListener("input", () => {
-      const sfxVol = Number(this.soundEffectVolumeSlider.value);
-      this.mainMenu.settings.soundEffectVolume = sfxVol;
-      this.mainMenu.saveSettings();
-      this.mainMenu.audio.setVolume(this.mainMenu.getNormalizedSoundEffectVolume());
-    });
-
-    // Listen for YouTube player volume changes (if user changes via YouTube UI)
-    setInterval(() => {
-      const ytVol = player.getVolume();
-      if (ytVol !== this.mainMenu.settings.volume) {
-        this.mainMenu.settings.volume = ytVol;
-        this.volumeSlider.value = String(ytVol);
-        this.mainMenu.saveSettings();
-        // Only set YouTube volume here
-      }
-    }, 500);
-
-    // Add Exit to Menu button to game HUD (top left, shared style)
-    const exitBtn = document.createElement("button");
-    exitBtn.id = "exit-to-menu-button";
-    exitBtn.className = "exit-to-menu-button"; // <-- shared CSS class
-    exitBtn.textContent = "Exit to Menu";
-    exitBtn.addEventListener("click", () => {
-      this.setGameMode(GameMode.MENU);
-    });
-    this.elements.gameHUD.appendChild(exitBtn);
-
-    // Add Edit Level button to game HUD (top left, next to exit)
-    const editBtn = document.createElement("button");
-    editBtn.id = "game-edit-level-button";
-    editBtn.className = "game-edit-level-button";
-    editBtn.textContent = "Edit Level";
-    editBtn.style.display = "none";
-    editBtn.onclick = () => {
-      this.setGameMode(GameMode.EDITING);
-    };
-    this.elements.gameHUD.appendChild(editBtn);
 
     // Add Community Levels button event
     const communityBtn = document.getElementById("community-levels-main-menu-button") as HTMLButtonElement;
@@ -187,110 +92,8 @@ export class VideoSouls {
     // Register this instance globally for playtest event
     (window as any).videoSoulsInstance = this;
 
-    this.initializeEventListeners();
-    this.loadLevelButtons();
-  }
 
-  // Shared helper to fetch and parse a level file
-  private async fetchAndParseLevelFile(levelFile: string): Promise<LevelDataV0 | null> {
-    try {
-      const response = await fetch(`/levels/${levelFile}`);
-      if (!response.ok) return null;
-      const levelData = await response.text();
-      const level = parseWithMaps(levelData);
-      const validation = await validateLevelData(level);
-      if (validation === null) {
-        return level as LevelDataV0;
-      } else {
-        console.error('Level validation failed:', validation);
-        return null;
-      }
-    } catch (error) {
-      console.error('Error fetching/parsing level:', error);
-      return null;
-    }
-  }
-
-  private async loadLevelButtons() {
-    try {
-      const levelFiles = await this.getLevelFiles();
-      this.elements.levelsContainer.innerHTML = '';
-
-      for (const levelFile of levelFiles) {
-        let titleText = "";
-        const level = await this.fetchAndParseLevelFile(levelFile);
-        if (level && level.title) {
-          titleText = String(level.title);
-        }
-        const button = document.createElement('button');
-        button.textContent = titleText
-          ? `${this.getLevelDisplayName(levelFile)} — ${titleText}`
-          : this.getLevelDisplayName(levelFile);
-        button.className = 'level-button';
-        button.addEventListener('click', () => {
-          this.loadAndPlayLevel(levelFile);
-        });
-        this.elements.levelsContainer.appendChild(button);
-      }
-    } catch (error) {
-      console.error('Failed to load level files:', error);
-      showFloatingAlert('Failed to load level files', 30, "20px");
-    }
-  }
-
-  private async loadAndPlayLevel(levelFile: string) {
-    try {
-      console.log(`Loading level from file: ${levelFile}`);
-      const level = await this.fetchAndParseLevelFile(levelFile);
-      if (level) {
-        this.editor.markerManager.level = level;
-        // Recreate battleLogic with new level
-        this.battleLogic = new BattleLogic(this.mainMenu.audio, level);
-        // Recreate battleRenderer with new level
-        this.battleRenderer = new BattleRenderer(this.elements.canvas, level);
-        this.setGameMode(GameMode.PLAYING);
-      } else {
-        showFloatingAlert(`Invalid or failed to load level file: ${levelFile}`, 30, "20px");
-      }
-    } catch (error) {
-      showFloatingAlert(`Failed to load level: ${levelFile}`, 30, "20px");
-      console.error('Error loading level:', error);
-    }
-  }
-
-  private async getLevelFiles(): Promise<string[]> {
-    // Try loading levels named level01.json, level02.json, ... until a fetch fails
-    const levelFiles: string[] = [];
-    const maxLevels = 50; // Arbitrary upper limit to avoid infinite loop
-    for (let i = 1; i <= maxLevels; i++) {
-      const filename = `${i.toString().padStart(2, '0')}.json`;
-      try {
-        const response = await fetch(`/levels/${filename}`, { method: 'HEAD' });
-        if (response.ok) {
-          levelFiles.push(filename);
-        } else {
-          break;
-        }
-      } catch {
-        break;
-      }
-    }
-    return levelFiles;
-  }
-
-  private getLevelDisplayName(filename: string): string {
-    // Convert filename to display name (e.g., "level1.json" -> "Level 1")
-    return filename
-      .replace('.json', '')
-      .replace(/([a-z])([A-Z])/g, '$1 $2')
-      .replace(/^./, str => str.toUpperCase());
-  }
-
-  private initializeEventListeners() {
     // Set canvas size dynamically
-    this.resizeCanvas();
-    window.addEventListener('resize', () => this.resizeCanvas());
-
     this.elements.recordButton.addEventListener('click', () => {
       const videoUrl = this.elements.videoUrlInput.value;
       if (videoUrl) {
@@ -300,43 +103,23 @@ export class VideoSouls {
       }
     });
 
-    this.elements.retryButton.addEventListener('click', () => {
-      this.setGameMode(GameMode.PLAYING);
-    });
-
-    this.elements.backButton.addEventListener('click', () => {
-      this.setGameMode(GameMode.MENU);
-    });
-
-    this.elements.customLevelPlayButton.addEventListener('click', async () => {
-      if (await this.importLevel()) {
-        this.setGameMode(GameMode.PLAYING);
-      }
-    });
-
-    this.elements.exportButton.addEventListener('click', () => {
+    this.mainMenu.exportButton.addEventListener('click', () => {
       this.exportLevel();
     });
-
-    this.elements.customLevelEditButton.addEventListener('click', () => {
-      // load the level data into the editor
-      this.importLevel();
-      this.setGameMode(GameMode.EDITING);
-    });
-
-    // Listen for editor HUD back button event
-    window.addEventListener("editor-back-to-menu", () => {
-      this.setGameMode(GameMode.MENU);
-    });
+    this.mainMenu.loadLevelButtons(); // <-- call mainMenu's method
+    this.resizeCanvas();
+    window.addEventListener('resize', () => this.resizeCanvas());
   }
 
   private resizeCanvas() {
-    console.log("Resizing canvas to window size");
     this.elements.canvas.width = window.innerWidth;
     this.elements.canvas.height = window.innerHeight;
   }
 
   mainLoop(_time: DOMHighResTimeStamp) {
+    // keep the player's volume in sync with the settings
+    this.elements.player.setVolume(this.mainMenu.settings.videoVolume);
+
     // Update battle time using the helper
     const deltaTime = this.videoPlayer.updateTime();
     updateBattleTime(this.battle, deltaTime);
@@ -363,32 +146,6 @@ export class VideoSouls {
 
 
     requestAnimationFrame(this.mainLoop.bind(this));
-  }
-
-  // returns true if the level was successfully imported
-  async importLevel(): Promise<boolean> {
-    const levelData = this.elements.customLevelInput.value;
-    try {
-      const level = parseWithMaps(levelData);
-      const validation = await validateLevelData(level);
-      if (validation === null) {
-        this.editor.level = level;
-        // Recreate battleLogic with new level
-        this.battleLogic = new BattleLogic(this.mainMenu.audio, level);
-        // Recreate battleRenderer with new level
-        this.battleRenderer = new BattleRenderer(this.elements.canvas, level);
-        return true;
-      } else {
-        showFloatingAlert("Invalid Level- see validation error below", 30, "20px");
-        this.elements.validationError.textContent = validation;
-        this.elements.validationError.style.display = 'block';
-        return false;
-      }
-    } catch (error) {
-      showFloatingAlert('Invalid JSON, failed to parse level data', 30, "20px");
-      console.error('Invalid JSON', error);
-      return false;
-    }
   }
 
   exportLevel() {
@@ -582,20 +339,18 @@ export class VideoSouls {
     }
 
     // Show/hide Exit to Menu button based on game mode
-    const exitBtn = document.getElementById("exit-to-menu-button");
-    if (exitBtn) {
-      exitBtn.style.display = (mode === GameMode.PLAYING) ? "block" : "none";
+    if (this.mainMenu.exitToMenuButton) {
+      this.mainMenu.exitToMenuButton.style.display = (mode === GameMode.PLAYING) ? "block" : "none";
     }
     // Show/hide Edit Level button based on game mode
-    const editBtn = document.getElementById("game-edit-level-button");
-    if (editBtn) {
-      editBtn.style.display = (mode === GameMode.PLAYING) ? "block" : "none";
+    if (this.mainMenu.gameEditLevelButton) {
+      this.mainMenu.gameEditLevelButton.style.display = (mode === GameMode.PLAYING) ? "block" : "none";
     }
 
     this.gameMode = mode;
 
     // Always keep YouTube player volume in sync with settings
-    this.elements.player.setVolume(this.mainMenu.settings.volume);
+    this.elements.player.setVolume(this.mainMenu.settings.videoVolume);
     this.mainMenu.audio.setVolume(this.mainMenu.getNormalizedSoundEffectVolume()); // <-- use sound effect volume
   }
 
