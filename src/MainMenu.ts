@@ -3,6 +3,7 @@ import { AudioPlayer } from "./audioPlayer";
 import { LevelDataV0, validateLevelData, parseWithMaps } from "./leveldata";
 import { GameMode } from "./GameMode";
 import { showFloatingAlert } from "./utils";
+import { AutosavesPage } from "./AutosavesPage"; // <-- import new class
 
 export class MainMenu {
   settings: LocalSave;
@@ -24,6 +25,8 @@ export class MainMenu {
   customLevelPlayButton: HTMLButtonElement;
   customLevelEditButton: HTMLButtonElement;
   videoUrlInput: HTMLInputElement;
+  autosavesButton: HTMLButtonElement;
+  autosavesPage: AutosavesPage | null = null; // <-- now stores instance
 
   constructor() {
     this.settings = LocalSave.load();
@@ -43,6 +46,7 @@ export class MainMenu {
     this.customLevelPlayButton = document.getElementById("custom-level-play-button") as HTMLButtonElement;
     this.customLevelEditButton = document.getElementById("custom-level-edit-button") as HTMLButtonElement;
     this.videoUrlInput = document.getElementById("video-url") as HTMLInputElement;
+    this.autosavesButton = document.getElementById("autosaves-main-menu-button") as HTMLButtonElement;
 
     if (this.volumeSlider) this.volumeSlider.value = String(this.settings.videoVolume);
     if (this.soundEffectVolumeSlider) this.soundEffectVolumeSlider.value = String(this.settings.soundEffectVolume);
@@ -96,6 +100,31 @@ export class MainMenu {
       await this.importLevel();
       if (this.onSetGameMode) this.onSetGameMode(GameMode.EDITING);
     });
+
+    if (this.autosavesButton) {
+      this.autosavesButton.onclick = () => {
+        if (!this.autosavesPage) {
+          this.autosavesPage = new AutosavesPage(
+            this.settings.autosaves,
+            (level: LevelDataV0) => {
+              if (this.onLoadLevel) this.onLoadLevel(level);
+              if (this.onSetGameMode) this.onSetGameMode(GameMode.EDITING);
+              this.autosavesPage?.cleanup();
+              this.autosavesPage = null;
+            },
+            () => {
+              this.autosavesPage?.cleanup();
+              this.autosavesPage = null;
+              const floatingMenu = document.getElementById("floating-menu");
+              if (floatingMenu) floatingMenu.style.display = "flex";
+            }
+          );
+        }
+        // Hide main menu
+        const floatingMenu = document.getElementById("floating-menu");
+        if (floatingMenu) floatingMenu.style.display = "none";
+      };
+    }
 
     window.addEventListener("editor-back-to-menu", () => {
       if (this.onSetGameMode) this.onSetGameMode(GameMode.MENU);

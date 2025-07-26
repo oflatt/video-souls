@@ -34,6 +34,7 @@
         <h1>Video Souls</h1>
         <div id="levels-container"></div>
         <button id="community-levels-main-menu-button" style="font-size:20px;margin-bottom:10px;">Community Levels</button>
+        <button id="autosaves-main-menu-button" style="font-size:20px;margin-bottom:10px;">Autosaves</button>
         <h2>New Custom Level</h2>
         <input id="video-url" type="text" placeholder="Enter YouTube video URL" />
         <button id="record-button">Edit New Custom Level</button>
@@ -162,6 +163,13 @@
             <button id="community-levels-refresh" style="margin-bottom:20px;font-size:20px;">Refresh</button>
             <div id="community-levels-list" style="width:80%;max-width:700px;display:flex;flex-direction:column;gap:12px;margin-bottom:30px;"></div>
             <button id="community-levels-back" style="font-size:20px;">Back</button>
+        </div>
+    </template>
+    <template id="autosaves-page-template">
+        <div id="autosaves-page">
+            <h1>Autosaves</h1>
+            <div id="autosaves-list"></div>
+            <button id="autosaves-back">Back</button>
         </div>
     </template>
     <canvas id="game-canvas"></canvas>

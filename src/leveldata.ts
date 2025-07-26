@@ -64,7 +64,7 @@ export class LevelDataV0 {
     this.bossHealth = 4.0;
   }
 
-  getAttacksInInterval(startTime: number, endTime: number) {
+  getAttacksInInterval(startTime: number, endTime: number): AttackData[] {
     return this.attackData.filter(attack => attack.time > startTime && attack.time <= endTime);
   }
 }

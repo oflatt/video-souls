@@ -164,7 +164,8 @@ export class BattleRenderer {
   ) {
     if (arrowless) return; // Suppress all warnings/arrows
 
-    const ctx = this.canvas.getContext('2d')!;
+    console.log(level);
+    console.log(level.getAttacksInInterval);
     // check for attack warning sound
     const soundAttack = level.getAttacksInInterval(prevTime + ATTACK_WARNING_ADVANCE, currentTime + ATTACK_WARNING_ADVANCE);
 
