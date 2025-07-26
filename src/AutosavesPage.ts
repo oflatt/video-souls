@@ -29,7 +29,8 @@ export class AutosavesPage {
       `;
       const loadBtn = div.querySelector(".autosave-load-btn") as HTMLButtonElement;
       loadBtn.onclick = () => {
-        onLoad(entry.level as LevelDataV0);
+        // TODO fix
+        onLoad(entry.level);
       };
       list.appendChild(div);
     }

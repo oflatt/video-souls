@@ -39,6 +39,7 @@ export type CriticalData = {
   multiplier: number,
 };
 
+// IMPORTANT: do not add methods to this class, we cast to it and it's just a javascript object
 export class LevelDataV0 {
   video: string | null;
   attackData: AttackData[];
@@ -63,10 +64,10 @@ export class LevelDataV0 {
     this.bossDamageMultiplier = 1.0; 
     this.bossHealth = 4.0;
   }
+}
 
-  getAttacksInInterval(startTime: number, endTime: number): AttackData[] {
-    return this.attackData.filter(attack => attack.time > startTime && attack.time <= endTime);
-  }
+export function getAttacksInInterval(level: LevelDataV0, startTime: number, endTime: number): AttackData[] {
+  return level.attackData.filter(attack => attack.time > startTime && attack.time <= endTime);
 }
 
 export function levelDataFromVideo(videoId: string): LevelDataV0 {

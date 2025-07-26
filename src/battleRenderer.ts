@@ -1,6 +1,6 @@
 import { Graphics } from './graphics';
 import { AttackAnimation, BattleState, directionNumToSwordPos, directionNumToSwordAngle } from './battle';
-import { LevelDataV0 } from './leveldata';
+import { getAttacksInInterval, LevelDataV0 } from './leveldata';
 import { graphics } from './videosouls'; // <-- import global graphics
 import { PARRY_WINDOW } from './constants';
 import { AudioPlayer } from './audioPlayer';
@@ -164,17 +164,15 @@ export class BattleRenderer {
   ) {
     if (arrowless) return; // Suppress all warnings/arrows
 
-    console.log(level);
-    console.log(level.getAttacksInInterval);
     // check for attack warning sound
-    const soundAttack = level.getAttacksInInterval(prevTime + ATTACK_WARNING_ADVANCE, currentTime + ATTACK_WARNING_ADVANCE);
+    const soundAttack = getAttacksInInterval(level, prevTime + ATTACK_WARNING_ADVANCE, currentTime + ATTACK_WARNING_ADVANCE);
 
     if (soundAttack.length > 0 && !arrowless) {
       audio.playWarningSound();
     }
 
     // Get all attacks in the warning window
-    const animAttacks = level.getAttacksInInterval(currentTime, currentTime + ATTACK_WARNING_ADVANCE);
+    const animAttacks = getAttacksInInterval(level, currentTime, currentTime + ATTACK_WARNING_ADVANCE);
 
     const arrowDrawSize = graphics.arrowSprite.width / 2;
     // Map from direction number to how many arrows have been drawn for that direction

@@ -3,7 +3,7 @@ import { AudioPlayer } from './audioPlayer';
 import { AttackSchedule } from './attackSchedule';
 import { AttackInterval } from './editor';
 import { VideoPlayer } from './videoPlayer';
-import { AttackData, LevelDataV0 } from './leveldata';
+import { AttackData, getAttacksInInterval, LevelDataV0 } from './leveldata';
 import { BattleAnim } from './battleAnim';
 import { InputManager } from './inputmanager';
 import { ATTACK_COMBO_DAMAGE_MULT, ATTACK_COMBO_STARTUP_TIMES, ATTACK_DURATION, ATTACK_END_LAG, BLOCK_WINDOW, COMBO_EXTEND_TIME, CRITICAL_TIME, PARRY_FORGIVENESS_TIME, PARRY_WINDOW, STAGGER_TIME } from './constants';
@@ -36,7 +36,7 @@ export class BattleLogic {
     attackData: any[],
     inputManager: InputManager
   ) {
-    const attacks = this.getAttacksInInterval(attackData, prevTime, currentTime);
+    const attacks = getAttacksInInterval(this.level, prevTime, currentTime);
     if (attacks.length > 0) {
       const attack = attacks[0];
       
@@ -73,12 +73,6 @@ export class BattleLogic {
         timeLeft: CRITICAL_TIME
       };
     }
-  }
-
-  // gets the attack direction, if any, for this time period
-  // starttime exclusive, endtime inclusive
-  getAttacksInInterval(attackData: AttackData[], startTime: number, endTime: number): AttackData[] {
-    return attackData.filter(attack => attack.time > startTime && attack.time <= endTime);
   }
 
   // gets the criticals, if any, for this time period

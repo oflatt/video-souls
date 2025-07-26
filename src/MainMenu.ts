@@ -1,6 +1,6 @@
 import { LocalSave } from "./LocalSave";
 import { AudioPlayer } from "./audioPlayer";
-import { LevelDataV0, validateLevelData, parseWithMaps } from "./leveldata";
+import { LevelDataV0, validateLevelData, parseWithMaps, parseLevelData } from "./leveldata";
 import { GameMode } from "./GameMode";
 import { showFloatingAlert } from "./utils";
 import { AutosavesPage } from "./AutosavesPage"; // <-- import new class
