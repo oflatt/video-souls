@@ -8,7 +8,7 @@ import { BattleRenderer } from './battleRenderer';
 import { BattleLogic } from './battleLogic';
 import { AttackAnimation, BattleState, initialBattleState, directionNumToSwordAngle, updateBattleTime } from './battle';
 import { VideoPlayer } from './videoPlayer';
-import { Settings } from './settings';
+import { LocalSave } from './LocalSave';
 import { CommunityLevelsPage } from "./CommunityLevelsPage";
 import { extractVideoID, showFloatingAlert } from './utils';
 import { MainMenu } from './MainMenu'; // <-- import MainMenu
@@ -37,12 +37,14 @@ export class VideoSouls {
   battleRenderer: BattleRenderer;
   battleLogic: BattleLogic;
   videoPlayer: VideoPlayer;
-  // only defined when in editing mode
   editor: Editor;
-  settings: Settings;
+  // only defined when in editing mode
+  settings: LocalSave;
   battleEndHudElement: HTMLElement | null = null;
   communityLevelsPage: CommunityLevelsPage | null = null;
   mainMenu: MainMenu;
+  needsFreshAutosave: boolean = true; // <-- track if we need a fresh autosave
+  lastAutosaveTime: number = 0; // <-- track last autosave timestamp
 
   constructor(player: YT.Player) {
     this.videoPlayer = new VideoPlayer(player);
@@ -75,11 +77,13 @@ export class VideoSouls {
     this.battleLogic = new BattleLogic(this.mainMenu.audio, this.editor.level());
     this.gameMode = GameMode.MENU;
     this.battle = initialBattleState();
-    this.settings = Settings.load();
+    this.settings = LocalSave.load();
 
     // Set initial sound effect volume
     this.mainMenu.audio.setVolume(this.mainMenu.getNormalizedSoundEffectVolume());
 
+    this.needsFreshAutosave = true;
+    this.lastAutosaveTime = Date.now();
 
     // Add Community Levels button event
     const communityBtn = document.getElementById("community-levels-main-menu-button") as HTMLButtonElement;
@@ -124,7 +128,7 @@ export class VideoSouls {
     const deltaTime = this.videoPlayer.updateTime();
     updateBattleTime(this.battle, deltaTime);
 
-    const currentTime = this.currentTime();
+    const currentTime = this.videoPlayer.getCurrentTime();
     const timeInMilliseconds = Math.floor(currentTime * 1000);
     this.elements.currentTimeDebug.textContent = `Time: ${timeInMilliseconds} ms data: ${this.editor.level().attackData.length}`;
 
@@ -137,9 +141,13 @@ export class VideoSouls {
     if (this.gameMode === GameMode.PLAYING) {
       this.drawCanvas();
     }
+
     // draw the sword if we are in editing or playback editing
     if (this.gameMode === GameMode.EDITING) {
-      this.drawSword();
+      // Directly call drawSword instead of wrapper
+      this.battleRenderer.drawSword(
+        this.battle,
+      );
       // draw the editor
       this.editor.draw(this.inputManager.mouseX, this.inputManager.mouseY);
     }
@@ -160,18 +168,8 @@ export class VideoSouls {
     });
   }
 
-  // gets the attack direction, if any, for this time period
-  // starttime exclusive, endtime inclusive
-  getAttacksInInterval(startTime: number, endTime: number) {
-    return this.editor.level().attackData.filter(attack => attack.time > startTime && attack.time <= endTime);
-  }
-
-  currentTime(): number {
-    return this.videoPlayer.getCurrentTime();
-  }
-
   handleBossAttacks() {
-    const currentTime = this.currentTime();
+    const currentTime = this.videoPlayer.getCurrentTime();
     const prevTime = this.videoPlayer.prevTime;
     this.battleLogic.handleBossAttacks(
       this.battle,
@@ -184,7 +182,7 @@ export class VideoSouls {
 
 
   updateState() {
-    const currentTime = this.currentTime();
+    const currentTime = this.videoPlayer.getCurrentTime();
 
     // if the sword is not in an animation, move towards user input dir
     this.battleLogic.update(this.battle, this.inputManager.getCurrentTargetDirection.bind(this.inputManager));
@@ -250,6 +248,15 @@ export class VideoSouls {
     if (this.inputManager.wasKeyJustPressed('Escape')) {
       // set game mode to menu
       this.setGameMode(GameMode.MENU);
+    }
+
+    // --- AUTOSAVE LOGIC ---
+    if (this.gameMode === GameMode.EDITING) {
+      const now = Date.now();
+      if (now - this.lastAutosaveTime > 5000) { // every 5 seconds
+        this.doAutosave();
+        this.lastAutosaveTime = now;
+      }
     }
 
     this.inputManager.clearJustPressed();
@@ -352,6 +359,8 @@ export class VideoSouls {
     // Always keep YouTube player volume in sync with settings
     this.elements.player.setVolume(this.mainMenu.settings.videoVolume);
     this.mainMenu.audio.setVolume(this.mainMenu.getNormalizedSoundEffectVolume()); // <-- use sound effect volume
+
+    this.needsFreshAutosave = true; // <-- set flag when game state changes
   }
 
   showCommunityLevelsPage() {
@@ -405,7 +414,7 @@ export class VideoSouls {
   }
 
   private drawCanvas() {
-    const currentTime = this.currentTime();
+    const currentTime = this.videoPlayer.getCurrentTime();
     const displayTitle = this.editor.level().title || this.elements.player.getIframe().title;
     const arrowless = !!this.editor.level().arrowless;
 
@@ -413,20 +422,10 @@ export class VideoSouls {
       currentTime,
       this.videoPlayer.prevTime,
       this.battle,
-      this.getAttacksInInterval.bind(this),
-      arrowless ? undefined : this.mainMenu.audio.playWarningSound.bind(this.mainMenu.audio),
-      this.inputManager.getCurrentTargetDirection.bind(this.inputManager),
+      this.editor.level(),
+      this.mainMenu.audio,
       displayTitle,
-      arrowless // <-- pass arrowless flag
-    );
-  }
-
-  private drawSword() {
-    const currentTime = this.currentTime();
-    this.battleRenderer.drawSword(
-      currentTime,
-      this.battle,
-      this.inputManager.getCurrentTargetDirection.bind(this.inputManager)
+      arrowless
     );
   }
   
@@ -454,9 +453,17 @@ export class VideoSouls {
 
     const retryBtn = hudClone.querySelector<HTMLButtonElement>("#retry-button");
     if (retryBtn) retryBtn.onclick = () => this.setGameMode(GameMode.PLAYING);
-
-    // Show HUD
     hudClone.style.display = "flex";
+  }
+
+  private doAutosave() {
+    const level = this.editor.level();
+    if (this.mainMenu.settings.autosaves.length === 0 || this.needsFreshAutosave) {
+      this.mainMenu.settings.addAutosave(level);
+      this.needsFreshAutosave = false;
+    } else {
+      this.mainMenu.settings.overwriteLastAutosave(level);
+    }
   }
 }
 

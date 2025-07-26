@@ -3,6 +3,8 @@ import { AttackAnimation, BattleState, directionNumToSwordPos, directionNumToSwo
 import { LevelDataV0 } from './leveldata';
 import { graphics } from './videosouls'; // <-- import global graphics
 import { PARRY_WINDOW } from './constants';
+import { AudioPlayer } from './audioPlayer';
+import { InputManager } from './inputmanager';
 
 const SUCCESS_PARRY_ANIM_FADE = 0.2;
 const ATTACK_WARNING_ADVANCE = 0.5;
@@ -156,22 +158,22 @@ export class BattleRenderer {
   drawAttackWarning(
     currentTime: number,
     prevTime: number,
-    getAttacksInInterval: (start: number, end: number) => any[],
-    playWarningSound?: (() => void), // <-- now optional
+    level: LevelDataV0,
+    audio: AudioPlayer,
     arrowless?: boolean // <-- new param
   ) {
     if (arrowless) return; // Suppress all warnings/arrows
 
     const ctx = this.canvas.getContext('2d')!;
     // check for attack warning sound
-    const soundAttack = getAttacksInInterval(prevTime + ATTACK_WARNING_ADVANCE, currentTime + ATTACK_WARNING_ADVANCE);
+    const soundAttack = level.getAttacksInInterval(prevTime + ATTACK_WARNING_ADVANCE, currentTime + ATTACK_WARNING_ADVANCE);
 
-    if (soundAttack.length > 0 && playWarningSound) {
-      playWarningSound();
+    if (soundAttack.length > 0 && !arrowless) {
+      audio.playWarningSound();
     }
 
     // Get all attacks in the warning window
-    const animAttacks = getAttacksInInterval(currentTime, currentTime + ATTACK_WARNING_ADVANCE);
+    const animAttacks = level.getAttacksInInterval(currentTime, currentTime + ATTACK_WARNING_ADVANCE);
 
     const arrowDrawSize = graphics.arrowSprite.width / 2;
     // Map from direction number to how many arrows have been drawn for that direction
@@ -188,7 +190,7 @@ export class BattleRenderer {
     }
   }
 
-  drawSword(currentTime: number, battle: BattleState, getCurrentTargetDirection: () => number) {
+  drawSword(battle: BattleState) {
     var swordPos = battle.anim.endPos;
     var swordAngle = battle.anim.endAngle;
     var redSwordOutlineStrength = 0.0;
@@ -350,16 +352,15 @@ export class BattleRenderer {
     currentTime: number,
     prevTime: number,
     battle: BattleState, 
-    getAttacksInInterval: (start: number, end: number) => any[], 
-    playWarningSound: (() => void) | undefined,
-    getCurrentTargetDirection: () => number,
+    level: LevelDataV0, 
+    audio: AudioPlayer,
     youtubeVideoName: string,
     arrowless?: boolean // <-- new param
   ) {
-    this.drawCriticalMarker(battle); // <-- draw critical marker if present
-    this.drawSword(currentTime, battle, getCurrentTargetDirection);
+    this.drawCriticalMarker(battle);
+    this.drawSword(battle);
     this.drawCriticalParticles(battle); // <-- always draw particles if present
-    this.drawAttackWarning(currentTime, prevTime, getAttacksInInterval, playWarningSound, arrowless);
+    this.drawAttackWarning(currentTime, prevTime, level, audio, arrowless);
 
     animateBossName(youtubeVideoName, this.canvas, currentTime, 0.15);
 

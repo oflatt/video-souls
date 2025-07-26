@@ -63,6 +63,10 @@ export class LevelDataV0 {
     this.bossDamageMultiplier = 1.0; 
     this.bossHealth = 4.0;
   }
+
+  getAttacksInInterval(startTime: number, endTime: number) {
+    return this.attackData.filter(attack => attack.time > startTime && attack.time <= endTime);
+  }
 }
 
 export function levelDataFromVideo(videoId: string): LevelDataV0 {

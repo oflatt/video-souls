@@ -1,11 +1,11 @@
-import { Settings } from "./settings";
+import { LocalSave } from "./LocalSave";
 import { AudioPlayer } from "./audioPlayer";
 import { LevelDataV0, validateLevelData, parseWithMaps } from "./leveldata";
 import { GameMode } from "./GameMode";
 import { showFloatingAlert } from "./utils";
 
 export class MainMenu {
-  settings: Settings;
+  settings: LocalSave;
   audio: AudioPlayer;
   volumeSlider: HTMLInputElement;
   soundEffectVolumeSlider: HTMLInputElement;
@@ -26,7 +26,7 @@ export class MainMenu {
   videoUrlInput: HTMLInputElement;
 
   constructor() {
-    this.settings = Settings.load();
+    this.settings = LocalSave.load();
     this.audio = new AudioPlayer();
 
     this.volumeSlider = document.getElementById("main-menu-volume-slider") as HTMLInputElement;
