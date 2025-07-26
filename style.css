@@ -109,7 +109,8 @@ body {
   margin-bottom: 10px;
 }
 
-#main-menu-volume-slider {
+
+.slider {
   width: 200px;
   margin-bottom: 10px;
 }

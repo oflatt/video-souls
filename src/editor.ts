@@ -14,10 +14,6 @@ import {
   exportLevelToClipboard
 } from './leveldata';
 import { EditorHud } from './editorHud';
-import { drawArrow, drawCritical } from './battleRenderer'; // <-- update import
-import { graphics } from './videosouls'; // <-- import global graphics
-import { roatate_vec2 } from './utils';
-import { showFloatingAlert } from './utils';
 import { DraggedAttack, DraggedCritical, DraggedInterval, IntervalElements, MarkerManager } from './MarkerManager';
 import { frameIndex } from './utils'; // <-- import from utils
 

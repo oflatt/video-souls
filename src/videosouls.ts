@@ -11,6 +11,7 @@ import { AttackAnimation, BattleState, initialBattleState, directionNumToSwordAn
 import { VideoPlayer } from './videoPlayer';
 import { Settings } from './settings';
 import { CommunityLevelsPage } from "./CommunityLevelsPage";
+import { showFloatingAlert } from './utils';
 
 // Load the interpreter from the local acorn_interpreter.js file
 declare const Interpreter: any;
@@ -66,6 +67,7 @@ export class VideoSouls {
   editor: Editor;
   settings: Settings;
   volumeSlider: HTMLInputElement;
+  soundEffectVolumeSlider: HTMLInputElement; // <-- add property
   battleEndHudElement: HTMLElement | null = null;
   communityLevelsPage: CommunityLevelsPage | null = null;
 
@@ -113,19 +115,31 @@ export class VideoSouls {
     this.volumeSlider = document.getElementById("main-menu-volume-slider") as HTMLInputElement;
     this.volumeSlider.value = String(this.settings.volume);
 
+    // Wire up sound effect volume slider
+    this.soundEffectVolumeSlider = document.getElementById("main-menu-sfx-volume-slider") as HTMLInputElement;
+    this.soundEffectVolumeSlider.value = String(this.settings.soundEffectVolume);
+
     // Set initial YouTube player volume
     player.setVolume(this.settings.volume);
 
     // Set initial sound effect volume
-    this.audio.setVolume(this.settings.getNormalizedVolume());
+    this.audio.setVolume(this.settings.getNormalizedSoundEffectVolume());
 
-    // Listen for slider changes
+    // Listen for main volume slider changes
     this.volumeSlider.addEventListener("input", () => {
       const vol = Number(this.volumeSlider.value);
       this.settings.volume = vol;
       this.settings.save();
       player.setVolume(vol);
-      this.audio.setVolume(this.settings.getNormalizedVolume());
+      // Only set YouTube volume here
+    });
+
+    // Listen for sound effect volume slider changes
+    this.soundEffectVolumeSlider.addEventListener("input", () => {
+      const sfxVol = Number(this.soundEffectVolumeSlider.value);
+      this.settings.soundEffectVolume = sfxVol;
+      this.settings.save();
+      this.audio.setVolume(this.settings.getNormalizedSoundEffectVolume());
     });
 
     // Listen for YouTube player volume changes (if user changes via YouTube UI)
@@ -135,7 +149,7 @@ export class VideoSouls {
         this.settings.volume = ytVol;
         this.volumeSlider.value = String(ytVol);
         this.settings.save();
-        this.audio.setVolume(this.settings.getNormalizedVolume());
+        // Only set YouTube volume here
       }
     }, 500);
 
@@ -218,7 +232,7 @@ export class VideoSouls {
       }
     } catch (error) {
       console.error('Failed to load level files:', error);
-      this.fadingAlert('Failed to load level files', 30, "20px");
+      showFloatingAlert('Failed to load level files', 30, "20px");
     }
   }
 
@@ -234,10 +248,10 @@ export class VideoSouls {
         this.battleRenderer = new BattleRenderer(this.elements.canvas, level);
         this.setGameMode(GameMode.PLAYING);
       } else {
-        this.fadingAlert(`Invalid or failed to load level file: ${levelFile}`, 30, "20px");
+        showFloatingAlert(`Invalid or failed to load level file: ${levelFile}`, 30, "20px");
       }
     } catch (error) {
-      this.fadingAlert(`Failed to load level: ${levelFile}`, 30, "20px");
+      showFloatingAlert(`Failed to load level: ${levelFile}`, 30, "20px");
       console.error('Error loading level:', error);
     }
   }
@@ -280,7 +294,7 @@ export class VideoSouls {
       if (videoUrl) {
         this.recordVideo(videoUrl);
       } else {
-        this.fadingAlert('Please enter a valid YouTube URL.', 30, "20px");
+        showFloatingAlert('Please enter a valid YouTube URL.', 30, "20px");
       }
     });
 
@@ -345,41 +359,8 @@ export class VideoSouls {
       this.editor.draw(this.inputManager.mouseX, this.inputManager.mouseY);
     }
 
-    this.fadeOutAlerts();
 
     requestAnimationFrame(this.mainLoop.bind(this));
-  }
-
-  fadingAlert(message: string, fontSize: number = 40, position: string, color: string = 'white', font: string = 'Arial') {
-    // make an alert text element on top of the screen
-    const alertText = document.createElement('div');
-    alertText.classList.add("fading-alert");
-    alertText.style.fontSize = `${fontSize}px`;
-    alertText.style.top = position;
-    alertText.style.color = color;
-    alertText.style.fontFamily = font;
-    alertText.textContent = message;
-    document.body.appendChild(alertText);
-    this.alerts.push({
-      message: alertText,
-      startTime: Date.now(),
-      lifetime: 3000
-    });
-  }
-
-  private fadeOutAlerts() {
-    const currentTime = Date.now();
-    let remainingAlerts: AlertData[] = [];
-    for (let alert of this.alerts) {
-      let timeLived = currentTime - alert.startTime;
-      if (timeLived > alert.lifetime) {
-        alert.message.remove();
-      } else {
-        alert.message.style.opacity = `${1 - timeLived / alert.lifetime}`;
-        remainingAlerts.push(alert);
-      }
-    }
-    this.alerts = remainingAlerts;
   }
 
   // returns true if the level was successfully imported
@@ -396,13 +377,13 @@ export class VideoSouls {
         this.battleRenderer = new BattleRenderer(this.elements.canvas, level);
         return true;
       } else {
-        this.fadingAlert("Invalid Level- see validation error below", 30, "20px");
+        showFloatingAlert("Invalid Level- see validation error below", 30, "20px");
         this.elements.validationError.textContent = validation;
         this.elements.validationError.style.display = 'block';
         return false;
       }
     } catch (error) {
-      this.fadingAlert('Invalid JSON, failed to parse level data', 30, "20px");
+      showFloatingAlert('Invalid JSON, failed to parse level data', 30, "20px");
       console.error('Invalid JSON', error);
       return false;
     }
@@ -413,9 +394,9 @@ export class VideoSouls {
     const json = stringifyWithMaps(this.editor.level);
     // copy the link to the clipboard
     navigator.clipboard.writeText(json).then(() => {
-      this.fadingAlert('Level data copied to clipboard.', 30, "20px");
+      showFloatingAlert('Level data copied to clipboard.', 30, "20px");
     }).catch(error => {
-      this.fadingAlert('Failed to copy level data to clipboard.', 30, "20px");
+      showFloatingAlert('Failed to copy level data to clipboard.', 30, "20px");
       console.error('Failed to copy: ', error);
     });
   }
@@ -613,7 +594,7 @@ export class VideoSouls {
 
     // Always keep YouTube player volume in sync with settings
     this.elements.player.setVolume(this.settings.volume);
-    this.audio.setVolume(this.settings.getNormalizedVolume());
+    this.audio.setVolume(this.settings.getNormalizedSoundEffectVolume()); // <-- use sound effect volume
   }
 
   showCommunityLevelsPage() {
@@ -662,7 +643,7 @@ export class VideoSouls {
       this.setCurrentVideo(videoId);
       this.setGameMode(GameMode.EDITING);
     } else {
-      this.fadingAlert('Invalid YouTube URL', 30, "20px");
+      showFloatingAlert('Invalid YouTube URL', 30, "20px");
     }
   }
 

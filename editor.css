@@ -404,17 +404,7 @@ div::-webkit-scrollbar-thumb {
   margin-bottom: 20px;
 }
 
-#custom-level-input {
-  /* Add any needed styles here */
-}
 
-#floating-menu>div {
-  display: flex;
-}
-
-#floating-menu>div>div {
-  width: 20px;
-}
 
 #export-button {
   display: none;

@@ -127,35 +127,54 @@
       "damage": 1
     }
   ],
-  "criticals": [],
+  "criticals": [
+    {
+      "time": 8.757154,
+      "direction": 3,
+      "multiplier": 1.5
+    },
+    {
+      "time": 15.330663,
+      "direction": 8,
+      "multiplier": 1.5
+    },
+    {
+      "time": 16.830663,
+      "direction": 1,
+      "multiplier": 1.5
+    },
+    {
+      "time": 23.330663,
+      "direction": 6,
+      "multiplier": 1.5
+    },
+    {
+      "time": 27.830663,
+      "direction": 6,
+      "multiplier": 1.5
+    },
+    {
+      "time": 28.280663000000008,
+      "direction": 2,
+      "multiplier": 1.5
+    }
+  ],
   "attackIntervals": {
-    "__type": "Map",
-    "entries": [
-      [
-        "intro",
-        {
-          "start": 0.17883755588673622,
-          "end": 4.783904619970194,
-          "name": "intro"
-        }
-      ],
-      [
-        "2",
-        {
-          "start": 4.694485842026825,
-          "end": 33.3532041728763,
-          "name": "2"
-        }
-      ],
-      [
-        "death",
-        {
-          "start": 64.38152011922504,
-          "end": 68.31594634873323,
-          "name": "death"
-        }
-      ]
-    ]
+    "2": {
+      "start": 4.694485842026825,
+      "end": 33.3532041728763,
+      "name": "2"
+    },
+    "intro": {
+      "start": 0.17883755588673622,
+      "end": 4.783904619970194,
+      "name": "intro"
+    },
+    "death": {
+      "start": 64.38152011922504,
+      "end": 68.31594634873323,
+      "name": "death"
+    }
   },
   "attackSchedule": "\nreturn function(state) {\n  var currentInterval = state.availableIntervals[state.currentInterval];\n\n  // Check if we've reached or passed the end time of the current interval\n  if (state.currentTime >= currentInterval.end) {\n    var nextInterval = state.intervalNamesAlpha[Math.floor(Math.random() * state.intervalNamesAlpha.length)];\n\n    // pick again if the interval is the same as the current one\n    if (nextInterval === state.currentInterval) {\n      nextInterval = state.intervalNamesAlpha[Math.floor(Math.random() * state.intervalNamesAlpha.length)];\n    }\n    \n    return {\n      continueNormal: false,\n      transitionToInterval: nextInterval,\n      intervalOffset: 0\n    };\n  }\n  \n  // Continue with current behavior\n  return { continueNormal: true };\n}",
   "version": "0.0.0",
