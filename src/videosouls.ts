@@ -4,14 +4,14 @@ import { Editor } from './editor';
 import { levelDataFromVideo, LevelDataV0, validateLevelData, BossState, BossScheduleResult, stringifyWithMaps, parseWithMaps } from './leveldata';
 import { Graphics } from './graphics';
 import { InputManager, InputDirection } from './inputmanager';
-import { AudioPlayer } from './audioPlayer';
 import { BattleRenderer } from './battleRenderer';
 import { BattleLogic } from './battleLogic';
 import { AttackAnimation, BattleState, initialBattleState, directionNumToSwordAngle, updateBattleTime } from './battle';
 import { VideoPlayer } from './videoPlayer';
 import { Settings } from './settings';
 import { CommunityLevelsPage } from "./CommunityLevelsPage";
-import { showFloatingAlert } from './utils';
+import { extractVideoID, showFloatingAlert } from './utils';
+import { MainMenu } from './MainMenu'; // <-- import MainMenu
 
 // Load the interpreter from the local acorn_interpreter.js file
 declare const Interpreter: any;
@@ -58,7 +58,6 @@ export class VideoSouls {
   gameMode: GameMode;
   battle: BattleState;
   alerts: AlertData[];
-  audio: AudioPlayer;
   inputManager: InputManager;
   battleRenderer: BattleRenderer;
   battleLogic: BattleLogic;
@@ -70,10 +69,10 @@ export class VideoSouls {
   soundEffectVolumeSlider: HTMLInputElement; // <-- add property
   battleEndHudElement: HTMLElement | null = null;
   communityLevelsPage: CommunityLevelsPage | null = null;
+  mainMenu: MainMenu; // <-- new property
 
   constructor(player: YT.Player) {
     this.videoPlayer = new VideoPlayer(player);
-    this.audio = new AudioPlayer();
     this.inputManager = new InputManager();
 
     this.elements = {
@@ -101,35 +100,38 @@ export class VideoSouls {
       customLevelEditButton: document.querySelector<HTMLInputElement>("#custom-level-edit-button")!,
       validationError: document.querySelector<HTMLInputElement>("#validation-error")!,
       levelsContainer: document.querySelector<HTMLDivElement>("#levels-container")!,
+
     } as const;
 
+    this.mainMenu = new MainMenu(); 
     this.editor = new Editor(new LevelDataV0(), graphics, this.videoPlayer);
     this.battleRenderer = new BattleRenderer(this.elements.canvas, this.editor.level());
-    this.battleLogic = new BattleLogic(this.audio, this.editor.level());
+    this.battleLogic = new BattleLogic(this.mainMenu.audio, this.editor.level());
     this.gameMode = GameMode.MENU;
     this.battle = initialBattleState();
     this.alerts = [];
     this.settings = Settings.load();
+    
 
     // Use the volume slider from the DOM
     this.volumeSlider = document.getElementById("main-menu-volume-slider") as HTMLInputElement;
-    this.volumeSlider.value = String(this.settings.volume);
+    this.volumeSlider.value = String(this.mainMenu.settings.volume);
 
     // Wire up sound effect volume slider
     this.soundEffectVolumeSlider = document.getElementById("main-menu-sfx-volume-slider") as HTMLInputElement;
-    this.soundEffectVolumeSlider.value = String(this.settings.soundEffectVolume);
+    this.soundEffectVolumeSlider.value = String(this.mainMenu.settings.soundEffectVolume);
 
     // Set initial YouTube player volume
-    player.setVolume(this.settings.volume);
+    player.setVolume(this.mainMenu.settings.volume);
 
     // Set initial sound effect volume
-    this.audio.setVolume(this.settings.getNormalizedSoundEffectVolume());
+    this.mainMenu.audio.setVolume(this.mainMenu.getNormalizedSoundEffectVolume());
 
     // Listen for main volume slider changes
     this.volumeSlider.addEventListener("input", () => {
       const vol = Number(this.volumeSlider.value);
-      this.settings.volume = vol;
-      this.settings.save();
+      this.mainMenu.settings.volume = vol;
+      this.mainMenu.saveSettings();
       player.setVolume(vol);
       // Only set YouTube volume here
     });
@@ -137,18 +139,18 @@ export class VideoSouls {
     // Listen for sound effect volume slider changes
     this.soundEffectVolumeSlider.addEventListener("input", () => {
       const sfxVol = Number(this.soundEffectVolumeSlider.value);
-      this.settings.soundEffectVolume = sfxVol;
-      this.settings.save();
-      this.audio.setVolume(this.settings.getNormalizedSoundEffectVolume());
+      this.mainMenu.settings.soundEffectVolume = sfxVol;
+      this.mainMenu.saveSettings();
+      this.mainMenu.audio.setVolume(this.mainMenu.getNormalizedSoundEffectVolume());
     });
 
     // Listen for YouTube player volume changes (if user changes via YouTube UI)
     setInterval(() => {
       const ytVol = player.getVolume();
-      if (ytVol !== this.settings.volume) {
-        this.settings.volume = ytVol;
+      if (ytVol !== this.mainMenu.settings.volume) {
+        this.mainMenu.settings.volume = ytVol;
         this.volumeSlider.value = String(ytVol);
-        this.settings.save();
+        this.mainMenu.saveSettings();
         // Only set YouTube volume here
       }
     }, 500);
@@ -243,7 +245,7 @@ export class VideoSouls {
       if (level) {
         this.editor.markerManager.level = level;
         // Recreate battleLogic with new level
-        this.battleLogic = new BattleLogic(this.audio, level);
+        this.battleLogic = new BattleLogic(this.mainMenu.audio, level);
         // Recreate battleRenderer with new level
         this.battleRenderer = new BattleRenderer(this.elements.canvas, level);
         this.setGameMode(GameMode.PLAYING);
@@ -372,7 +374,7 @@ export class VideoSouls {
       if (validation === null) {
         this.editor.level = level;
         // Recreate battleLogic with new level
-        this.battleLogic = new BattleLogic(this.audio, level);
+        this.battleLogic = new BattleLogic(this.mainMenu.audio, level);
         // Recreate battleRenderer with new level
         this.battleRenderer = new BattleRenderer(this.elements.canvas, level);
         return true;
@@ -593,8 +595,8 @@ export class VideoSouls {
     this.gameMode = mode;
 
     // Always keep YouTube player volume in sync with settings
-    this.elements.player.setVolume(this.settings.volume);
-    this.audio.setVolume(this.settings.getNormalizedSoundEffectVolume()); // <-- use sound effect volume
+    this.elements.player.setVolume(this.mainMenu.settings.volume);
+    this.mainMenu.audio.setVolume(this.mainMenu.getNormalizedSoundEffectVolume()); // <-- use sound effect volume
   }
 
   showCommunityLevelsPage() {
@@ -622,7 +624,7 @@ export class VideoSouls {
 
   loadCommunityLevel(level: LevelDataV0) {
     this.editor.markerManager.level = level;
-    this.battleLogic = new BattleLogic(this.audio, level);
+    this.battleLogic = new BattleLogic(this.mainMenu.audio, level);
     this.battleRenderer = new BattleRenderer(this.elements.canvas, level);
     this.hideCommunityLevelsPage();
     this.setGameMode(GameMode.PLAYING);
@@ -631,7 +633,7 @@ export class VideoSouls {
   setCurrentVideo(videoId: string) {
     this.editor.markerManager.level = levelDataFromVideo(videoId);
     // Recreate battleLogic with new level
-    this.battleLogic = new BattleLogic(this.audio, this.editor.markerManager.level);
+    this.battleLogic = new BattleLogic(this.mainMenu.audio, this.editor.markerManager.level);
     // Recreate battleRenderer with new level
     this.battleRenderer = new BattleRenderer(this.elements.canvas, this.editor.markerManager.level);
   }
@@ -657,7 +659,7 @@ export class VideoSouls {
       this.videoPlayer.prevTime,
       this.battle,
       this.getAttacksInInterval.bind(this),
-      arrowless ? undefined : this.audio.playWarningSound.bind(this.audio),
+      arrowless ? undefined : this.mainMenu.audio.playWarningSound.bind(this.mainMenu.audio),
       this.inputManager.getCurrentTargetDirection.bind(this.inputManager),
       displayTitle,
       arrowless // <-- pass arrowless flag
@@ -672,13 +674,7 @@ export class VideoSouls {
       this.inputManager.getCurrentTargetDirection.bind(this.inputManager)
     );
   }
-
-  currentTargetAngleRadians() {
-    return this.battleRenderer.getCurrentTargetAngleRadians(
-      this.inputManager.getCurrentTargetDirection.bind(this.inputManager)
-    );
-  }
-
+  
   // Helper to create and show the battle end HUD
   private createBattleEndHud(type: "win" | "lose") {
     // Remove previous HUD if present
@@ -709,23 +705,3 @@ export class VideoSouls {
   }
 }
 
-// Helper function to extract the video ID from a YouTube URL, including Shorts
-function extractVideoID(url: string) {
-  // Match regular, short, and shorts URLs
-  const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:shorts\/|(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=))|youtu\.be\/)([^"&?/\s]{11})/;
-  const match = url.match(regex);
-  return match ? match[1] : null;
-}
-
-// Listen for playtest event from editor HUD
-window.addEventListener("editor-playtest-level", () => {
-  // Find the VideoSouls instance and set game mode to PLAYING
-  // If you use a global, replace with your instance reference
-  for (const k in window) {
-    const v = (window as any)[k];
-    if (v instanceof VideoSouls) {
-      v.setGameMode(GameMode.PLAYING);
-      break;
-    }
-  }
-});

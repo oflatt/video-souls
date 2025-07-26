@@ -43,3 +43,11 @@ export function showFloatingAlert(
   }, 1800);
 }
 
+
+// Helper function to extract the video ID from a YouTube URL, including Shorts
+export function extractVideoID(url: string) {
+  // Match regular, short, and shorts URLs
+  const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:shorts\/|(?:[^/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=))|youtu\.be\/)([^"&?/\s]{11})/;
+  const match = url.match(regex);
+  return match ? match[1] : null;
+}

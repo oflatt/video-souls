@@ -98,23 +98,7 @@ export function parseWithMaps(jsonString: string): any {
 }
 
 export function stringifyLevelData(levelData: LevelDataV0): string {
-  const attackIntervalsObj: Record<string, AttackInterval> = {};
-  for (const [key, value] of levelData.attackIntervals) {
-    attackIntervalsObj[key] = value;
-  }
-  const serializable: any = {
-    video: levelData.video,
-    attackData: levelData.attackData,
-    criticals: levelData.criticals,
-    attackIntervals: attackIntervalsObj,
-    attackSchedule: levelData.attackSchedule,
-    version: levelData.version,
-    title: levelData.title,
-    arrowless: levelData.arrowless, // <-- Always present
-    bossDamageMultiplier: levelData.bossDamageMultiplier, // <-- new field
-    bossHealth: levelData.bossHealth // <-- new field
-  };
-  return JSON.stringify(serializable, null, 2);
+  return stringifyWithMaps(levelData);
 }
 
 export function parseLevelData(jsonString: string): LevelDataV0 {
