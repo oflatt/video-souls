@@ -1,57 +1,44 @@
 export class EditorHud {
   controlsInfoPanel: HTMLElement | null = null;
   controlsInfoToggle: HTMLButtonElement | null = null;
-  controlsInfoVisible: boolean = true;
+  controlsInfoVisible: boolean = false;
   titleInput: HTMLInputElement;
+  controlsInfoInstance: HTMLElement | null = null;
+  hudElement: HTMLElement | null = null; // <-- track parent HUD element
 
   constructor() {
     this.titleInput = document.getElementById("editor-title-input") as HTMLInputElement;
-    this.controlsInfoPanel = document.getElementById("controls-info");
-    if (this.controlsInfoPanel) {
-      let toggleBtn = document.getElementById("controls-info-toggle") as HTMLButtonElement;
-      if (!toggleBtn) {
-        toggleBtn = document.createElement("button");
-        toggleBtn.id = "controls-info-toggle";
-        toggleBtn.textContent = "Hide Controls";
-        // Move the button inside the controls panel, at the top
-        toggleBtn.style.display = "block";
-        toggleBtn.style.margin = "0 0 8px 0";
-        toggleBtn.style.width = "100%";
-        toggleBtn.style.fontSize = "13px";
-        toggleBtn.style.padding = "2px 0";
-        this.controlsInfoPanel.insertBefore(toggleBtn, this.controlsInfoPanel.firstChild);
-      }
-      this.controlsInfoToggle = toggleBtn;
-      this.controlsInfoVisible = true;
-      this.controlsInfoPanel.style.display = "block";
+    this.hudElement = document.getElementById("record-hud") as HTMLElement;
+
+    this.controlsInfoToggle = document.getElementById("controls-info-toggle") as HTMLButtonElement;
+    if (this.controlsInfoToggle) {
+      this.controlsInfoToggle.textContent = "Show Controls";
       this.controlsInfoToggle.onclick = () => {
         this.controlsInfoVisible = !this.controlsInfoVisible;
         if (this.controlsInfoVisible) {
-          this.controlsInfoPanel!.style.display = "block";
-          this.controlsInfoPanel!.insertBefore(this.controlsInfoToggle!, this.controlsInfoPanel!.firstChild);
+          // Instantiate controls-info from template as child of HUD
+          if (!this.controlsInfoInstance) {
+            const tpl = document.getElementById("controls-info-template") as HTMLTemplateElement;
+            if (tpl && tpl.content) {
+              const fragment = tpl.content.cloneNode(true) as DocumentFragment;
+              this.controlsInfoInstance = fragment.querySelector<HTMLElement>("#controls-info")!;
+              if (this.hudElement) {
+                this.hudElement.appendChild(this.controlsInfoInstance);
+              }
+              this.controlsInfoPanel = this.controlsInfoInstance;
+            }
+          }
           this.controlsInfoToggle!.textContent = "Hide Controls";
         } else {
-          this.controlsInfoPanel!.style.display = "none";
-          // Move the toggle button outside the panel so it remains visible
-          document.body.appendChild(this.controlsInfoToggle!);
-          this.controlsInfoToggle!.style.position = "absolute";
-          this.controlsInfoToggle!.style.top = "10px";
-          this.controlsInfoToggle!.style.right = "10px";
-          this.controlsInfoToggle!.style.width = "auto";
+          // Remove controls-info from HUD
+          if (this.controlsInfoInstance && this.controlsInfoInstance.parentNode) {
+            this.controlsInfoInstance.parentNode.removeChild(this.controlsInfoInstance);
+            this.controlsInfoInstance = null;
+            this.controlsInfoPanel = null;
+          }
           this.controlsInfoToggle!.textContent = "Show Controls";
         }
       };
-    }
-  }
-
-  reset() {
-    if (this.controlsInfoPanel && this.controlsInfoToggle) {
-      this.controlsInfoPanel.style.display = "block";
-      this.controlsInfoPanel.insertBefore(this.controlsInfoToggle, this.controlsInfoPanel.firstChild);
-      this.controlsInfoToggle.style.position = "static";
-      this.controlsInfoToggle.style.width = "100%";
-      this.controlsInfoToggle.textContent = "Hide Controls";
-      this.controlsInfoVisible = true;
     }
   }
 }

@@ -206,7 +206,8 @@
   position: absolute;
   top: 0;
   right: 0;
-  width: 10em;
+  width: 18em;
+  /* was 10em, now wider */
   padding: 1em;
   background-color: #10141b;
   border-left: 2px solid lightgray;
@@ -245,7 +246,7 @@
   position: absolute;
   top: 0;
   right: 0;
-  width: 10em;
+  width: 18em;
   padding: 1em;
   background-color: #10141b;
   border-left: lightgray 2px solid;
@@ -293,6 +294,14 @@
   top: 10px !important;
   right: 10px !important;
   width: auto !important;
+  z-index: 2000;
+}
+
+#record-hud #controls-info-toggle {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: auto;
   z-index: 2000;
 }
 

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,25 +8,28 @@
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-L6XVHV2JJ5"></script>
     <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
 
-    gtag('config', 'G-L6XVHV2JJ5');
+        gtag('config', 'G-L6XVHV2JJ5');
     </script>
 
     <!-- Google AdSense -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5102275085064362" crossorigin="anonymous"></script>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5102275085064362"
+        crossorigin="anonymous"></script>
 
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Unicase:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Unicase:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
 
     <title>Video Souls</title>
     <link href="style.css" rel="stylesheet" />
     <link href="editor.css" rel="stylesheet" />
 </head>
+
 <body>
     <div id="game-container">
         <div id="video-player"></div>
@@ -33,7 +37,8 @@
     <div id="floating-menu">
         <h1>Video Souls</h1>
         <div id="levels-container"></div>
-        <button id="community-levels-main-menu-button" style="font-size:20px;margin-bottom:10px;">Community Levels</button>
+        <button id="community-levels-main-menu-button" style="font-size:20px;margin-bottom:10px;">Community
+            Levels</button>
         <button id="autosaves-main-menu-button" style="font-size:20px;margin-bottom:10px;">Autosaves</button>
         <h2>New Custom Level</h2>
         <input id="video-url" type="text" placeholder="Enter YouTube video URL" />
@@ -102,42 +107,49 @@
         <div id="record-hud">
             <button id="editor-exit-to-menu-button">Exit to Menu</button>
             <input id="editor-title-input" type="text" placeholder="Level Title" />
+            <button id="controls-info-toggle">Hide Controls</button>
             <div id="recording-controls">
                 <div id="playback-bar-wrapper">
                     <div id="playback-bar"></div>
                     <div id="playback-point"></div>
                 </div>
             </div>
-            <div id="controls-info">
-                <div class="controls-entry">
-                    <kbd><kbd>Space</kbd></kbd> Play/Pause
-                </div>
-                <div class="controls-entry">
-                    <kbd><kbd>K</kbd></kbd> Add attack marker
-                </div>
-                <div class="controls-entry">
-                    <kbd><kbd>J</kbd> <kbd>L</kbd></kbd> 1/2 second jump
-                </div>
-                <div class="controls-entry">
-                    <kbd><kbd>M</kbd> <kbd>.</kbd></kbd> 1/20 second jump
-                </div>
-                <div class="controls-entry">
-                    <kbd><kbd>&ShortLeftArrow;</kbd> <kbd>&ShortRightArrow;</kbd></kbd> 1 second jump
-                </div>
-                <div class="controls-entry">
-                    <kbd><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></kbd> Aim attack direction (hold W and press K)
-                </div>
-                <div class="controls-entry">
-                    <kbd><kbd>X</kbd></kbd> Delete attack / interval
-                </div>
-                <div class="controls-entry">
-                    <kbd><kbd>I</kbd></kbd> Add attack interval (advanced)
-                </div>
+        </div>
+    </template>
+    <template id="controls-info-template">
+        <div id="controls-info">
+            <div class="controls-entry">
+                <kbd><kbd>space</kbd></kbd> play/pause
+            </div>
+            <div class="controls-entry">
+                <kbd><kbd>k</kbd></kbd> add attack marker
+            </div>
+            <div class="controls-entry">
+                <kbd><kbd>j</kbd> <kbd>l</kbd></kbd> 1/2 second jump
+            </div>
+            <div class="controls-entry">
+                <kbd><kbd>m</kbd> <kbd>.</kbd></kbd> 1/20 second jump
+            </div>
+            <div class="controls-entry">
+                <kbd><kbd>&ShortLeftArrow;</kbd> <kbd>&ShortRightArrow;</kbd></kbd> 1 second jump
+            </div>
+            <div class="controls-entry">
+                <kbd><kbd>w</kbd><kbd>a</kbd><kbd>s</kbd><kbd>d</kbd></kbd> aim attack direction (hold w and press k)
+            </div>
+            <div class="controls-entry">
+                <kbd><kbd>x / backspace</kbd></kbd> delete element
+            </div>
+            <div class="controls-entry">
+                <kbd><kbd>i</kbd></kbd> add attack interval (advanced)
+            </div>
+            <div class="controls-entry">
+                <kbd><kbd>o</kbd></kbd> add critical attack
             </div>
         </div>
     </template>
     <template id="battle-end-hud-win-template">
-        <div id="battle-end-hud" style="position:fixed;top:0;left:0;width:100vw;height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;background:rgba(34,34,34,0.7);z-index:9999;">
+        <div id="battle-end-hud"
+            style="position:fixed;top:0;left:0;width:100vw;height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;background:rgba(34,34,34,0.7);z-index:9999;">
             <h1 style="font-size:90px;color:green;font-family:'Cormorant Unicase',serif;">You Won</h1>
             <div style="margin-top:40px;">
                 <button id="back-button" style="font-size:30px;margin-right:30px;">Back</button>
@@ -146,7 +158,8 @@
         </div>
     </template>
     <template id="battle-end-hud-lose-template">
-        <div id="battle-end-hud" style="position:fixed;top:0;left:0;width:100vw;height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;background:rgba(34,34,34,0.7);z-index:9999;">
+        <div id="battle-end-hud"
+            style="position:fixed;top:0;left:0;width:100vw;height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;background:rgba(34,34,34,0.7);z-index:9999;">
             <h1 style="font-size:90px;color:red;font-family:'Cormorant Unicase',serif;">You Died</h1>
             <div style="margin-top:40px;">
                 <button id="back-button" style="font-size:30px;margin-right:30px;">Back</button>
@@ -155,13 +168,16 @@
         </div>
     </template>
     <template id="community-levels-template">
-        <div id="community-levels-page" style="position:fixed;top:0;left:0;width:100vw;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;background:rgba(34,34,34,0.85);z-index:9999;">
+        <div id="community-levels-page"
+            style="position:fixed;top:0;left:0;width:100vw;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;background:rgba(34,34,34,0.85);z-index:9999;">
             <h1 style="font-size:48px;margin-top:40px;font-family:'Cormorant Unicase',serif;">Community Levels</h1>
             <div style="margin-bottom:20px;font-size:18px;">
-                Want to see your level here? Post it on <a href="https://lemmy.world/c/videosouls" target="_blank" style="color:#ffd700;">lemmy.world/c/videosouls</a>
+                Want to see your level here? Post it on <a href="https://lemmy.world/c/videosouls" target="_blank"
+                    style="color:#ffd700;">lemmy.world/c/videosouls</a>
             </div>
             <button id="community-levels-refresh" style="margin-bottom:20px;font-size:20px;">Refresh</button>
-            <div id="community-levels-list" style="width:80%;max-width:700px;display:flex;flex-direction:column;gap:12px;margin-bottom:30px;"></div>
+            <div id="community-levels-list"
+                style="width:80%;max-width:700px;display:flex;flex-direction:column;gap:12px;margin-bottom:30px;"></div>
             <button id="community-levels-back" style="font-size:20px;">Back</button>
         </div>
     </template>
@@ -178,4 +194,5 @@
     <script src="dist/main.js"></script>
     <script src="https://www.youtube.com/iframe_api"></script>
 </body>
+
 </html>

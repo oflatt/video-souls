@@ -52,7 +52,11 @@ body {
   padding: 10px 20px;
   border-radius: var(--border-radius);
   overflow-y: auto;
-  height: 100%;
+  height: 90vh;
+  /* <-- set max height for scrollable area */
+  max-height: 90vh;
+  /* <-- ensure it doesn't exceed viewport */
+  box-sizing: border-box;
 }
 
 #levels-container {
@@ -68,6 +72,7 @@ body {
 }
 
 #floating-menu h2 {
+  margin-top: 20px;
   margin-bottom: 10px;
 }
 
@@ -82,20 +87,6 @@ body {
   min-height: 300px;
 }
 
-#main-menu-settings-section {
-  position: absolute;
-  bottom: 20px;
-  left: 0;
-  right: 0;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  background: none;
-  z-index: 10;
-  pointer-events: auto;
-}
 
 #main-menu-volume-container,
 #main-menu-sfx-volume-container {
@@ -160,11 +151,12 @@ body {
 
 input,
 textarea {
-  width: 300px;
+  width: 500px;
   padding: 5px;
   border: none;
   border-radius: var(--input-radius);
   font-size: 1em;
+  margin-bottom: 10px;
 }
 
 #validation-error {
