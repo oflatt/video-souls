@@ -370,6 +370,16 @@ export class VideoSouls {
     this.elements.player.setVolume(this.mainMenu.settings.videoVolume);
     this.mainMenu.audio.setVolume(this.mainMenu.getNormalizedSoundEffectVolume()); // <-- use sound effect volume
 
+    // --- IFRAME ZOOM LOGIC ---
+    const iframe = this.elements.player.getIframe();
+    if (mode === GameMode.MENU) {
+      iframe.style.transform = "scale(1.6) translateX(10vw)";
+      iframe.style.transformOrigin = "middle center";
+    } else {
+      iframe.style.transform = "";
+      iframe.style.transformOrigin = "";
+    }
+
     this.needsFreshAutosave = true; // <-- set flag when game state changes
   }
 
