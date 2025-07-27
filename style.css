@@ -83,6 +83,12 @@ body {
   margin-bottom: 20px;
 }
 
+/* Remove margin-bottom for play/edit buttons so they align horizontally */
+#custom-level-play-button,
+#custom-level-edit-button {
+  margin-bottom: 0;
+}
+
 #custom-level-input {
   min-height: 300px;
 }
@@ -305,4 +311,25 @@ button {
 
 .autosave-entry .autosave-load-btn:hover {
   background: #218838;
+}
+
+.big-menu-button {
+  font-size: 28px;
+  padding: 16px 32px;
+  background: #ffd700;
+  color: #222;
+  border-radius: 10px;
+  border: none;
+  margin-bottom: 18px;
+  font-weight: bold;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: background 0.2s, color 0.2s;
+  cursor: pointer;
+  display: block;
+  max-width: 500px;
+}
+
+.big-menu-button:hover {
+  background: #ffe066;
+  color: #111;
 }
