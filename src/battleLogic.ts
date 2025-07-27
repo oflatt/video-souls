@@ -278,14 +278,17 @@ export class BattleLogic {
     battle.timeSincePlayerHit = 0;  // Reset duration
     battle.hitCombo = 0;
 
+    // Move sword further and randomize angle
+    const staggerDistance = 0.18; // increased from 0.1
+    const angleJitter = (Math.random() - 0.5) * Math.PI; // random offset up to ±30°
     battle.anim = BattleAnim.staggering(
       [...battle.anim.endPos],
       [
-        attackedPosition[0] + (Math.random() - 0.5) * 0.1,
-        attackedPosition[1] + (Math.random() - 0.5) * 0.1,
+        attackedPosition[0] + (Math.random() - 0.5) * staggerDistance,
+        attackedPosition[1] + (Math.random() - 0.5) * staggerDistance,
       ],
       battle.anim.endAngle,
-      attackedAngle,
+      attackedAngle + angleJitter,
       STAGGER_TIME
     );
   }
