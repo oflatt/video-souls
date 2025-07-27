@@ -113,6 +113,9 @@ export class VideoSouls {
     this.mainMenu.loadLevelButtons(); // <-- call mainMenu's method
     this.resizeCanvas();
     window.addEventListener('resize', () => this.resizeCanvas());
+
+    // set initial game mode
+    this.setGameMode(GameMode.MENU);
   }
 
   private resizeCanvas() {
@@ -259,6 +262,14 @@ export class VideoSouls {
       }
     }
 
+    // --- Loop main menu video if ended ---
+    if (this.gameMode === GameMode.MENU) { 
+      this.videoPlayer.playVideo();
+      if (this.videoPlayer.getPlayerState() === YT.PlayerState.ENDED || this.videoPlayer.getPlayerState() === YT.PlayerState.UNSTARTED || this.videoPlayer.getPlayerState() === YT.PlayerState.PAUSED) {
+        this.videoPlayer.cueVideoById("PVCf3pB-3Mc");
+      }
+    }
+
     this.inputManager.clearJustPressed();
   }
 
@@ -339,7 +350,6 @@ export class VideoSouls {
       if (vid != null) {
         this.videoPlayer.loadVideoById(vid);
       }
-      this.videoPlayer.pauseVideo();
       this.videoPlayer.setPlaybackRate(1.0);
 
       this.videoPlayer.playVideo();
