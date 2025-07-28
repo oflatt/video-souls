@@ -4,9 +4,9 @@ export type AutosaveEntry = {
 };
 
 export class LocalSave {
-  videoVolume: number = 70;
-  soundEffectVolume: number = 60; // <-- new property
-  autosaves: AutosaveEntry[] = []; // <-- new field
+  videoVolume: number = 100;
+  soundEffectVolume: number = 50;
+  autosaves: AutosaveEntry[] = [];
 
   static STORAGE_KEY = "videosouls_settings";
 
