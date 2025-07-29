@@ -186,9 +186,10 @@
     </template>
     <template id="autosaves-page-template">
         <div id="autosaves-page">
+            <button id="autosaves-back" style="position:absolute;top:20px;left:20px;z-index:10;">Back</button>
             <h1>Autosaves</h1>
-            <div id="autosaves-list"></div>
-            <button id="autosaves-back">Back</button>
+            <div id="autosaves-list" style="overflow-y:auto;max-height:60vh;"></div>
+            <button id="autosaves-back-bottom" style="margin-top:30px;">Back</button>
         </div>
     </template>
     <canvas id="game-canvas"></canvas>

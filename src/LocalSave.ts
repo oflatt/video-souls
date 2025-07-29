@@ -1,5 +1,7 @@
+import { LevelDataV0, stringifyLevelData } from "./leveldata";
+
 export type AutosaveEntry = {
-  level: any; // LevelDataV0 or plain object
+  level: string;
   timestamp: number;
 };
 
@@ -31,9 +33,10 @@ export class LocalSave {
     localStorage.setItem(LocalSave.STORAGE_KEY, JSON.stringify(this));
   }
 
-  addAutosave(level: any) {
+  addAutosave(level: LevelDataV0) {
+    const levelDataString = stringifyLevelData(level);
     this.autosaves.push({
-      level,
+      level: levelDataString,
       timestamp: Date.now()
     });
     // Limit to 100 autosaves

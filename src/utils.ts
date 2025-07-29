@@ -36,6 +36,7 @@ export function showFloatingAlert(
   alertText.style.left = "50%";
   alertText.style.transform = "translateX(-50%)";
   alertText.style.zIndex = "2000";
+  console.log("showFloatingAlert", message);
   document.body.appendChild(alertText);
   setTimeout(() => {
     alertText.style.opacity = "0";

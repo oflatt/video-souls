@@ -2,12 +2,13 @@ import { LevelDataV0, parseLevelData, stringifyLevelData, validateLevelData } fr
 import { global } from './globalState';
 import { GameMode } from "./GameMode";
 import { showFloatingAlert } from "./utils";
+import { AutosaveEntry } from "./LocalSave";
 
 export class AutosavesPage {
   element: HTMLElement;
 
   constructor(
-    autosaves: { level: any; timestamp: number }[],
+    autosaves: AutosaveEntry[],
     onBack: () => void
   ) {
     const template = document.getElementById("autosaves-page-template") as HTMLTemplateElement;
@@ -32,8 +33,7 @@ export class AutosavesPage {
       const loadBtn = div.querySelector(".autosave-load-btn") as HTMLButtonElement;
       loadBtn.onclick = () => {
         // serialize the level data to a string
-        const levelDataString = stringifyLevelData(entry.level);
-        const level = parseLevelData(levelDataString);
+        const level = parseLevelData(entry.level);
         // validate level data
         const error = validateLevelData(level);
         if (error) {
@@ -46,10 +46,16 @@ export class AutosavesPage {
       list.appendChild(div);
     }
 
-    // Wire up back button
+    // Wire up back buttons (top and bottom)
     const backBtn = this.element.querySelector("#autosaves-back") as HTMLButtonElement;
+    const backBtnBottom = this.element.querySelector("#autosaves-back-bottom") as HTMLButtonElement;
     if (backBtn) {
       backBtn.onclick = () => {
+        onBack();
+      };
+    }
+    if (backBtnBottom) {
+      backBtnBottom.onclick = () => {
         onBack();
       };
     }
