@@ -264,8 +264,6 @@ export class VideoSouls {
 
     // --- Loop main menu video if ended ---
     if (this.gameMode === GameMode.MENU) { 
-      console.log("Checking main menu video state");
-      console.log("Current video state:", this.videoPlayer.getPlayerState());
       this.videoPlayer.playVideo();
       if (this.videoPlayer.getPlayerState() === YT.PlayerState.ENDED) {
         this.videoPlayer.cueVideoById("PVCf3pB-3Mc");

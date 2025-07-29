@@ -92,7 +92,6 @@ export class MarkerManager {
     this.clearSelectClass();
     if (interval != null) {
       this.selected = new DraggedInterval(interval, isStart);
-      console.log("selecting interval", interval, isStart);
       this.intervalElements.get(interval)!.startElement.classList.add("selected");
       this.intervalElements.get(interval)!.endElement.classList.add("selected");
       this.intervalElements.get(interval)!.nameElement.classList.add("selected");
