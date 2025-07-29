@@ -264,8 +264,10 @@ export class VideoSouls {
 
     // --- Loop main menu video if ended ---
     if (this.gameMode === GameMode.MENU) { 
+      console.log("Checking main menu video state");
+      console.log("Current video state:", this.videoPlayer.getPlayerState());
       this.videoPlayer.playVideo();
-      if (this.videoPlayer.getPlayerState() === YT.PlayerState.ENDED || this.videoPlayer.getPlayerState() === YT.PlayerState.UNSTARTED || this.videoPlayer.getPlayerState() === YT.PlayerState.PAUSED) {
+      if (this.videoPlayer.getPlayerState() === YT.PlayerState.ENDED) {
         this.videoPlayer.cueVideoById("PVCf3pB-3Mc");
       }
     }
@@ -311,9 +313,10 @@ export class VideoSouls {
       this.elements.gameHUD.style.display = 'none';
     }
 
-    // if the new mode is menu, show the menu
+    // if the new mode is menu, show the menu, cue the main menu video
     if (mode === GameMode.MENU) {
       this.elements.floatingMenu.style.display = 'flex';
+      this.videoPlayer.cueVideoById("PVCf3pB-3Mc");
     } else {
       this.elements.floatingMenu.style.display = 'none';
     }
@@ -369,16 +372,6 @@ export class VideoSouls {
     // Always keep YouTube player volume in sync with settings
     this.elements.player.setVolume(this.mainMenu.settings.videoVolume);
     this.mainMenu.audio.setVolume(this.mainMenu.getNormalizedSoundEffectVolume()); // <-- use sound effect volume
-
-    // --- IFRAME ZOOM LOGIC ---
-    const iframe = this.elements.player.getIframe();
-    if (mode === GameMode.MENU) {
-      iframe.style.transform = "scale(1.6) translateX(10vw)";
-      iframe.style.transformOrigin = "middle center";
-    } else {
-      iframe.style.transform = "";
-      iframe.style.transformOrigin = "";
-    }
 
     this.needsFreshAutosave = true; // <-- set flag when game state changes
   }
