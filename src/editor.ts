@@ -128,6 +128,10 @@ export class Editor {
     return this.markerManager.level;
   }
 
+  setLevel(level: LevelDataV0) {
+    this.markerManager.level = level;
+  }
+
   cleanup() {
     // Remove the entire HUD from DOM
     if (this.hudElement && this.hudElement.parentNode) {

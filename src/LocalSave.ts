@@ -7,6 +7,7 @@ export class LocalSave {
   videoVolume: number = 100;
   soundEffectVolume: number = 50;
   autosaves: AutosaveEntry[] = [];
+  editorVideoSpeed: number = 1; // <-- add property
 
   static STORAGE_KEY = "videosouls_settings";
 
@@ -19,6 +20,7 @@ export class LocalSave {
         s.videoVolume = typeof obj.volume === "number" ? obj.volume : 100;
         s.soundEffectVolume = typeof obj.soundEffectVolume === "number" ? obj.soundEffectVolume : 60; // <-- load from storage or default
         s.autosaves = Array.isArray(obj.autosaves) ? obj.autosaves : []; // <-- load autosaves
+        s.editorVideoSpeed = typeof obj.editorVideoSpeed === "number" ? obj.editorVideoSpeed : 1; // <-- load
         return s;
       }
     } catch {}

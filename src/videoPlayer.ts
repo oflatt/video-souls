@@ -15,6 +15,10 @@ export class VideoPlayer {
     return this.player.getDuration();
   }
 
+  setLoop(loop: boolean): void {
+    this.player.setLoop(loop);
+  }
+
   seekTo(inputs: number, allowSeekAhead: boolean): void {
     let seconds = Math.min(Math.max(inputs, 0), this.getDuration());
     this.player.seekTo(seconds, allowSeekAhead);

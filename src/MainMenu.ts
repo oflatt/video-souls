@@ -4,6 +4,7 @@ import { LevelDataV0, validateLevelData, parseWithMaps, parseLevelData } from ".
 import { GameMode } from "./GameMode";
 import { showFloatingAlert } from "./utils";
 import { AutosavesPage } from "./AutosavesPage"; // <-- import new class
+import { global } from './globalState';
 
 export class MainMenu {
   settings: LocalSave;
@@ -106,12 +107,6 @@ export class MainMenu {
         if (!this.autosavesPage) {
           this.autosavesPage = new AutosavesPage(
             this.settings.autosaves,
-            (level: LevelDataV0) => {
-              if (this.onLoadLevel) this.onLoadLevel(level);
-              if (this.onSetGameMode) this.onSetGameMode(GameMode.EDITING);
-              this.autosavesPage?.cleanup();
-              this.autosavesPage = null;
-            },
             () => {
               this.autosavesPage?.cleanup();
               this.autosavesPage = null;
@@ -120,9 +115,6 @@ export class MainMenu {
             }
           );
         }
-        // Hide main menu
-        const floatingMenu = document.getElementById("floating-menu");
-        if (floatingMenu) floatingMenu.style.display = "none";
       };
     }
 
@@ -141,6 +133,16 @@ export class MainMenu {
 
   getNormalizedSoundEffectVolume(): number {
     return this.settings.getNormalizedSoundEffectVolume();
+  }
+
+  cleanup() {
+    if (this.autosavesPage) {
+      this.autosavesPage.cleanup();
+      this.autosavesPage = null;
+    }
+    // Hide main menu
+    const floatingMenu = document.getElementById("floating-menu");
+    if (floatingMenu) floatingMenu.style.display = "none";
   }
 
   async loadLevelButtons() {
@@ -162,9 +164,7 @@ export class MainMenu {
         if (level && this.onLoadLevel) {
           this.onLoadLevel(level); // <-- call loadLevel
         }
-        if (this.onSetGameMode) {
-          this.onSetGameMode(GameMode.PLAYING); // <-- call setGameMode
-        }
+          global().setGameMode(GameMode.PLAYING);
       });
       this.levelsContainer.appendChild(button);
     }

@@ -39,7 +39,7 @@ export function showFloatingAlert(
   document.body.appendChild(alertText);
   setTimeout(() => {
     alertText.style.opacity = "0";
-    setTimeout(() => alertText.remove(), 600);
+    setTimeout(() => alertText.remove(), 2000);
   }, 1800);
 }
 

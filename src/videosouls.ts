@@ -13,6 +13,7 @@ import { CommunityLevelsPage } from "./CommunityLevelsPage";
 import { extractVideoID, showFloatingAlert } from './utils';
 import { MainMenu } from './MainMenu'; // <-- import MainMenu
 import { GameMode } from './GameMode';
+import { EventData, EventType, setVideoSouls } from './globalState';
 
 // Create a global graphics instance and export it
 export const graphics = new Graphics(document.querySelector<HTMLCanvasElement>("#game-canvas")!);
@@ -39,12 +40,13 @@ export class VideoSouls {
   videoPlayer: VideoPlayer;
   editor: Editor;
   // only defined when in editing mode
-  settings: LocalSave;
+  localSave: LocalSave;
   battleEndHudElement: HTMLElement | null = null;
   communityLevelsPage: CommunityLevelsPage | null = null;
   mainMenu: MainMenu;
   needsFreshAutosave: boolean = true; // <-- track if we need a fresh autosave
   lastAutosaveTime: number = 0; // <-- track last autosave timestamp
+  events: EventData[];
 
   constructor(player: YT.Player) {
     this.videoPlayer = new VideoPlayer(player);
@@ -63,6 +65,8 @@ export class VideoSouls {
       validationError: document.querySelector<HTMLInputElement>("#validation-error")!,
     } as const;
 
+
+    this.events = [];
     this.mainMenu = new MainMenu(); 
     this.mainMenu.onLoadLevel = (level: LevelDataV0) => {
       this.editor.markerManager.level = level;
@@ -77,7 +81,7 @@ export class VideoSouls {
     this.battleLogic = new BattleLogic(this.mainMenu.audio, this.editor.level());
     this.gameMode = GameMode.MENU;
     this.battle = initialBattleState();
-    this.settings = LocalSave.load();
+    this.localSave = LocalSave.load();
 
     // Set initial sound effect volume
     this.mainMenu.audio.setVolume(this.mainMenu.getNormalizedSoundEffectVolume());
@@ -115,7 +119,9 @@ export class VideoSouls {
     window.addEventListener('resize', () => this.resizeCanvas());
 
     // set initial game mode
-    this.setGameMode(GameMode.MENU);
+    this.setGameModeNow(GameMode.MENU);
+
+    setVideoSouls(this);
   }
 
   private resizeCanvas() {
@@ -123,7 +129,25 @@ export class VideoSouls {
     this.elements.canvas.height = window.innerHeight;
   }
 
+  setLevel(level: LevelDataV0) {
+    this.events.push(new EventData(EventType.SetLevel, level));
+  }
+
   mainLoop(_time: DOMHighResTimeStamp) {
+    // do any events
+    for (const event of this.events) {
+      if (event.event == EventType.SetLevel) {
+        this.editor.setLevel(event.data as LevelDataV0);
+      }
+      if (event.event == EventType.SetGameMode) {
+        this.setGameModeNow(event.data as GameMode);
+      }
+    }
+
+    // clear events
+    this.events = [];
+
+
     // keep the player's volume in sync with the settings
     this.elements.player.setVolume(this.mainMenu.settings.videoVolume);
 
@@ -262,18 +286,23 @@ export class VideoSouls {
       }
     }
 
-    // --- Loop main menu video if ended ---
-    if (this.gameMode === GameMode.MENU) { 
-      this.videoPlayer.playVideo();
-      if (this.videoPlayer.getPlayerState() === YT.PlayerState.ENDED) {
-        this.videoPlayer.cueVideoById("PVCf3pB-3Mc");
+    this.inputManager.clearJustPressed(); 
+
+    // hack: if we are in state menu play the video
+    if (this.gameMode === GameMode.MENU) {
+      if (this.videoPlayer.getPlayerState() === YT.PlayerState.CUED) {
+        this.videoPlayer.playVideo();
       }
     }
-
-    this.inputManager.clearJustPressed();
   }
 
   setGameMode(mode: GameMode) {
+    console.log("Setting game mode to:", mode);
+    this.events.push(new EventData(EventType.SetGameMode, mode));
+  }
+
+  private setGameModeNow(mode: GameMode) {
+    console.log("Setting game mode now to:", mode);
     // always sync the custom level input with the level data using generic stringify
     this.elements.customLevelInput.value = stringifyWithMaps(this.editor.level());
 
@@ -284,6 +313,16 @@ export class VideoSouls {
 
     // if the video is valid, load it
     this.videoPlayer.pauseVideo();
+
+    // --- Video speed logic ---
+    if (mode === GameMode.MENU) {
+      this.videoPlayer.setPlaybackRate(1.0);
+    }
+    if (mode === GameMode.EDITING) {
+      // Restore editor speed from LocalSave
+      const speed = this.localSave.editorVideoSpeed ?? 1;
+      this.videoPlayer.setPlaybackRate(speed);
+    }
 
     // if the new mode is battle end, show the battle end hud
     if (mode === GameMode.BATTLE_END) {
@@ -315,8 +354,12 @@ export class VideoSouls {
     if (mode === GameMode.MENU) {
       this.elements.floatingMenu.style.display = 'flex';
       this.videoPlayer.cueVideoById("PVCf3pB-3Mc");
+      this.videoPlayer.playVideo();
+      this.videoPlayer.setLoop(true);
     } else {
       this.elements.floatingMenu.style.display = 'none';
+      this.videoPlayer.setLoop(false);
+      this.mainMenu.cleanup(); // <-- cleanup main menu if switching away
     }
 
     // load the video for editing, make new editor
@@ -467,8 +510,24 @@ export class VideoSouls {
     hudClone.style.display = "flex";
   }
 
+  // Returns true if the level is empty (no attacks, no intervals except intro/death, no criticals)
+  private isLevelEmpty(level: LevelDataV0): boolean {
+    if (!level) return true;
+    if (level.attackData && level.attackData.length > 0) return false;
+    if (level.criticals && level.criticals.length > 0) return false;
+    if (level.attackIntervals && typeof level.attackIntervals.forEach === "function") {
+      let hasNonSpecial = false;
+      level.attackIntervals.forEach((interval, name) => {
+        if (name !== "intro" && name !== "death" && name !== "1") hasNonSpecial = true;
+      });
+      if (hasNonSpecial) return false;
+    }
+    return true;
+  }
+
   private doAutosave() {
     const level = this.editor.level();
+    if (this.isLevelEmpty(level)) return; // <-- skip autosave if empty
     if (this.mainMenu.settings.autosaves.length === 0 || this.needsFreshAutosave) {
       this.mainMenu.settings.addAutosave(level);
       this.needsFreshAutosave = false;

@@ -1,11 +1,13 @@
-import { LevelDataV0 } from "./leveldata";
+import { LevelDataV0, parseLevelData, stringifyLevelData, validateLevelData } from "./leveldata";
+import { global } from './globalState';
+import { GameMode } from "./GameMode";
+import { showFloatingAlert } from "./utils";
 
 export class AutosavesPage {
   element: HTMLElement;
 
   constructor(
     autosaves: { level: any; timestamp: number }[],
-    onLoad: (level: LevelDataV0) => void,
     onBack: () => void
   ) {
     const template = document.getElementById("autosaves-page-template") as HTMLTemplateElement;
@@ -29,8 +31,17 @@ export class AutosavesPage {
       `;
       const loadBtn = div.querySelector(".autosave-load-btn") as HTMLButtonElement;
       loadBtn.onclick = () => {
-        // TODO fix
-        onLoad(entry.level);
+        // serialize the level data to a string
+        const levelDataString = stringifyLevelData(entry.level);
+        const level = parseLevelData(levelDataString);
+        // validate level data
+        const error = validateLevelData(level);
+        if (error) {
+          showFloatingAlert(`Invalid autosave: ${error}`, 30, "20px");
+          return;
+        }
+        global().setLevel(level);
+        global().setGameMode(GameMode.EDITING);
       };
       list.appendChild(div);
     }

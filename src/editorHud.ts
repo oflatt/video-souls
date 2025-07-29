@@ -1,10 +1,15 @@
+import { global } from './globalState';
+import { VideoPlayer } from './videoPlayer';
+
 export class EditorHud {
   controlsInfoPanel: HTMLElement | null = null;
   controlsInfoToggle: HTMLButtonElement | null = null;
   controlsInfoVisible: boolean = false;
   titleInput: HTMLInputElement;
   controlsInfoInstance: HTMLElement | null = null;
-  hudElement: HTMLElement | null = null; // <-- track parent HUD element
+  hudElement: HTMLElement | null = null;
+  speedSlider: HTMLInputElement | null = null;
+  speedValue: HTMLElement | null = null;
 
   constructor() {
     this.titleInput = document.getElementById("editor-title-input") as HTMLInputElement;
@@ -39,6 +44,38 @@ export class EditorHud {
           this.controlsInfoToggle!.textContent = "Show Controls";
         }
       };
+    }
+
+    // --- Playback speed slider handling ---
+    this.speedSlider = document.getElementById("editor-speed-slider") as HTMLInputElement;
+    this.speedValue = document.getElementById("editor-speed-value") as HTMLElement;
+    let savedSpeed = 1;
+    try {
+      const raw = localStorage.getItem("videosouls_settings");
+      if (raw) {
+        const obj = JSON.parse(raw);
+        if (typeof obj.editorVideoSpeed === "number") {
+          savedSpeed = obj.editorVideoSpeed;
+        }
+      }
+    } catch {}
+    if (this.speedSlider) {
+      this.speedSlider.value = String(savedSpeed);
+      if (this.speedValue) this.speedValue.textContent = `${Number(savedSpeed).toFixed(2)}x`;
+      this.speedSlider.addEventListener("input", () => {
+        const val = Number(this.speedSlider!.value);
+        global().videoPlayer.setPlaybackRate(val);
+        if (this.speedValue) this.speedValue.textContent = `${val.toFixed(2)}x`;
+        // Save to LocalSave
+        global().localSave.editorVideoSpeed = val;
+        global().localSave.save();
+      });
+    } else {
+      // If slider not found, update anyway if present in DOM (for safety)
+      const domSlider = document.getElementById("editor-speed-slider") as HTMLInputElement;
+      const domValue = document.getElementById("editor-speed-value") as HTMLElement;
+      if (domSlider) domSlider.value = String(savedSpeed);
+      if (domValue) domValue.textContent = `${Number(savedSpeed).toFixed(2)}x`;
     }
   }
 }
