@@ -290,6 +290,7 @@ export class VideoSouls {
 
     // hack: if we are in state menu play the video
     if (this.gameMode === GameMode.MENU) {
+      console.log("player state is", this.videoPlayer.getPlayerState());
       if (this.videoPlayer.getPlayerState() === YT.PlayerState.CUED) {
         this.videoPlayer.playVideo();
       }
