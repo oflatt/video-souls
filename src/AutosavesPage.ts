@@ -34,13 +34,9 @@ export class AutosavesPage {
       loadBtn.onclick = () => {
         // serialize the level data to a string
         const level = parseLevelData(entry.level);
-        // validate level data
-        const error = validateLevelData(level);
-        if (error) {
-          showFloatingAlert(`Invalid autosave: ${error}`, 30, "20px");
-          return;
+        if (level) {
+          global().setLevel(level);
         }
-        global().setLevel(level);
         global().setGameMode(GameMode.EDITING);
       };
       list.appendChild(div);

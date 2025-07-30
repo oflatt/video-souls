@@ -49,16 +49,11 @@ export class EditorHud {
     // --- Playback speed slider handling ---
     this.speedSlider = document.getElementById("editor-speed-slider") as HTMLInputElement;
     this.speedValue = document.getElementById("editor-speed-value") as HTMLElement;
-    let savedSpeed = 1;
-    try {
-      const raw = localStorage.getItem("videosouls_settings");
-      if (raw) {
-        const obj = JSON.parse(raw);
-        if (typeof obj.editorVideoSpeed === "number") {
-          savedSpeed = obj.editorVideoSpeed;
-        }
-      }
-    } catch {}
+    if (!global()) {
+      return;
+    }
+    let savedSpeed = global().localSave.editorVideoSpeed || 1; // 
+    // Default to 1 if not set
     if (this.speedSlider) {
       this.speedSlider.value = String(savedSpeed);
       if (this.speedValue) this.speedValue.textContent = `${Number(savedSpeed).toFixed(2)}x`;

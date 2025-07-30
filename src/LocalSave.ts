@@ -20,9 +20,10 @@ export class LocalSave {
         const obj = JSON.parse(raw);
         const s = new LocalSave();
         s.videoVolume = typeof obj.volume === "number" ? obj.volume : 100;
-        s.soundEffectVolume = typeof obj.soundEffectVolume === "number" ? obj.soundEffectVolume : 60; // <-- load from storage or default
-        s.autosaves = Array.isArray(obj.autosaves) ? obj.autosaves : []; // <-- load autosaves
+        s.soundEffectVolume = typeof obj.soundEffectVolume === "number" ? obj.soundEffectVolume : 60; 
+        s.autosaves = Array.isArray(obj.autosaves) ? obj.autosaves : []; 
         s.editorVideoSpeed = typeof obj.editorVideoSpeed === "number" ? obj.editorVideoSpeed : 1; // <-- load
+        console.log(s.autosaves);
         return s;
       }
     } catch {}

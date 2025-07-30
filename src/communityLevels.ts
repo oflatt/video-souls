@@ -1,4 +1,4 @@
-import { LevelDataV0, validateLevelData, parseWithMaps } from "./leveldata";
+import { LevelDataV0, validateLevelData, parseLevelData } from "./leveldata";
 
 // Helper to fetch posts from Lemmy community
 export async function fetchCommunityLevels(): Promise<{ title: string, author: string, level: LevelDataV0 }[]> {
@@ -17,9 +17,8 @@ export async function fetchCommunityLevels(): Promise<{ title: string, author: s
       const levelStr = extractLevelString(body);
       if (levelStr) {
         try {
-          const parsed = parseWithMaps(levelStr);
-          const validation = await validateLevelData(parsed);
-          if (validation === null) {
+          const parsed = parseLevelData(levelStr);
+          if (parsed) {
             levels.push({
               title: title + " — by " + author,
               author,

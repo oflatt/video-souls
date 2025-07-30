@@ -1,6 +1,6 @@
 import { LocalSave } from "./LocalSave";
 import { AudioPlayer } from "./audioPlayer";
-import { LevelDataV0, validateLevelData, parseWithMaps, parseLevelData } from "./leveldata";
+import { LevelDataV0, parseLevelData, validateLevelData } from "./leveldata";
 import { GameMode } from "./GameMode";
 import { showFloatingAlert } from "./utils";
 import { AutosavesPage } from "./AutosavesPage"; // <-- import new class
@@ -173,9 +173,8 @@ export class MainMenu {
   async importLevel(): Promise<boolean> {
     const levelData = this.customLevelInput.value;
     try {
-      const level = parseWithMaps(levelData);
-      const validation = await validateLevelData(level);
-      if (validation === null) {
+      const level = parseLevelData(levelData);
+      if (level) {
         if (this.onLoadLevel) {
           this.onLoadLevel(level);
         }
@@ -184,6 +183,7 @@ export class MainMenu {
         }
         return true;
       } else {
+        const validation = validateLevelData(level);
         showFloatingAlert("Invalid Level- see validation error below", 30, "20px");
         this.validationError.textContent = validation;
         this.validationError.style.display = 'block';
@@ -201,12 +201,10 @@ export class MainMenu {
       const response = await fetch(`/levels/${levelFile}`);
       if (!response.ok) return null;
       const levelData = await response.text();
-      const level = parseWithMaps(levelData);
-      const validation = await validateLevelData(level);
-      if (validation === null) {
+      const level = parseLevelData(levelData);
+      if (level) {
         return level as LevelDataV0;
       } else {
-        console.error('Level validation failed:', validation);
         return null;
       }
     } catch (error) {

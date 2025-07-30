@@ -81,7 +81,7 @@ export function levelDataFromVideo(videoId: string): LevelDataV0 {
 }
 
 // Generic JSON utilities for handling Maps and other non-serializable types
-export function stringifyWithMaps(obj: any): string {
+function stringifyWithMaps(obj: any): string {
   return JSON.stringify(obj, (key, value) => {
     if (value instanceof Map) {
       return {
@@ -93,7 +93,7 @@ export function stringifyWithMaps(obj: any): string {
   }, 2);
 }
 
-export function parseWithMaps(jsonString: string): any {
+function parseWithMaps(jsonString: string): any {
   return JSON.parse(jsonString, (key, value) => {
     if (value && typeof value === 'object' && value.__type === 'Map') {
       return new Map(value.entries);
@@ -106,26 +106,16 @@ export function stringifyLevelData(levelData: LevelDataV0): string {
   return stringifyWithMaps(levelData);
 }
 
-export function parseLevelData(jsonString: string): LevelDataV0 {
-  const parsed = JSON.parse(jsonString);
-  const attackIntervals = new Map<string, AttackInterval>();
-  if (parsed.attackIntervals) {
-    for (const [key, value] of Object.entries(parsed.attackIntervals)) {
-      attackIntervals.set(key, value as AttackInterval);
-    }
+export function parseLevelData(jsonString: string): LevelDataV0 | null {
+  const parsed = parseWithMaps(jsonString);
+  let validationError = validateLevelData(parsed);
+  if (validationError) {
+    showFloatingAlert(`Invalid level data: ${validationError}`, 30, "20px");
+    console.error("Level data validation failed:", validationError);
+    return null;
   }
-  const levelData = new LevelDataV0();
-  levelData.video = parsed.video || null;
-  levelData.attackData = parsed.attackData || [];
-  levelData.criticals = parsed.criticals || [];
-  levelData.attackIntervals = attackIntervals;
-  levelData.attackSchedule = parsed.attackSchedule || DEFAULT_ATTACK_SCHEDULE;
-  levelData.version = parsed.version || "0.0.0";
-  levelData.title = parsed.title || null;
-  levelData.arrowless = !!parsed.arrowless; // <-- Always set, fallback to false
-  levelData.bossDamageMultiplier = typeof parsed.bossDamageMultiplier === "number" ? parsed.bossDamageMultiplier : 1.0; // <-- parse
-  levelData.bossHealth = typeof parsed.bossHealth === "number" ? parsed.bossHealth : 1.0; // <-- parse
-  return levelData;
+
+  return parsed as LevelDataV0;
 }
 
 // Returns null if the level data is valid, otherwise returns an error message

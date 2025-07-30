@@ -1,7 +1,7 @@
 // main.ts
 
 import { Editor } from './editor';
-import { levelDataFromVideo, LevelDataV0, validateLevelData, BossState, BossScheduleResult, stringifyWithMaps, parseWithMaps } from './leveldata';
+import { levelDataFromVideo, LevelDataV0,  BossState, BossScheduleResult, stringifyLevelData,  } from './leveldata';
 import { Graphics } from './graphics';
 import { InputManager, InputDirection } from './inputmanager';
 import { BattleRenderer } from './battleRenderer';
@@ -185,7 +185,7 @@ export class VideoSouls {
 
   exportLevel() {
     // use the generic stringify function that handles Maps
-    const json = stringifyWithMaps(this.editor.level);
+    const json = stringifyLevelData(this.editor.level());
     // copy the link to the clipboard
     navigator.clipboard.writeText(json).then(() => {
       showFloatingAlert('Level data copied to clipboard.', 30, "20px");
@@ -290,7 +290,6 @@ export class VideoSouls {
 
     // hack: if we are in state menu play the video
     if (this.gameMode === GameMode.MENU) {
-      console.log("player state is", this.videoPlayer.getPlayerState());
       if (this.videoPlayer.getPlayerState() === YT.PlayerState.CUED || this.videoPlayer.getPlayerState() === YT.PlayerState.UNSTARTED) {
         this.videoPlayer.playVideo();
       }
@@ -305,7 +304,7 @@ export class VideoSouls {
   private setGameModeNow(mode: GameMode) {
     console.log("Setting game mode now to:", mode);
     // always sync the custom level input with the level data using generic stringify
-    this.elements.customLevelInput.value = stringifyWithMaps(this.editor.level());
+    this.elements.customLevelInput.value = stringifyLevelData(this.editor.level());
 
     // clear validation errors
     this.elements.validationError.textContent = '';
