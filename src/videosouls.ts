@@ -280,7 +280,7 @@ export class VideoSouls {
     // --- AUTOSAVE LOGIC ---
     if (this.gameMode === GameMode.EDITING) {
       const now = Date.now();
-      if (now - this.lastAutosaveTime > 5000) { // every 5 seconds
+      if (now - this.lastAutosaveTime > 1000) { // every 1 seconds
         this.doAutosave();
         this.lastAutosaveTime = now;
       }

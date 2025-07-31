@@ -51,16 +51,9 @@ export class LocalSave {
     if (this.autosaves.length === 0) {
       this.addAutosave(level);
     } else {
-      const last = this.autosaves.length - 1;
-      this.autosaves[last] = {
-        level,
-        timestamp: Date.now()
-      };
-      // Limit to 100 autosaves
-      if (this.autosaves.length > 100) {
-        this.autosaves = this.autosaves.slice(-100);
-      }
-      this.save();
+      // delete last autosave
+      this.autosaves = this.autosaves.slice(0, -1);
+      this.addAutosave(level);
     }
   }
 
