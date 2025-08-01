@@ -146,6 +146,7 @@ We support  ES5 JavaScript: internally we use this javascript interpreter for sa
 
 # TODO
 
+- rebindable controls (multiple parry buttons allowed)
 - in the park tree video
 - crits in ping pong player video
 - Auto special effects preprocessing on videos?

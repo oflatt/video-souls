@@ -73,10 +73,6 @@ export function getAttacksInInterval(level: LevelDataV0, startTime: number, endT
 export function levelDataFromVideo(videoId: string): LevelDataV0 {
   const level = new LevelDataV0();
   level.video = videoId;
-  level.arrowless = false; // <-- Always set
-  level.bossDamageMultiplier = 1.0; // <-- always set
-  level.bossHealth = 1.0; // <-- always set
-  level.criticals = []; // <-- always set
   return level;
 }
 

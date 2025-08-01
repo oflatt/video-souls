@@ -79,7 +79,7 @@
 /* --- Attack Marker --- */
 .attack-marker {
   position: absolute;
-  bottom: 20px;
+  bottom: 40px;
   --height: 35px;
   --marker-color: hsl(210, 70%, 40%);
   --highlight-color: hsl(210, 55%, 60%);
@@ -154,7 +154,8 @@
 /* Multiplier label for critical markers */
 .critical-marker .mult-label {
   position: absolute;
-  top: -22px;
+  top: -42px;
+  /* was -22px, move up by 20px */
   left: 50%;
   transform: translateX(-50%);
   color: #ffd700;
@@ -167,7 +168,8 @@
 /* Damage/multiplier input spinner for attack/critical markers */
 .damage-input {
   position: absolute;
-  top: -22px;
+  top: -42px;
+  /* was -22px, move up by 20px */
   left: 50%;
   transform: translateX(-50%);
   width: 48px;
@@ -191,7 +193,8 @@
 .interval-start,
 .interval-end {
   position: absolute;
-  bottom: 20px;
+  bottom: 40px;
+  /* was 20px, move up by 20px */
   height: 40px;
   width: 10px;
 }

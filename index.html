@@ -37,23 +37,25 @@
     <div id="floating-menu">
         <h1>Video Souls</h1>
         <div id="levels-container"></div>
-        <button id="community-levels-main-menu-button" class="big-menu-button">Community Levels</button>
-        <button id="autosaves-main-menu-button" class="big-menu-button">Autosaves</button>
+        <div id="main-menu-sidebyside-wrapper">
+            <button id="community-levels-main-menu-button" class="big-menu-button">Community Levels</button>
+            <button id="autosaves-main-menu-button" class="big-menu-button">Autosaves</button>
+        </div>
         <h2>New Custom Level</h2>
         <input id="video-url" type="text" placeholder="Enter YouTube video URL" />
         <button id="record-button">Edit New Custom Level</button>
         <h2>Custom Level</h2>
         <textarea id="custom-level-input">Level JSON Here</textarea>
-        <div style="display: flex; gap: 12px; align-items: center;">
+        <div id="custom-level-buttons-row">
             <button id="custom-level-play-button">Play</button>
             <button id="custom-level-edit-button">Edit</button>
             <button id="export-button">Export</button>
-            <a href="https://github.com/oflatt/video-souls#custom-javascript-documentation" target="_blank" style="font-size:18px;padding:8px 16px;background:#333;color:#ffd700;border-radius:6px;text-decoration:none;display:inline-block;margin-bottom:20px;">JS Docs</a>
+            <a id="js-docs-link" href="https://github.com/oflatt/video-souls#custom-javascript-documentation" target="_blank">JS Docs</a>
         </div>
         <textarea id="validation-error"></textarea>
         <!-- Settings section at the bottom of the menu -->
         <div id="main-menu-settings-section">
-            <h2 style="margin-bottom: 8px; text-align: center;">Settings</h2>
+            <h2 id="settings-title">Settings</h2>
             <div id="main-menu-volume-container">
                 <label for="main-menu-volume-slider">Volume</label>
                 <input id="main-menu-volume-slider" class="slider" type="range" min="0" max="100" />

@@ -509,6 +509,13 @@ function drawHealthBar(
   const healthPercent = Math.max(0, Math.min(1, currentHealth / maxHealth));
   const lastHealthPercent = Math.max(0, Math.min(1, lastHealth / maxHealth));
 
+  // Always show a sliver of green (or color) at the left
+  const minSliverPx = 4;
+  let currentHealthWidth = barWidth * healthPercent;
+  if (currentHealth > 0 && currentHealthWidth < minSliverPx) {
+    currentHealthWidth = minSliverPx;
+  }
+
   if (lostHealth > 0) {
     const delay = 0.5;
     let animatedLastHealth = lastHealthPercent;
@@ -516,12 +523,14 @@ function drawHealthBar(
       const decrementAmount = (timeSinceHealthChange - delay) / 5 / maxHealth;
       animatedLastHealth = Math.max(healthPercent, lastHealthPercent - decrementAmount);
     }
-    const lostHealthWidth = barWidth * animatedLastHealth;
+    let lostHealthWidth = barWidth * animatedLastHealth;
+    if (lastHealth > 0 && lostHealthWidth < minSliverPx) {
+      lostHealthWidth = minSliverPx;
+    }
     ctx.fillStyle = colorToString(adjustColorOpacity(color, 0.5));
     ctx.fillRect(xOffset + shakeOffsetX, yPos, lostHealthWidth, barHeight);
   }
 
-  const currentHealthWidth = barWidth * healthPercent;
   ctx.fillStyle = colorToString(color);
   ctx.fillRect(xOffset + shakeOffsetX, yPos, currentHealthWidth, barHeight);
 

@@ -35,6 +35,8 @@ export class Editor {
   controlsInfoVisible: boolean = true;
   hud: EditorHud;
   hudElement: HTMLElement;
+  private isDraggingPlaybackPoint: boolean = false;
+  private playbackPointElement: HTMLElement;
 
   constructor(level: LevelDataV0, _graphics: Graphics, videoPlayer: VideoPlayer) {
     this.zoom = 1.0;
@@ -91,6 +93,16 @@ export class Editor {
     // Wire up controls
     this.recordingControls = hudClone.querySelector<HTMLElement>("#recording-controls")!;
     this.playbackBar = hudClone.querySelector<HTMLElement>("#playback-bar")!;
+
+    // --- Playback point drag logic ---
+    this.playbackPointElement = document.querySelector<HTMLElement>("#playback-point")!;
+    if (this.playbackPointElement) {
+      this.playbackPointElement.style.cursor = "pointer";
+      this.playbackPointElement.addEventListener("mousedown", (e) => this.onPlaybackPointMouseDown(e));
+    }
+    // Listen for mousemove and mouseup globally
+    window.addEventListener("mousemove", (e) => this.onPlaybackPointMouseMove(e));
+    window.addEventListener("mouseup", (e) => this.onPlaybackPointMouseUp(e));
 
     this.markerManager = new MarkerManager(
       this.recordingControls.querySelector<HTMLElement>("#playback-bar-wrapper")!,
@@ -604,6 +616,36 @@ export class Editor {
     } else {
       this.changeScroll(event);
     }
+  }
+
+  private onPlaybackPointMouseDown(event: MouseEvent) {
+    if (event.button !== 0) return;
+    this.isDraggingPlaybackPoint = true;
+    event.preventDefault();
+    event.stopPropagation();
+    // Seek immediately to mouse position
+    this.seekPlaybackPointToMouse(event);
+  }
+
+  private onPlaybackPointMouseMove(event: MouseEvent) {
+    if (!this.isDraggingPlaybackPoint) return;
+    event.preventDefault();
+    this.seekPlaybackPointToMouse(event);
+  }
+
+  private onPlaybackPointMouseUp(event: MouseEvent) {
+    if (!this.isDraggingPlaybackPoint) return;
+    this.isDraggingPlaybackPoint = false;
+    event.preventDefault();
+  }
+
+  private seekPlaybackPointToMouse(event: MouseEvent) {
+    // Only allow seeking if mouse is over the playback bar area
+    const rect = this.playbackBar.getBoundingClientRect();
+    const x = Math.max(rect.left, Math.min(event.clientX, rect.right));
+    const px = x - rect.left;
+    const time = this.pxToTime(px);
+    this.markerManager.videoPlayer.seekTo(time, true);
   }
 }
 
