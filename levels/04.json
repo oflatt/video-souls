@@ -137,13 +137,7 @@
       "damage": 1
     }
   ],
-  "criticals": [
-    {
-      "time": 0,
-      "direction": 8,
-      "multiplier": 1.5
-    }
-  ],
+  "criticals": [],
   "attackIntervals": {
     "__type": "Map",
     "entries": [
@@ -194,29 +188,13 @@
           "end": 28.936828439632077,
           "name": "1"
         }
-      ],
-      [
-        "5",
-        {
-          "start": 9.028939002861023,
-          "end": 11.028939002861023,
-          "name": "5"
-        }
-      ],
-      [
-        "6",
-        {
-          "start": 10.942248063896178,
-          "end": 12.942248063896178,
-          "name": "6"
-        }
       ]
     ]
   },
   "attackSchedule": "\nreturn function(state) {\n  var currentInterval = state.availableIntervals[state.currentInterval];\n\n  // Check if we've reached or passed the end time of the current interval\n  if (state.currentTime >= currentInterval.end) {\n    var nextInterval = state.intervalNamesAlpha[Math.floor(Math.random() * state.intervalNamesAlpha.length)];\n\n    // pick again if the interval is the same as the current one\n    if (nextInterval === state.currentInterval) {\n      nextInterval = state.intervalNamesAlpha[Math.floor(Math.random() * state.intervalNamesAlpha.length)];\n    }\n    \n    return {\n      continueNormal: false,\n      transitionToInterval: nextInterval,\n      intervalOffset: 0\n    };\n  }\n  \n  // Continue with current behavior\n  return { continueNormal: true };\n}",
   "version": "0.0.0",
-  "title": "Ping Pong Pain ",
+  "title": null,
   "arrowless": false,
   "bossDamageMultiplier": 1,
-  "bossHealth": 5.5
+  "bossHealth": 3.5
 }

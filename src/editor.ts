@@ -225,6 +225,23 @@ export class Editor {
     let finalW = this.timeToPx(duration);
     this.playbackBar.style.width = `${finalW}px`;
 
+    // --- Update playback bar fill like YouTube ---
+    const playbackBarFilled = this.playbackBar.querySelector<HTMLElement>("#playback-bar-filled");
+    const playbackBarEmpty = this.playbackBar.querySelector<HTMLElement>("#playback-bar-empty");
+    const playbackPoint = document.querySelector<HTMLElement>("#playback-point")!;
+    // Use savedCursorTime if set, otherwise use video time
+    const cursorTime = this.markerManager.cursorTime();
+    // Use savedCursorTime if set, otherwise use video time
+    const playbackPointLeft = this.timeToPx(this.markerManager.cursorTime());
+    playbackPoint.style.left = `${playbackPointLeft}px`;
+
+    if (playbackBarFilled && playbackBarEmpty) {
+      const percent = Math.max(0, Math.min(1, duration ? cursorTime / duration : 0));
+      playbackBarFilled.style.width = `${percent * 100}%`;
+      playbackBarEmpty.style.width = `${(1 - percent) * 100}%`;
+      playbackBarEmpty.style.left = `${percent * 100}%`;
+    }
+
     // the recordins controls have a series of lines based on the zoom level using repeating linear gradient
     this.markerManager.playbackWrapper = this.recordingControls.querySelector<HTMLElement>("#playback-bar-wrapper")!;
     // lines every 1 second
@@ -280,12 +297,6 @@ export class Editor {
       element.style.left = `${left}px`;
       element.style.setProperty('--height', `50px`);
     }
-
-    // update the playback point
-    const playbackPoint = document.querySelector<HTMLElement>("#playback-point")!;
-    // Use savedCursorTime if set, otherwise use video time
-    const playbackPointLeft = this.timeToPx(this.markerManager.cursorTime());
-    playbackPoint.style.left = `${playbackPointLeft}px`;
 
     if (this.hud.titleInput.value) {
       this.markerManager.level.title = this.hud.titleInput.value; 
