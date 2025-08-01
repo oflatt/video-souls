@@ -1,146 +1,161 @@
 {
-  "video": "Do3pZk4YdZc",
+  "video": "HhsJ2VK_rhA",
   "attackData": [
     {
-      "time": 8.239362000000002,
-      "direction": 8,
-      "damage": 1
-    },
-    {
-      "time": 11.170191,
-      "direction": 6,
-      "damage": 1
-    },
-    {
-      "time": 13.686481000000002,
-      "direction": 6,
-      "damage": 1
-    },
-    {
-      "time": 16.053018000000005,
-      "direction": 6,
-      "damage": 1
-    },
-    {
-      "time": 17.088718,
+      "time": 5.813608574644571,
       "direction": 2,
       "damage": 1
     },
     {
-      "time": 17.949884,
+      "time": 7.31992241535859,
       "direction": 6,
       "damage": 1
     },
     {
-      "time": 18.743807000000004,
-      "direction": 2,
-      "damage": 1
-    },
-    {
-      "time": 23.511179000000002,
-      "direction": 0,
-      "damage": 1
-    },
-    {
-      "time": 25.499566,
-      "direction": 2,
-      "damage": 1
-    },
-    {
-      "time": 26.334831,
-      "direction": 0,
-      "damage": 1
-    },
-    {
-      "time": 27.444046999999994,
-      "direction": 2,
-      "damage": 1
-    },
-    {
-      "time": 28.180159000000003,
-      "direction": 0,
-      "damage": 1
-    },
-    {
-      "time": 30.112405000000003,
-      "direction": 8,
-      "damage": 1
-    },
-    {
-      "time": 32.51395399999997,
-      "direction": 3,
-      "damage": 1
-    },
-    {
-      "time": 33.79939999999999,
-      "direction": 5,
-      "damage": 1
-    },
-    {
-      "time": 37.979032999999994,
-      "direction": 0,
-      "damage": 1
-    },
-    {
-      "time": 43.570257,
-      "direction": 6,
-      "damage": 1
-    },
-    {
-      "time": 44.177345,
-      "direction": 2,
-      "damage": 1
-    },
-    {
-      "time": 44.896505000000005,
-      "direction": 6,
-      "damage": 1
-    },
-    {
-      "time": 46.14201200000001,
-      "direction": 1,
-      "damage": 1
-    },
-    {
-      "time": 46.84721100000002,
+      "time": 10.352635675336895,
       "direction": 7,
       "damage": 1
     },
     {
-      "time": 47.44259099999999,
-      "direction": 1,
+      "time": 13.56725105232736,
+      "direction": 8,
+      "damage": 0.7
+    },
+    {
+      "time": 13.817251052327364,
+      "direction": 8,
+      "damage": 0.7
+    },
+    {
+      "time": 14.067251052327368,
+      "direction": 8,
+      "damage": 0.7
+    },
+    {
+      "time": 14.317251052327371,
+      "direction": 8,
+      "damage": 0.7
+    },
+    {
+      "time": 14.617251052327376,
+      "direction": 8,
+      "damage": 0.7
+    },
+    {
+      "time": 17.562277771983286,
+      "direction": 2,
+      "damage": 0.6
+    },
+    {
+      "time": 17.879497492982587,
+      "direction": 2,
+      "damage": 0.6
+    },
+    {
+      "time": 18.17949749298259,
+      "direction": 2,
+      "damage": 0.6
+    },
+    {
+      "time": 18.479497492982595,
+      "direction": 2,
+      "damage": 0.6
+    },
+    {
+      "time": 18.7794974929826,
+      "direction": 2,
+      "damage": 0.6
+    },
+    {
+      "time": 20.27949749298262,
+      "direction": 3,
       "damage": 1
     },
     {
-      "time": 48.96860599999997,
-      "direction": 1,
+      "time": 21.779497492982642,
+      "direction": 7,
       "damage": 1
     },
     {
-      "time": 50.2686059999999,
-      "direction": 1,
-      "damage": 1
-    },
-    {
-      "time": 53.745256,
-      "direction": 6,
-      "damage": 1
-    },
-    {
-      "time": 55.388358,
+      "time": 24.47949749298268,
       "direction": 2,
       "damage": 1
     },
     {
-      "time": 57.65371100000004,
+      "time": 26.479497492982702,
       "direction": 6,
+      "damage": 1
+    },
+    {
+      "time": 26.92949749298271,
+      "direction": 2,
+      "damage": 1
+    },
+    {
+      "time": 27.329497492982714,
+      "direction": 6,
+      "damage": 1
+    },
+    {
+      "time": 29.653025216938225,
+      "direction": 2,
+      "damage": 0.6
+    },
+    {
+      "time": 29.92949749298275,
+      "direction": 2,
+      "damage": 0.6
+    },
+    {
+      "time": 30.229497492982755,
+      "direction": 2,
+      "damage": 0.6
+    },
+    {
+      "time": 30.52949749298276,
+      "direction": 2,
+      "damage": 0.6
+    },
+    {
+      "time": 30.829497492982764,
+      "direction": 2,
+      "damage": 0.6
+    },
+    {
+      "time": 32.779497492982735,
+      "direction": 7,
       "damage": 1
     }
   ],
   "criticals": [
     {
-      "time": 0,
+      "time": 8.757154,
+      "direction": 3,
+      "multiplier": 1.5
+    },
+    {
+      "time": 15.330663,
       "direction": 8,
+      "multiplier": 1.5
+    },
+    {
+      "time": 16.830663,
+      "direction": 1,
+      "multiplier": 1.5
+    },
+    {
+      "time": 23.330663,
+      "direction": 6,
+      "multiplier": 1.5
+    },
+    {
+      "time": 27.830663,
+      "direction": 6,
+      "multiplier": 1.5
+    },
+    {
+      "time": 28.280663000000008,
+      "direction": 2,
       "multiplier": 1.5
     }
   ],
@@ -148,75 +163,35 @@
     "__type": "Map",
     "entries": [
       [
-        "intro",
-        {
-          "start": 0,
-          "end": 9.479048697621744,
-          "name": "intro"
-        }
-      ],
-      [
-        "0",
-        {
-          "start": 9.475223084840554,
-          "end": 20.71250519949356,
-          "name": "0"
-        }
-      ],
-      [
         "2",
         {
-          "start": 28.891118809566457,
-          "end": 39.496719385230094,
+          "start": 4.694485842026825,
+          "end": 33.3532041728763,
           "name": "2"
         }
       ],
       [
-        "3",
+        "intro",
         {
-          "start": 39.536103,
-          "end": 51.73139340355053,
-          "name": "3"
+          "start": 0.17883755588673622,
+          "end": 4.783904619970194,
+          "name": "intro"
         }
       ],
       [
         "death",
         {
-          "start": 51.73139340355053,
-          "end": 61.173370091602166,
+          "start": 64.38152011922504,
+          "end": 68.31594634873323,
           "name": "death"
-        }
-      ],
-      [
-        "1",
-        {
-          "start": 20.728548,
-          "end": 28.936828439632077,
-          "name": "1"
-        }
-      ],
-      [
-        "5",
-        {
-          "start": 9.028939002861023,
-          "end": 11.028939002861023,
-          "name": "5"
-        }
-      ],
-      [
-        "6",
-        {
-          "start": 10.942248063896178,
-          "end": 12.942248063896178,
-          "name": "6"
         }
       ]
     ]
   },
   "attackSchedule": "\nreturn function(state) {\n  var currentInterval = state.availableIntervals[state.currentInterval];\n\n  // Check if we've reached or passed the end time of the current interval\n  if (state.currentTime >= currentInterval.end) {\n    var nextInterval = state.intervalNamesAlpha[Math.floor(Math.random() * state.intervalNamesAlpha.length)];\n\n    // pick again if the interval is the same as the current one\n    if (nextInterval === state.currentInterval) {\n      nextInterval = state.intervalNamesAlpha[Math.floor(Math.random() * state.intervalNamesAlpha.length)];\n    }\n    \n    return {\n      continueNormal: false,\n      transitionToInterval: nextInterval,\n      intervalOffset: 0\n    };\n  }\n  \n  // Continue with current behavior\n  return { continueNormal: true };\n}",
   "version": "0.0.0",
-  "title": "Ping Pong Pain ",
+  "title": "Rice Cooker",
   "arrowless": false,
   "bossDamageMultiplier": 1,
-  "bossHealth": 5.5
+  "bossHealth": 3
 }
