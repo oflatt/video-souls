@@ -137,7 +137,23 @@
       "damage": 1
     }
   ],
-  "criticals": [],
+  "criticals": [
+    {
+      "time": 21.709777,
+      "direction": 4,
+      "multiplier": 1.5
+    },
+    {
+      "time": 35.903181,
+      "direction": 1,
+      "multiplier": 1.5
+    },
+    {
+      "time": 40.921498,
+      "direction": 2,
+      "multiplier": 1.5
+    }
+  ],
   "attackIntervals": {
     "__type": "Map",
     "entries": [
