@@ -98,13 +98,17 @@ export class Editor {
       videoPlayer // <-- pass videoPlayer to MarkerManager
     );
 
-    // Add mousewheel event listeners for zoom/scroll
-    this.recordingControls.addEventListener("mousewheel", (event) => {
-      this.handleMouseWheelEvent(event);
-    }, { passive: false });
-    // Firefox
-    this.recordingControls.addEventListener("DOMMouseScroll", (event) => {
-      this.handleDomMouseScrollEvent(event);
+    // Listen for mouse wheel globally for zoom/scroll in editor
+    window.addEventListener("wheel", (event) => {
+      // Only zoom/scroll if in editing mode and the editor HUD is visible
+      if (this.hudElement && this.hudElement.style.display === "flex") {
+        if (event.ctrlKey) {
+          event.preventDefault();
+          this.changeZoom(event as WheelEvent);
+        } else {
+          this.changeScroll(event as WheelEvent);
+        }
+      }
     }, { passive: false });
 
     this.playbackBar.addEventListener("click", (event) => {

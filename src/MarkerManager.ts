@@ -117,18 +117,21 @@ export class MarkerManager {
   }
 
   intervalMouseDown(interval: AttackInterval, isStart: boolean) {
-    this.savedCursorTime = null;
+    // Save the current cursor time at drag start
+    this.savedCursorTime = this.cursorTime();
     this.selectInterval(interval, isStart);
     this.dragged = new DraggedInterval(interval, isStart);
   }
 
   attackMouseDown(attack: AttackData) {
+    // Save the current cursor time at drag start
     this.savedCursorTime = this.cursorTime();
     this.selectAttack(attack);
     this.dragged = new DraggedAttack(attack);
   }
 
   criticalMouseDown(crit: CriticalData) {
+    // Save the current cursor time at drag start
     this.savedCursorTime = this.cursorTime();
     this.selectCritical(crit);
     this.dragged = new DraggedCritical(crit);

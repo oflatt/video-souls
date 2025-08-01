@@ -324,6 +324,22 @@ export class VideoSouls {
       this.videoPlayer.setPlaybackRate(speed);
     }
 
+    // --- Video zoom/pan logic for main menu ---
+    const iframe = this.videoPlayer.getIframe();
+    if (iframe) {
+      if (mode === GameMode.MENU) {
+        // Zoom in (scale up) and pan right (translateX)
+        iframe.style.transition = "transform 0.5s cubic-bezier(.4,2,.6,1)";
+        iframe.style.transform = "scale(1.5) translateX(10%)";
+        iframe.style.transformOrigin = "center center";
+      } else {
+        // Reset zoom/pan
+        iframe.style.transition = "transform 0.5s cubic-bezier(.4,2,.6,1)";
+        iframe.style.transform = "scale(1) translateX(0)";
+        iframe.style.transformOrigin = "center center";
+      }
+    }
+
     // if the new mode is battle end, show the battle end hud
     if (mode === GameMode.BATTLE_END) {
       // Only create HUD when entering battle end
