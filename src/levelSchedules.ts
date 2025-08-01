@@ -127,9 +127,9 @@ return function(state) {
       }
     }
 
-    // If not low health and weighted is empty (all intervals were "3"), fallback to all intervals
+    // If not low health and weighted is empty (all intervals were "3"), fallback to all intervals except "3"
     if (weighted.length === 0) {
-      weighted = intervals.filter(x => x !== "3");
+      weighted = intervals.filter(function(x) { return x !== "3"; });
       // If still empty, fallback to all intervals
       if (weighted.length === 0) weighted = intervals.slice();
     }
