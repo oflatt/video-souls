@@ -122,9 +122,10 @@ export class BattleLogic {
 
     let damageMult = ATTACK_COMBO_DAMAGE_MULT[battle.hitCombo % ATTACK_COMBO_DAMAGE_MULT.length];
     damageMult *= battle.currentCritical!.multiplier;
+
+    battle.lastBossHealth = battle.bossHealth;
     battle.bossHealth -= 0.1 * damageMult;
     battle.timeSinceBossHit = 0;
-    battle.lastBossHealth = battle.bossHealth;
     battle.criticalAnimParticles = {
       t: 0,
       particles: Array.from({ length: 7 }, (_, i) => ({
