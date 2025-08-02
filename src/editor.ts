@@ -1,4 +1,3 @@
-// TODO file too big
 import typia from "typia";
 
 import { Graphics } from './graphics';
@@ -16,6 +15,7 @@ import {
 import { EditorHud } from './editorHud';
 import { DraggedAttack, DraggedCritical, DraggedInterval, IntervalElements, MarkerManager } from './MarkerManager';
 import { frameIndex } from './utils'; // <-- import from utils
+import { LocalSave } from './LocalSave'; // <-- add import
 
 const PLAYBACK_BAR_PADDING = 20;
 
@@ -138,6 +138,18 @@ export class Editor {
 
     this.hud = new EditorHud();
     this.markerManager.savedCursorTime = null; // <-- initialize in markerManager
+
+    // Save editor speed slider changes to settings
+    const speedSlider = hudClone.querySelector<HTMLInputElement>("#editor-speed-slider");
+    if (speedSlider) {
+      speedSlider.addEventListener("input", () => {
+        const value = Number(speedSlider.value);
+        // Save to settings and persist
+        const settings = LocalSave.load();
+        settings.editorVideoSpeed = value;
+        settings.save();
+      });
+    }
   }
 
   level() : LevelDataV0 {
@@ -400,7 +412,6 @@ export class Editor {
       this.markerManager.videoPlayer.seekTo(time, true);
     }
 
-    // now check if there is a "death" attack interval, if not, add one
     var deathInterval = this.markerManager.level.attackIntervals.get("death");
     var introInterval = this.markerManager.level.attackIntervals.get("intro");
     var hasNonSpecialInterval = false;
