@@ -179,6 +179,10 @@ export class VideoSouls {
       this.editor.draw(this.inputManager.mouseX, this.inputManager.mouseY);
     }
 
+    // draw health bars only if showing death or win screen
+    if (this.gameMode === GameMode.BATTLE_END) {
+      this.battleRenderer.drawHealthBarsOnly(this.battle, this.editor.level(), false); // <-- don't show sliver
+    }
 
     requestAnimationFrame(this.mainLoop.bind(this));
   }
@@ -353,15 +357,14 @@ export class VideoSouls {
       if (this.battleEndHudElement) this.battleEndHudElement.style.display = "none";
     }
 
-    // reset the sword state
-    this.battle = initialBattleState();
-    // Set bossHealth from level data
-    this.battle.bossHealth = this.editor.level().bossHealth;
-    this.battle.lastBossHealth = this.editor.level().bossHealth;
-
-    // if the new mode is game, show the game hud
+    // if the new mode is game, show the game hud and reset battle state
     if (mode === GameMode.PLAYING) {
       this.elements.gameHUD.style.display = 'flex';
+      // reset the sword state
+      this.battle = initialBattleState();
+      // Set bossHealth from level data
+      this.battle.bossHealth = this.editor.level().bossHealth;
+      this.battle.lastBossHealth = this.editor.level().bossHealth;
     } else {
       this.elements.gameHUD.style.display = 'none';
     }

@@ -347,6 +347,35 @@ export class BattleRenderer {
     );
   }
 
+  drawHealthBarsOnly(
+    battle: BattleState,
+    level: LevelDataV0,
+    showSliver: boolean
+  ) {
+    // Draw boss health bar
+    drawHealthBar(
+      this.canvas,
+      0.05,
+      { r: 255, g: 0, b: 0 },
+      battle.bossHealth,
+      battle.timeSinceBossHit,
+      battle.lastBossHealth,
+      level.bossHealth,
+      showSliver
+    );
+    // Draw player health bar
+    drawHealthBar(
+      this.canvas,
+      0.9,
+      { r: 0, g: 255, b: 0 },
+      battle.playerHealth,
+      battle.timeSincePlayerHit,
+      battle.lastPlayerHealth,
+      1.0,
+      showSliver
+    );
+  }
+
   drawCanvas(
     currentTime: number,
     prevTime: number,
@@ -363,25 +392,7 @@ export class BattleRenderer {
 
     animateBossName(youtubeVideoName, this.canvas, currentTime, 0.15);
 
-    // Use level.bossHealth for max health
-    drawHealthBar(
-      this.canvas,
-      0.05,
-      { r: 255, g: 0, b: 0 },
-      battle.bossHealth,
-      battle.timeSinceBossHit,
-      battle.lastBossHealth,
-      this.level.bossHealth
-    );
-    drawHealthBar(
-      this.canvas,
-      0.9,
-      { r: 0, g: 255, b: 0 },
-      battle.playerHealth,
-      battle.timeSincePlayerHit,
-      battle.lastPlayerHealth,
-      1.0
-    );
+    this.drawHealthBarsOnly(battle, level, true); // <-- always show sliver in gameplay
   }
 
   private drawCenteredRotated(image: HTMLImageElement | HTMLCanvasElement, xpos: number, ypos: number, angle: number, alpha: number, xscale: number, yscale: number) {
@@ -488,7 +499,8 @@ function drawHealthBar(
   currentHealth: number,
   timeSinceHealthChange: number,
   lastHealth: number,
-  maxHealth: number = 1.0 // <-- new param
+  maxHealth: number = 1.0, // <-- new param
+  showSliver: boolean = true // <-- new param
 ) {
   const ctx = canvas.getContext('2d')!;
   const barWidth = canvas.width * 0.8;
@@ -512,7 +524,7 @@ function drawHealthBar(
   // Always show a sliver of green (or color) at the left
   const minSliverPx = 4;
   let currentHealthWidth = barWidth * healthPercent;
-  if (currentHealth > 0 && currentHealthWidth < minSliverPx) {
+  if (showSliver && currentHealth > 0 && currentHealthWidth < minSliverPx) {
     currentHealthWidth = minSliverPx;
   }
 
@@ -524,7 +536,7 @@ function drawHealthBar(
       animatedLastHealth = Math.max(healthPercent, lastHealthPercent - decrementAmount);
     }
     let lostHealthWidth = barWidth * animatedLastHealth;
-    if (lastHealth > 0 && lostHealthWidth < minSliverPx) {
+    if (showSliver && lastHealth > 0 && lostHealthWidth < minSliverPx) {
       lostHealthWidth = minSliverPx;
     }
     ctx.fillStyle = colorToString(adjustColorOpacity(color, 0.5));
