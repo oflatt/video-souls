@@ -207,7 +207,7 @@ export class MainMenu {
   private async getLevelFiles(): Promise<string[]> {
     const levelFiles: string[] = [];
     const maxLevels = 50;
-    for (let i = 1; i <= maxLevels; i++) {
+    for (let i = 0; i <= maxLevels; i++) {
       const filename = `${i.toString().padStart(2, '0')}.json`;
       try {
         const response = await fetch(`/levels/${filename}`, { method: 'HEAD' });

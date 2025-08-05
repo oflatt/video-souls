@@ -153,7 +153,47 @@ return function(state) {
 };
 `;
 
-// Usage: ts-node src/scheduleExamples.ts
+export const TUTORIAL_SCHEDULE = `
+var tutorialStep = 0;
+var orderedIntervals = ["intro", "0", "1", "3", "2", "4", "6", "7"];
+
+return function(state) {
+  var currentIntervalName = state.currentInterval;
+  var currentInterval = state.availableIntervals[currentIntervalName];
+
+  // Wait until current interval ends
+  if (state.currentTime >= currentInterval.end) {
+    // Check if we need to validate parryOrBlockCombo
+    if ((currentIntervalName === "0" && state.parryOrBlockCombo < 2) ||
+        ((currentIntervalName === "3" || currentIntervalName === "4" || currentIntervalName === "7") &&
+         state.parryOrBlockCombo < 1)) {
+      return { continueNormal: false, transitionToInterval: currentIntervalName, intervalOffset: 0 }; // Wait until parry requirement met
+    }
+
+    // Advance to next step or to death
+    tutorialStep++;
+    if (tutorialStep >= orderedIntervals.length) {
+      return {
+        continueNormal: false,
+        transitionToInterval: "death",
+        intervalOffset: 0
+      };
+    }
+
+    var next = orderedIntervals[tutorialStep];
+    return {
+      continueNormal: false,
+      transitionToInterval: next,
+      intervalOffset: 0
+    };
+  }
+
+  // Continue current interval
+  return { continueNormal: true };
+};
+`
+
+// Usage: ts-node src/levelSchedules.ts
 
 import * as fs from "fs";
 import * as path from "path";
@@ -168,9 +208,9 @@ function copyLevel(target: string, schedule: string, label: string) {
   const data = JSON.parse(json);
   data.attackSchedule = schedule;
   fs.writeFileSync(target, JSON.stringify(data, null, 2), "utf8");
-  console.log(`Copied ${label} level script to ${target}`);
 }
 
 copyLevel(targetPath, ZOMBIE_ATTACK_SCHEDULE, "zombie");
 copyLevel(crabTargetPath, CRAB_ATTACK_SCHEDULE, "crab");
 copyLevel(path.resolve(__dirname, "../levels/04.json"), PING_PONG_PLAYER_SCHEDULE, "ping pong player");
+copyLevel(path.resolve(__dirname, "../levels/00.json"), TUTORIAL_SCHEDULE, "tutorial");

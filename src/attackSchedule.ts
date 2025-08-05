@@ -116,7 +116,16 @@ export class AttackSchedule {
         availableIntervals: availableIntervalsObj,
         intervalNamesAlpha: intervalNamesAlpha,
         intervalNamesByStart: intervalNamesByStart,
-        intervalNamesByEnd: intervalNamesByEnd
+        intervalNamesByEnd: intervalNamesByEnd,
+        // --- Add extra fields ---
+        hitCombo: battle.hitCombo,
+        parryCombo: battle.parryCombo,
+        parryOrBlockCombo: battle.parryOrBlockCombo,
+        timeSinceLastHit: battle.timeSinceLastHit,
+        timeSincePlayerHit: battle.timeSincePlayerHit,
+        timeSinceBossHit: battle.timeSinceBossHit,
+        currentCriticalDir: battle.currentCritical ? battle.currentCritical.direction : null,
+        currentCriticalTimeLeft: battle.currentCritical ? battle.currentCritical.timeLeft : null
       };
 
       // Pass bossState as a global variable

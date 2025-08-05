@@ -22,6 +22,8 @@ export type BattleState = {
   anim: BattleAnim,
   timeSinceLastParry: number;
   hitCombo: number,
+  parryCombo: number,
+  parryOrBlockCombo: number,
   timeSinceLastHit: number, 
   bufferedInput: string | null,
   playerHealth: number,
@@ -64,16 +66,18 @@ const directionNumToSwordPos = new Map<number, [number, number]>([
 export function initialBattleState(): BattleState {
   return {
     anim: new BattleAnim(),
+    timeSinceLastParry: 1000,  // Large initial value
+    hitCombo: 0,
+    parryCombo: 0,
+    parryOrBlockCombo: 0,
+    timeSinceLastHit: 1000,  // Large initial value
     bufferedInput: null,
     playerHealth: 1.0,
     lastPlayerHealth: 1.0,
-    timeSinceLastParry: 1000,  // Large initial value
     timeSincePlayerHit: 1000,  // Large initial value
     bossHealth: 1.0,
     lastBossHealth: 1.0,
     timeSinceBossHit: 1000,  // Large initial value
-    hitCombo: 0,
-    timeSinceLastHit: 1000,  // Large initial value
     currentInterval: "intro",
     currentCritical: null,
     criticalAnimParticles: undefined,

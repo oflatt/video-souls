@@ -194,6 +194,7 @@ export class BattleRenderer {
     var swordAngle = battle.anim.endAngle;
     var redSwordOutlineStrength = 0.0;
     var greenSwordOutlineStrength = 0.0;
+    var orangeSwordOutlineStrength = 0.0; // <-- new variable
     var xscale = 1.0;
     var yscale = 1.0;
   
@@ -231,6 +232,15 @@ export class BattleRenderer {
       greenSwordOutlineStrength = Math.sqrt(1.0 - (battle.timeSinceLastParry / SUCCESS_PARRY_ANIM_FADE));
     }
 
+    // Orange glow for block (parryOrBlockCombo > 0, parryCombo == 0, and recent hit)
+    if (
+      battle.parryOrBlockCombo > 0 &&
+      battle.parryCombo == 0 &&
+      battle.timeSincePlayerHit < SUCCESS_PARRY_ANIM_FADE
+    ) {
+      orangeSwordOutlineStrength = Math.sqrt(1.0 - (battle.timeSincePlayerHit / SUCCESS_PARRY_ANIM_FADE));
+    }
+
     // Center horizontally, offset using height for symmetry, scale by 1.5
     const topLeftX = this.canvas.width / 2 + 1.5 * this.canvas.height * (swordPos[0] - 0.5);
     const topLeftY = this.canvas.height * swordPos[1];
@@ -257,6 +267,22 @@ export class BattleRenderer {
       xscale * swordScale,
       yscale * swordScale
     );
+    // Draw orange outline for block
+    if (orangeSwordOutlineStrength > 0) {
+      // Use yellowOutline sprite, but tint orange
+      const ctx = this.canvas.getContext('2d')!;
+      ctx.save();
+      ctx.globalAlpha = orangeSwordOutlineStrength;
+      ctx.translate(swordOutlineX, this.canvas.height - swordOutlineY);
+      ctx.rotate(-(swordAngle - Math.PI / 2));
+      ctx.scale(xscale * swordScale, yscale * swordScale);
+      ctx.drawImage(graphics.swordSprites.yellowOutline, -graphics.swordSprites.yellowOutline.width / 2, -graphics.swordSprites.yellowOutline.height / 2);
+      // Overlay orange tint
+      ctx.globalCompositeOperation = "source-atop";
+      ctx.fillStyle = "rgba(255,140,0,0.7)";
+      ctx.fillRect(-graphics.swordSprites.yellowOutline.width / 2, -graphics.swordSprites.yellowOutline.height / 2, graphics.swordSprites.yellowOutline.width, graphics.swordSprites.yellowOutline.height);
+      ctx.restore();
+    }
     this.drawCenteredRotated(
       graphics.swordSprites.default,
       topLeftX,

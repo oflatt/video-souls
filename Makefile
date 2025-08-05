@@ -1,5 +1,5 @@
 # serve is phony
-.PHONY: build install serve
+.PHONY: build install serve level-schedules
 
 # Define the target to start the server
 build:
@@ -8,6 +8,10 @@ build:
 
 install:
 	npm install
+
+
+level-schedules:
+	ts-node src/levelSchedules.ts
 
 
 serve:

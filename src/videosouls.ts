@@ -301,12 +301,10 @@ export class VideoSouls {
   }
 
   setGameMode(mode: GameMode) {
-    console.log("Setting game mode to:", mode);
     this.events.push(new EventData(EventType.SetGameMode, mode));
   }
 
   private setGameModeNow(mode: GameMode) {
-    console.log("Setting game mode now to:", mode);
     // always sync the custom level input with the level data using generic stringify
     this.elements.customLevelInput.value = stringifyLevelData(this.editor.level());
 

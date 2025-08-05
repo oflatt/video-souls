@@ -151,6 +151,7 @@ We support  ES5 JavaScript: internally we use this javascript interpreter for sa
 - rebindable controls (multiple parry buttons allowed)
 - ability to change things like health and other stats in the level editor
 - in the park tree video
+- give ranks for levels (combination of time and times hit, author time part of calculation)
 - crits tutorial
   How to do critical hits, and what do they do
     they give you more damage and a quicker attack

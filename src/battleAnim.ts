@@ -86,7 +86,7 @@ export class BattleAnim {
     anim.startPos = [...pos];
     anim.endPos = [...pos];
     anim.startAngle = angle;
-    anim.endAngle = angle - (Math.PI / 10);
+    anim.endAngle = angle + (Math.PI / 10);
     anim.startYScale = 1.0;
     anim.endYScale = 1.0;
     anim.startXScale = 1.0;

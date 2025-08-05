@@ -39,7 +39,7 @@ export class BattleLogic {
     const attacks = getAttacksInInterval(this.level, prevTime, currentTime);
     if (attacks.length > 0) {
       const attack = attacks[0];
-      
+
       if (
         battle.anim.state === AttackAnimation.PARRYING &&
         inputManager.getCurrentTargetDirection() === attack.direction
@@ -51,10 +51,10 @@ export class BattleLogic {
         const blockWindowProportion = BLOCK_WINDOW / parryTotalDuration;
         if (parryProgress < parryWindowProportion) {
           this.successParry(battle, currentTime);
-        }  else if (parryProgress < blockWindowProportion) {
+        } else if (parryProgress < blockWindowProportion) {
           this.blockAttack(battle, attack.damage);
         }
-        
+
         else {
           this.playerTakeDamage(battle, attack.damage);
         }
@@ -258,17 +258,21 @@ export class BattleLogic {
     battle.anim.state = AttackAnimation.NONE;
     // recent missed parries reset
     battle.numRecentMissedParries = 0;
+    battle.parryCombo += 1;
+    battle.parryOrBlockCombo += 1;
   }
 
-  
+
   // take half damage, cancel animation
   private blockAttack(battle: BattleState, attackDamage: number) {
-    this.audio.playBlockedSound(); 
+    this.audio.playBlockedSound();
     battle.lastPlayerHealth = battle.playerHealth;
     battle.playerHealth -= 0.2 * attackDamage * 0.1 * this.level.bossDamageMultiplier;
     battle.anim.state = AttackAnimation.NONE;
     // recent missed parries reset
     battle.numRecentMissedParries = 0;
+    battle.parryOrBlockCombo += 1; // <-- increment block combo
+    battle.parryCombo = 0; // <-- reset parry combo
   }
 
   private playerTakeDamage(battle: BattleState, attackDamage: number) {
@@ -278,6 +282,8 @@ export class BattleLogic {
     battle.playerHealth -= attackDamage * 0.1 * this.level.bossDamageMultiplier;
     battle.timeSincePlayerHit = 0;  // Reset duration
     battle.hitCombo = 0;
+    battle.parryCombo = 0; // <-- reset parry combo on hit
+    battle.parryOrBlockCombo = 0; // <-- reset block combo on hit
 
     // Move sword further and randomize angle
     const staggerDistance = 0.18; // increased from 0.1
