@@ -43,7 +43,7 @@ export class Graphics {
       let untinted = makeGlow(this.swordSprites.default, 0.1);
       this.swordSprites.yellowOutline = tintImage(untinted, [1.0, 1.0, 0.2]);
       this.swordSprites.greenOutline = tintImage(untinted, [0.2, 1.0, 0.2]);
-      this.swordSprites.orangeOutline = tintImage(untinted, [1.0, 0.55, 0.0]); // <-- precompute orange
+      this.swordSprites.orangeOutline = tintImage(untinted, [1.0, 0.55, 0.2]); // <-- precompute orange
     });
 
     const arrowImage = new Image();

@@ -32,6 +32,17 @@ The `state` object passed to your schedule function contains:
 - `intervalNamesByStart`: Array of interval names, sorted by start time.
 - `intervalNamesByEnd`: Array of interval names, sorted by end time.
 
+**Additional fields available for advanced scheduling:**
+
+- `hitCombo`: Current attack combo count (player's consecutive attacks).
+- `parryCombo`: Number of consecutive successful parries.
+- `parryOrBlockCombo`: Number of consecutive blocks or parries (resets on hit).
+- `timeSinceLastHit`: Time (seconds) since last player attack.
+- `timeSincePlayerHit`: Time (seconds) since player was last hit (blocks which cause chip damage don't count). 
+- `timeSinceBossHit`: Time (seconds) since boss was last hit.
+- `currentCriticalDir`: Direction of the current critical attack, or `null` if none.
+- `currentCriticalTimeLeft`: Time left (seconds) for the current critical attack, or `null` if none.
+
 ### Example: Simple Random Schedule
 
 This example picks a random interval (other than "intro" or "death") when the current interval ends.

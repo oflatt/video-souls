@@ -21,6 +21,7 @@ export type CriticalAnimParticles = {
 export type BattleState = {
   anim: BattleAnim,
   timeSinceLastParry: number;
+  timeSinceLastBlock: number;
   hitCombo: number,
   parryCombo: number,
   parryOrBlockCombo: number,
@@ -67,6 +68,7 @@ export function initialBattleState(): BattleState {
   return {
     anim: new BattleAnim(),
     timeSinceLastParry: 1000,  // Large initial value
+    timeSinceLastBlock: 1000,  // Large initial value
     hitCombo: 0,
     parryCombo: 0,
     parryOrBlockCombo: 0,
@@ -91,6 +93,7 @@ export function updateBattleTime(battle: BattleState, deltaTime: number) {
   battle.anim.timeElapsed += deltaTime;
   battle.anim.timeElapsed = Math.min(battle.anim.timeElapsed, battle.anim.duration); 
   battle.timeSinceLastParry += deltaTime;
+  battle.timeSinceLastBlock += deltaTime;
   battle.timeSinceLastHit += deltaTime;
   battle.timeSincePlayerHit += deltaTime;
   battle.timeSinceBossHit += deltaTime;

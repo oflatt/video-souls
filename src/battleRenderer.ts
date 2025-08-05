@@ -234,11 +234,9 @@ export class BattleRenderer {
 
     // Orange glow for block (parryOrBlockCombo > 0, parryCombo == 0, and recent hit)
     if (
-      battle.parryOrBlockCombo > 0 &&
-      battle.parryCombo == 0 &&
-      battle.timeSincePlayerHit < SUCCESS_PARRY_ANIM_FADE
+      battle.timeSinceLastBlock < SUCCESS_PARRY_ANIM_FADE
     ) {
-      orangeSwordOutlineStrength = Math.sqrt(1.0 - (battle.timeSincePlayerHit / SUCCESS_PARRY_ANIM_FADE));
+      orangeSwordOutlineStrength = Math.sqrt(1.0 - (battle.timeSinceLastBlock / SUCCESS_PARRY_ANIM_FADE));
     }
 
     // Center horizontally, offset using height for symmetry, scale by 1.5
@@ -416,6 +414,7 @@ export class BattleRenderer {
   }
 
   private drawCenteredRotated(image: HTMLImageElement | HTMLCanvasElement, xpos: number, ypos: number, angle: number, alpha: number, xscale: number, yscale: number) {
+    if (alpha < 0.01) return; // Skip if alpha is too low
     ypos = this.canvas.height - ypos;
     const ctx = this.canvas.getContext('2d')!;
     ctx.save();
