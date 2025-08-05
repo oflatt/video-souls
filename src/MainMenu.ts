@@ -7,7 +7,6 @@ import { AutosavesPage } from "./AutosavesPage"; // <-- import new class
 import { global } from './globalState';
 
 export class MainMenu {
-  settings: LocalSave;
   audio: AudioPlayer;
   volumeSlider: HTMLInputElement;
   soundEffectVolumeSlider: HTMLInputElement;
@@ -29,8 +28,7 @@ export class MainMenu {
   autosavesButton: HTMLButtonElement;
   autosavesPage: AutosavesPage | null = null; // <-- now stores instance
 
-  constructor() {
-    this.settings = LocalSave.load();
+  constructor(localSave: LocalSave) {
     this.audio = new AudioPlayer();
 
     this.volumeSlider = document.getElementById("main-menu-volume-slider") as HTMLInputElement;
@@ -49,24 +47,24 @@ export class MainMenu {
     this.videoUrlInput = document.getElementById("video-url") as HTMLInputElement;
     this.autosavesButton = document.getElementById("autosaves-main-menu-button") as HTMLButtonElement;
 
-    if (this.volumeSlider) this.volumeSlider.value = String(this.settings.videoVolume);
-    if (this.soundEffectVolumeSlider) this.soundEffectVolumeSlider.value = String(this.settings.soundEffectVolume);
+    if (this.volumeSlider) this.volumeSlider.value = String(localSave.videoVolume);
+    if (this.soundEffectVolumeSlider) this.soundEffectVolumeSlider.value = String(localSave.soundEffectVolume);
 
-    this.audio.setVolume(this.getNormalizedSoundEffectVolume());
+    this.audio.setVolume(localSave.getNormalizedSoundEffectVolume());
 
     if (this.volumeSlider) {
       this.volumeSlider.addEventListener("input", () => {
         const vol = Number(this.volumeSlider.value);
-        this.settings.videoVolume = vol;
+        global().localSave.videoVolume = vol;
         this.saveSettings();
       });
     }
     if (this.soundEffectVolumeSlider) {
       this.soundEffectVolumeSlider.addEventListener("input", () => {
         const sfxVol = Number(this.soundEffectVolumeSlider.value);
-        this.settings.soundEffectVolume = sfxVol;
-        this.saveSettings();
-        this.audio.setVolume(this.getNormalizedSoundEffectVolume());
+        global().localSave.soundEffectVolume = sfxVol;
+        global().localSave.save();
+        this.audio.setVolume(global().localSave.getNormalizedSoundEffectVolume());
       });
     }
 
@@ -106,7 +104,7 @@ export class MainMenu {
       this.autosavesButton.onclick = () => {
         if (!this.autosavesPage) {
           this.autosavesPage = new AutosavesPage(
-            this.settings.autosaves,
+            global().localSave.autosaves,
             () => {
               this.autosavesPage?.cleanup();
               this.autosavesPage = null;
@@ -124,16 +122,9 @@ export class MainMenu {
   }
 
   saveSettings() {
-    this.settings.save();
+    global().localSave.save();
   }
 
-  getNormalizedVolume(): number {
-    return this.settings.getNormalizedVolume();
-  }
-
-  getNormalizedSoundEffectVolume(): number {
-    return this.settings.getNormalizedSoundEffectVolume();
-  }
 
   cleanup() {
     if (this.autosavesPage) {

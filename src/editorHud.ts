@@ -62,6 +62,7 @@ export class EditorHud {
         global().videoPlayer.setPlaybackRate(val);
         if (this.speedValue) this.speedValue.textContent = `${val.toFixed(2)}x`;
         // Save to LocalSave
+        console.log("Saving editor video speed:", val);
         global().localSave.editorVideoSpeed = val;
         global().localSave.save();
       });

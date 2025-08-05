@@ -65,11 +65,11 @@ body {
   transform: translateX(-50%);
   bottom: 0;
   z-index: 9999;
-  width: 100vw;
+  width: 100%;
+  height: 10%;
   max-width: 700px;
   pointer-events: auto;
   background: none;
-  /* Only show when menu is visible */
   display: none;
 }
 

@@ -67,7 +67,8 @@ export class VideoSouls {
 
 
     this.events = [];
-    this.mainMenu = new MainMenu(); 
+    this.localSave = LocalSave.load();
+    this.mainMenu = new MainMenu(this.localSave); 
     this.mainMenu.onLoadLevel = (level: LevelDataV0) => {
       this.editor.markerManager.level = level;
       this.battleLogic = new BattleLogic(this.mainMenu.audio, level);
@@ -81,10 +82,9 @@ export class VideoSouls {
     this.battleLogic = new BattleLogic(this.mainMenu.audio, this.editor.level());
     this.gameMode = GameMode.MENU;
     this.battle = initialBattleState();
-    this.localSave = LocalSave.load();
 
     // Set initial sound effect volume
-    this.mainMenu.audio.setVolume(this.mainMenu.getNormalizedSoundEffectVolume());
+    this.mainMenu.audio.setVolume(this.localSave.getNormalizedSoundEffectVolume());
 
     this.needsFreshAutosave = true;
     this.lastAutosaveTime = Date.now();
@@ -149,7 +149,7 @@ export class VideoSouls {
 
 
     // keep the player's volume in sync with the settings
-    this.elements.player.setVolume(this.mainMenu.settings.videoVolume);
+    this.elements.player.setVolume(this.localSave.videoVolume);
 
     // Update battle time using the helper
     const deltaTime = this.videoPlayer.updateTime();
@@ -430,8 +430,8 @@ export class VideoSouls {
     this.gameMode = mode;
 
     // Always keep YouTube player volume in sync with settings
-    this.elements.player.setVolume(this.mainMenu.settings.videoVolume);
-    this.mainMenu.audio.setVolume(this.mainMenu.getNormalizedSoundEffectVolume()); // <-- use sound effect volume
+    this.elements.player.setVolume(this.localSave.videoVolume);
+    this.mainMenu.audio.setVolume(this.localSave.getNormalizedSoundEffectVolume()); // <-- use sound effect volume
 
     this.needsFreshAutosave = true; // <-- set flag when game state changes
   }
@@ -547,11 +547,11 @@ export class VideoSouls {
   private doAutosave() {
     const level = this.editor.level();
     if (this.isLevelEmpty(level)) return; // <-- skip autosave if empty
-    if (this.mainMenu.settings.autosaves.length === 0 || this.needsFreshAutosave) {
-      this.mainMenu.settings.addAutosave(level);
+    if (this.localSave.autosaves.length === 0 || this.needsFreshAutosave) {
+      this.localSave.addAutosave(level);
       this.needsFreshAutosave = false;
     } else {
-      this.mainMenu.settings.overwriteLastAutosave(level);
+      this.localSave.overwriteLastAutosave(level);
     }
   }
 }

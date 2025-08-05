@@ -23,6 +23,8 @@ export class LocalSave {
         s.soundEffectVolume = typeof obj.soundEffectVolume === "number" ? obj.soundEffectVolume : 60; 
         s.autosaves = Array.isArray(obj.autosaves) ? obj.autosaves : []; 
         s.editorVideoSpeed = typeof obj.editorVideoSpeed === "number" ? obj.editorVideoSpeed : 1; // <-- load
+        console.log("Obj:", obj);
+        console.log("Editor video speed:", s.editorVideoSpeed);
         console.log(s.autosaves);
         return s;
       }
@@ -31,6 +33,7 @@ export class LocalSave {
   }
 
   save() {
+    console.log("Saving LocalSave to localStorage: ", this.editorVideoSpeed);
     localStorage.setItem(LocalSave.STORAGE_KEY, JSON.stringify(this));
   }
 

@@ -157,7 +157,6 @@ We support  ES5 JavaScript: internally we use this javascript interpreter for sa
   If you are early on your parry you may still block most of the damage
   Spamming parry makes the parry end lag longer
 - editor tutorial
-- crits in ping pong player video
 - Auto special effects preprocessing on videos?
 - Different weapons
   - Different attack speeds/damage tradeoff
