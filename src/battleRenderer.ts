@@ -268,21 +268,15 @@ export class BattleRenderer {
       yscale * swordScale
     );
     // Draw orange outline for block
-    if (orangeSwordOutlineStrength > 0) {
-      // Use yellowOutline sprite, but tint orange
-      const ctx = this.canvas.getContext('2d')!;
-      ctx.save();
-      ctx.globalAlpha = orangeSwordOutlineStrength;
-      ctx.translate(swordOutlineX, this.canvas.height - swordOutlineY);
-      ctx.rotate(-(swordAngle - Math.PI / 2));
-      ctx.scale(xscale * swordScale, yscale * swordScale);
-      ctx.drawImage(graphics.swordSprites.yellowOutline, -graphics.swordSprites.yellowOutline.width / 2, -graphics.swordSprites.yellowOutline.height / 2);
-      // Overlay orange tint
-      ctx.globalCompositeOperation = "source-atop";
-      ctx.fillStyle = "rgba(255,140,0,0.7)";
-      ctx.fillRect(-graphics.swordSprites.yellowOutline.width / 2, -graphics.swordSprites.yellowOutline.height / 2, graphics.swordSprites.yellowOutline.width, graphics.swordSprites.yellowOutline.height);
-      ctx.restore();
-    }
+    this.drawCenteredRotated(
+      graphics.swordSprites.orangeOutline,
+      swordOutlineX,
+      swordOutlineY,
+      swordAngle - Math.PI / 2,
+      orangeSwordOutlineStrength,
+      xscale * swordScale,
+      yscale * swordScale
+    );
     this.drawCenteredRotated(
       graphics.swordSprites.default,
       topLeftX,

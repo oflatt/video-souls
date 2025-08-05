@@ -2,6 +2,8 @@ export class VideoPlayer {
   private player: YT.Player;
   private _prevTime: number = 0;
   private _currentTime: number = 0;
+  private _seeking: boolean = false;
+  private _beforeSeekTime: number = 0;
 
   constructor(player: YT.Player) {
     this.player = player;
@@ -20,6 +22,8 @@ export class VideoPlayer {
   }
 
   seekTo(inputs: number, allowSeekAhead: boolean): void {
+    this._seeking = true;
+    this._beforeSeekTime = this._currentTime; // Store the time before seeking
     let seconds = Math.min(Math.max(inputs, 0), this.getDuration());
     this.player.seekTo(seconds, allowSeekAhead);
     this._prevTime = seconds; // Update previous time when seeking
@@ -60,17 +64,21 @@ export class VideoPlayer {
   }
 
   updateTime(): number {
+    // HACK: if we are seeking, don't update unless the time has changed
+    if (this._seeking) {
+      if (Math.abs(this.player.getCurrentTime() - this._beforeSeekTime) < 0.15) {
+        return 0; // No significant change, return 0
+      } else {
+        this._seeking = false; // Reset seeking state after significant change
+      }
+    }
+
     this._prevTime = this._currentTime;
     this._currentTime = this.player.getCurrentTime() ?? 0;
     const deltaTime = this._currentTime - this._prevTime;
 
     // ensure prevTime is less than or equal to currentTime
     if (this._prevTime > this._currentTime) {
-      this._prevTime = this._currentTime;
-    }
-
-    // HACK: youtube player seeking is async, so for big jumps we want prevTime to track with currentTime
-    if (Math.abs(deltaTime) > 0.15) {
       this._prevTime = this._currentTime;
     }
 

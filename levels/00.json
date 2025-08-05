@@ -1,0 +1,122 @@
+{
+  "video": "LryZ-QOCmz8",
+  "attackData": [
+    {
+      "time": 75.397673,
+      "direction": 8,
+      "damage": 1
+    },
+    {
+      "time": 81.677109,
+      "direction": 8,
+      "damage": 1
+    },
+    {
+      "time": 124.89518899999999,
+      "direction": 6,
+      "damage": 1
+    },
+    {
+      "time": 145.07961700000004,
+      "direction": 4,
+      "damage": 1
+    },
+    {
+      "time": 183.61571700000005,
+      "direction": 7,
+      "damage": 1
+    }
+  ],
+  "criticals": [],
+  "attackIntervals": {
+    "__type": "Map",
+    "entries": [
+      [
+        "intro",
+        {
+          "start": 0,
+          "end": 68.84086804811605,
+          "name": "intro"
+        }
+      ],
+      [
+        "3",
+        {
+          "start": 121.85939220608414,
+          "end": 126.00216062752132,
+          "name": "3"
+        }
+      ],
+      [
+        "2",
+        {
+          "start": 125.98806957846881,
+          "end": 141.85744360066417,
+          "name": "2"
+        }
+      ],
+      [
+        "4",
+        {
+          "start": 141.83868435131205,
+          "end": 146.54725593869193,
+          "name": "4"
+        }
+      ],
+      [
+        "5",
+        {
+          "start": 146.80484000000007,
+          "end": 148.80484000000007,
+          "name": "5"
+        }
+      ],
+      [
+        "7",
+        {
+          "start": 179.29226443402607,
+          "end": 185.75324693615315,
+          "name": "7"
+        }
+      ],
+      [
+        "death",
+        {
+          "start": 185.75324693615315,
+          "end": 193.83342224098627,
+          "name": "death"
+        }
+      ],
+      [
+        "6",
+        {
+          "start": 148.7158569591339,
+          "end": 179.30629209444555,
+          "name": "6"
+        }
+      ],
+      [
+        "0",
+        {
+          "start": 68.77860345335795,
+          "end": 82.44817490747792,
+          "name": "0"
+        }
+      ],
+      [
+        "1",
+        {
+          "start": 82.46119578159471,
+          "end": 121.86146061695428,
+          "name": "1"
+        }
+      ]
+    ]
+  },
+  "attackSchedule": "\nvar tutorialStep = 0;\nvar orderedIntervals = [\"intro\", \"0\", \"1\", \"3\", \"2\", \"4\", \"6\", \"7\"];\n\nreturn function(state) {\n  var currentIntervalName = state.currentInterval;\n  var currentInterval = state.availableIntervals[currentIntervalName];\n\n  // Wait until current interval ends\n  if (state.currentTime >= currentInterval.end) {\n    // Check if we need to validate parryOrBlockCombo\n    if ((currentIntervalName === \"0\" && state.parryOrBlockCombo < 2) ||\n        ((currentIntervalName === \"3\" || currentIntervalName === \"4\" || currentIntervalName === \"7\") &&\n         state.parryOrBlockCombo < 1)) {\n      return { continueNormal: false, transitionToInterval: currentIntervalName, intervalOffset: 0 }; // Wait until parry requirement met\n    }\n\n    // Advance to next step or to death\n    tutorialStep++;\n    if (tutorialStep >= orderedIntervals.length) {\n      return {\n        continueNormal: false,\n        transitionToInterval: \"death\",\n        intervalOffset: 0\n      };\n    }\n\n    var next = orderedIntervals[tutorialStep];\n    return {\n      continueNormal: false,\n      transitionToInterval: next,\n      intervalOffset: 0\n    };\n  }\n\n  // Continue current interval\n  return { continueNormal: true };\n};\n",
+  "version": "0.0.0",
+  "title": "Tutorial",
+  "arrowless": false,
+  "bossDamageMultiplier": 1,
+  "bossHealth": 1.5
+}

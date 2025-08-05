@@ -3,6 +3,7 @@ export class Graphics {
     default: HTMLImageElement | HTMLCanvasElement,
     yellowOutline: HTMLImageElement | HTMLCanvasElement,
     greenOutline: HTMLImageElement | HTMLCanvasElement,
+    orangeOutline: HTMLImageElement | HTMLCanvasElement, // <-- add orange outline
   };
   arrowSprite: HTMLCanvasElement;
   xSprite: HTMLCanvasElement;
@@ -15,6 +16,7 @@ export class Graphics {
       default: new Image(),
       yellowOutline: new Image(),
       greenOutline: new Image(),
+      orangeOutline: new Image(), // <-- initialize orange outline
     };
     const swordImage = new Image();
     swordImage.src = 'sword.png';
@@ -41,6 +43,7 @@ export class Graphics {
       let untinted = makeGlow(this.swordSprites.default, 0.1);
       this.swordSprites.yellowOutline = tintImage(untinted, [1.0, 1.0, 0.2]);
       this.swordSprites.greenOutline = tintImage(untinted, [0.2, 1.0, 0.2]);
+      this.swordSprites.orangeOutline = tintImage(untinted, [1.0, 0.55, 0.0]); // <-- precompute orange
     });
 
     const arrowImage = new Image();

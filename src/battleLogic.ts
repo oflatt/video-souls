@@ -323,7 +323,6 @@ export class BattleLogic {
       currentTime,
       videoPlayer,
       attackIntervals,
-      this.level.attackSchedule // <-- pass for API compatibility, not used
     );
   }
 

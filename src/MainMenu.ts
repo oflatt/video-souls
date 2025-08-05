@@ -12,8 +12,6 @@ export class MainMenu {
   soundEffectVolumeSlider: HTMLInputElement;
   levelsContainer: HTMLDivElement;
   onLoadAndPlayLevel: ((level: LevelDataV0) => void) | null = null;
-  onLoadLevel: ((level: LevelDataV0) => void) | null = null; // <-- new callback
-  onSetGameMode: ((mode: GameMode) => void) | null = null;   // <-- new callback
   exitToMenuButton: HTMLButtonElement;
   gameEditLevelButton: HTMLButtonElement;
   customLevelInput: HTMLInputElement;
@@ -71,24 +69,24 @@ export class MainMenu {
     // Wire up Exit to Menu button
     if (this.exitToMenuButton) {
       this.exitToMenuButton.onclick = () => {
-        if (this.onSetGameMode) this.onSetGameMode(GameMode.MENU);
+        global().setGameMode(GameMode.MENU);
       };
     }
 
     // Wire up Edit Level button
     if (this.gameEditLevelButton) {
       this.gameEditLevelButton.onclick = () => {
-        if (this.onSetGameMode) this.onSetGameMode(GameMode.EDITING);
+        global().setGameMode(GameMode.EDITING);
       };
       this.gameEditLevelButton.style.display = "none";
     }
 
     this.retryButton.addEventListener('click', () => {
-      if (this.onSetGameMode) this.onSetGameMode(GameMode.PLAYING);
+      global().setGameMode(GameMode.PLAYING);
     });
 
     this.backButton.addEventListener('click', () => {
-      if (this.onSetGameMode) this.onSetGameMode(GameMode.MENU);
+      global().setGameMode(GameMode.MENU);
     });
 
     this.customLevelPlayButton.addEventListener('click', async () => {
@@ -97,7 +95,7 @@ export class MainMenu {
 
     this.customLevelEditButton.addEventListener('click', async () => {
       await this.importLevel();
-      if (this.onSetGameMode) this.onSetGameMode(GameMode.EDITING);
+      global().setGameMode(GameMode.EDITING);
     });
 
     if (this.autosavesButton) {
@@ -117,7 +115,7 @@ export class MainMenu {
     }
 
     window.addEventListener("editor-back-to-menu", () => {
-      if (this.onSetGameMode) this.onSetGameMode(GameMode.MENU);
+      global().setGameMode(GameMode.MENU);
     });
   }
 
@@ -152,9 +150,7 @@ export class MainMenu {
         : this.getLevelDisplayName(levelFile);
       button.className = 'level-button';
       button.addEventListener('click', () => {
-        if (level && this.onLoadLevel) {
-          this.onLoadLevel(level); // <-- call loadLevel
-        }
+          global().setLevel(level!);
           global().setGameMode(GameMode.PLAYING);
       });
       this.levelsContainer.appendChild(button);
@@ -166,12 +162,8 @@ export class MainMenu {
     try {
       const level = parseLevelData(levelData);
       if (level) {
-        if (this.onLoadLevel) {
-          this.onLoadLevel(level);
-        }
-        if (this.onSetGameMode) {
-          this.onSetGameMode(GameMode.PLAYING);
-        }
+        global().setLevel(level);
+        global().setGameMode(GameMode.PLAYING);
         return true;
       } else {
         const validation = validateLevelData(level);

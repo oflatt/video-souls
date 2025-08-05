@@ -69,14 +69,6 @@ export class VideoSouls {
     this.events = [];
     this.localSave = LocalSave.load();
     this.mainMenu = new MainMenu(this.localSave); 
-    this.mainMenu.onLoadLevel = (level: LevelDataV0) => {
-      this.editor.markerManager.level = level;
-      this.battleLogic = new BattleLogic(this.mainMenu.audio, level);
-      this.battleRenderer = new BattleRenderer(this.elements.canvas, level);
-    };
-    this.mainMenu.onSetGameMode = (mode: GameMode) => {
-      this.setGameMode(mode);
-    };
     this.editor = new Editor(new LevelDataV0(), graphics, this.videoPlayer);
     this.battleRenderer = new BattleRenderer(this.elements.canvas, this.editor.level());
     this.battleLogic = new BattleLogic(this.mainMenu.audio, this.editor.level());
@@ -155,9 +147,9 @@ export class VideoSouls {
     const deltaTime = this.videoPlayer.updateTime();
     updateBattleTime(this.battle, deltaTime);
 
-    const currentTime = this.videoPlayer.getCurrentTime();
-    const timeInMilliseconds = Math.floor(currentTime * 1000);
-    this.elements.currentTimeDebug.textContent = `Time: ${timeInMilliseconds} ms data: ${this.editor.level().attackData.length}`;
+    //const currentTime = this.videoPlayer.getCurrentTime();
+    //const timeInMilliseconds = Math.floor(currentTime * 1000);
+    //this.elements.currentTimeDebug.textContent = `Time: ${timeInMilliseconds} ms data: ${this.editor.level().attackData.length}`;
 
     this.updateState();
 
@@ -266,7 +258,7 @@ export class VideoSouls {
       // check for player death or win condition
       if (this.battle.playerHealth <= 0) {
         this.setGameMode(GameMode.BATTLE_END);
-      } else if (this.battle.bossHealth <= 0 && this.battle.currentInterval === "death") {
+      } else if (this.battle.currentInterval === "death") {
         const deathInterval = this.editor.level().attackIntervals.get("death");
         if (deathInterval && currentTime >= deathInterval.end || this.videoPlayer.getPlayerState() === YT.PlayerState.ENDED) {
           this.setGameMode(GameMode.BATTLE_END);
@@ -363,6 +355,9 @@ export class VideoSouls {
       // Set bossHealth from level data
       this.battle.bossHealth = this.editor.level().bossHealth;
       this.battle.lastBossHealth = this.editor.level().bossHealth;
+
+      this.battleLogic = new BattleLogic(this.mainMenu.audio, this.editor.level());
+      this.battleRenderer = new BattleRenderer(this.elements.canvas, this.editor.level());
     } else {
       this.elements.gameHUD.style.display = 'none';
     }
@@ -459,25 +454,15 @@ export class VideoSouls {
 
   loadCommunityLevel(level: LevelDataV0) {
     this.editor.markerManager.level = level;
-    this.battleLogic = new BattleLogic(this.mainMenu.audio, level);
-    this.battleRenderer = new BattleRenderer(this.elements.canvas, level);
     this.hideCommunityLevelsPage();
     this.setGameMode(GameMode.PLAYING);
-  }
-
-  setCurrentVideo(videoId: string) {
-    this.editor.markerManager.level = levelDataFromVideo(videoId);
-    // Recreate battleLogic with new level
-    this.battleLogic = new BattleLogic(this.mainMenu.audio, this.editor.markerManager.level);
-    // Recreate battleRenderer with new level
-    this.battleRenderer = new BattleRenderer(this.elements.canvas, this.editor.markerManager.level);
   }
 
   // Function to play a YouTube video by extracting the video ID from the URL
   recordVideo(videoUrl: string) {
     const videoId = extractVideoID(videoUrl);
     if (videoId != null) {
-      this.setCurrentVideo(videoId);
+      this.setLevel(levelDataFromVideo(videoId));
       this.setGameMode(GameMode.EDITING);
     } else {
       showFloatingAlert('Invalid YouTube URL', 30, "20px");

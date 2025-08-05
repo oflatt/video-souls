@@ -18,8 +18,12 @@ export class AttackSchedule {
     // Create interpreter with the schedule function loaded and init function
     this.interpreter = new (window as any).Interpreter(functionCode, (interpreter: any, globalObject: any) => {
       this.globalObject = globalObject;
-      // Example: add alert API if needed
-      // interpreter.setProperty(globalObject, 'alert', interpreter.createNativeFunction(window.alert));
+      // Add console API for logging
+      const consoleObj = interpreter.createObject(interpreter.OBJECT);
+      interpreter.setProperty(consoleObj, 'log', interpreter.createNativeFunction((...args: any[]) => console.log(...args)));
+      interpreter.setProperty(consoleObj, 'warn', interpreter.createNativeFunction((...args: any[]) => console.warn(...args)));
+      interpreter.setProperty(consoleObj, 'error', interpreter.createNativeFunction((...args: any[]) => console.error(...args)));
+      interpreter.setProperty(globalObject, 'console', consoleObj);
     });
   }
 
@@ -28,8 +32,15 @@ export class AttackSchedule {
     currentTime: number,
     videoPlayer: VideoPlayer,
     attackIntervals: Map<string, AttackInterval>,
-    attackSchedule: string // kept for API compatibility, but not used
   ) {
+    // If we are before the intro and in intro, skip to beginning of intro
+    if (battle.currentInterval === "intro" && currentTime < attackIntervals.get("intro")!.start) {
+      const introInterval = attackIntervals.get("intro");
+      if (introInterval) {
+        videoPlayer.seekTo(introInterval.start, true);
+      }
+    }
+
     // If we're in the death interval, do nothing (handled outside schedule)
     if (battle.currentInterval === "death") {
       return;
@@ -41,7 +52,6 @@ export class AttackSchedule {
       if (deathInterval && battle.currentInterval !== "death") {
         battle.currentInterval = "death";
         videoPlayer.seekTo(deathInterval.start, true);
-        return;
       }
     }
 
