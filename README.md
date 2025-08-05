@@ -146,9 +146,17 @@ We support  ES5 JavaScript: internally we use this javascript interpreter for sa
 
 # TODO
 
+- make blocks have a visual feedback
+- tutorial redo until parry is hit
 - rebindable controls (multiple parry buttons allowed)
 - ability to change things like health and other stats in the level editor
 - in the park tree video
+- crits tutorial
+  How to do critical hits, and what do they do
+    they give you more damage and a quicker attack
+  If you are early on your parry you may still block most of the damage
+  Spamming parry makes the parry end lag longer
+- editor tutorial
 - crits in ping pong player video
 - Auto special effects preprocessing on videos?
 - Different weapons
