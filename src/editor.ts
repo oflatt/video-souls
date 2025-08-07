@@ -1,6 +1,7 @@
 // TODO file too big
 import typia from "typia";
 
+import { global } from './globalState';
 import { Graphics } from './graphics';
 import { VideoPlayer } from './videoPlayer';
 import {
@@ -351,8 +352,9 @@ export class Editor {
     this.recordingControls.scrollLeft += -event.deltaY / 5;
   }
 
-  update(keyJustPressed: Set<string>, currentTargetDir: AttackDirection, mouseX: number) {
+  update() {
     this.markerManager.videoPlayer.updateTime(); // <-- use from markerManager
+    let keyJustPressed = global().inputManager.getJustPressedKeys();
 
     if (keyJustPressed.has(" ")) {
       if (this.markerManager.videoPlayer.getPlayerState() == YT.PlayerState.PLAYING) {
@@ -379,6 +381,7 @@ export class Editor {
     if (keyJustPressed.has("l")) {
       this.seekForward(0.5);
     }
+    let currentTargetDir = global().inputManager.getCurrentTargetDirection();
     if (keyJustPressed.has("Enter") || keyJustPressed.has("k")) {
       this.createAttackAt(this.markerManager.cursorTime(), currentTargetDir, Editor.defaults.attackDamage);
     }
@@ -393,6 +396,7 @@ export class Editor {
     }
 
 
+    let mouseX = global().inputManager.mouseX;
     // if an attack is being dragged, seek to mouse cursor
     if (this.markerManager.dragged != null) {
       let posRelative = mouseX - this.playbackBar.getBoundingClientRect().left;

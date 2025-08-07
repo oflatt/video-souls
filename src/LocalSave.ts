@@ -5,11 +5,60 @@ export type AutosaveEntry = {
   timestamp: number;
 };
 
+export type Keybindings = {
+  attack: string;
+  attackAlt: string;
+  parry: string;
+  parryAlt1: string;
+  parryAlt2: string;
+  up: string;
+  down: string;
+  left: string;
+  right: string;
+  escape: string;
+  play: string;
+  seekLeft: string;
+  seekRight: string;
+  seekSmallLeft: string;
+  seekSmallRight: string;
+  seekMediumLeft: string;
+  seekMediumRight: string;
+  interval: string;
+  critical: string;
+  delete: string;
+  deleteAlt1: string;
+  deleteAlt2: string;
+};
+
 export class LocalSave {
   videoVolume: number = 100;
   soundEffectVolume: number = 50;
   autosaves: AutosaveEntry[] = [];
   editorVideoSpeed: number = 1; // <-- add property
+  keybindings: Keybindings = {
+    attack: 'j',
+    attackAlt: 'h',
+    parry: 'k',
+    parryAlt1: 'l',
+    parryAlt2: ';',
+    up: 'w',
+    down: 's',
+    left: 'a',
+    right: 'd',
+    escape: 'Escape',
+    play: ' ',
+    seekLeft: 'ArrowLeft',
+    seekRight: 'ArrowRight',
+    seekSmallLeft: 'm',
+    seekSmallRight: '.',
+    seekMediumLeft: 'j',
+    seekMediumRight: 'l',
+    interval: 'i',
+    critical: 'o',
+    delete: 'x',
+    deleteAlt1: 'Backspace',
+    deleteAlt2: 'Delete',
+  };
 
   static STORAGE_KEY = "videosouls_settings";
 
@@ -22,7 +71,8 @@ export class LocalSave {
         s.videoVolume = typeof obj.volume === "number" ? obj.volume : 100;
         s.soundEffectVolume = typeof obj.soundEffectVolume === "number" ? obj.soundEffectVolume : 60; 
         s.autosaves = Array.isArray(obj.autosaves) ? obj.autosaves : []; 
-        s.editorVideoSpeed = typeof obj.editorVideoSpeed === "number" ? obj.editorVideoSpeed : 1; // <-- load
+        s.editorVideoSpeed = typeof obj.editorVideoSpeed === "number" ? obj.editorVideoSpeed : 1;
+        s.keybindings = typeof obj.keybindings === "object" && obj.keybindings !== null ? { ...s.keybindings, ...obj.keybindings } : s.keybindings;
         return s;
       }
     } catch {}

@@ -3,7 +3,7 @@
 import { Editor } from './editor';
 import { levelDataFromVideo, LevelDataV0,  BossState, BossScheduleResult, stringifyLevelData,  } from './leveldata';
 import { Graphics } from './graphics';
-import { InputManager, InputDirection } from './inputmanager';
+import { InputManager, InputDirection, getKeybinding } from './inputmanager';
 import { BattleRenderer } from './battleRenderer';
 import { BattleLogic } from './battleLogic';
 import { AttackAnimation, BattleState, initialBattleState, directionNumToSwordAngle, updateBattleTime } from './battle';
@@ -212,7 +212,7 @@ export class VideoSouls {
 
     // if the game mode is editing, update the editor
     if (this.gameMode == GameMode.EDITING) {
-      this.editor!.update(this.inputManager.getJustPressedKeys(), this.inputManager.getCurrentTargetDirection(), this.inputManager.mouseX);
+      this.editor!.update();
     }
 
     if (this.gameMode == GameMode.PLAYING) {
@@ -224,16 +224,14 @@ export class VideoSouls {
         this.editor.level().attackIntervals
       );
 
-      // TODO move key handling input to battle logic file
-      if (this.inputManager.wasKeyJustPressed(this.inputManager.attackKey) && this.battle.bufferedInput === null) {
-        // buffer attack
-        this.battle.bufferedInput = this.inputManager.attackKey;
+      // Check all attack keys
+      const attackKeys = [getKeybinding("attack"), getKeybinding("attackAlt")];
+      const parryKeys = [getKeybinding("parry"), getKeybinding("parryAlt1"), getKeybinding("parryAlt2")];
+      if (attackKeys.some(key => this.inputManager.wasKeyJustPressed(key)) && this.battle.bufferedInput === null) {
+        this.battle.bufferedInput = attackKeys.find(key => this.inputManager.wasKeyJustPressed(key))!;
       }
-
-      // check if parry button pressed
-      if (this.inputManager.wasKeyJustPressed(this.inputManager.parryKey) && this.battle.bufferedInput === null) {
-        // buffer the parry
-        this.battle.bufferedInput = this.inputManager.parryKey;
+      if (parryKeys.some(key => this.inputManager.wasKeyJustPressed(key)) && this.battle.bufferedInput === null) {
+        this.battle.bufferedInput = parryKeys.find(key => this.inputManager.wasKeyJustPressed(key))!;
       }
 
       // check if we finished an animation
@@ -241,10 +239,10 @@ export class VideoSouls {
 
       // ready for new buffered action
       if (this.battle.bufferedInput !== null && this.battle.anim.state === AttackAnimation.NONE) {
-        if (this.battle.bufferedInput === this.inputManager.parryKey) {
+        if (parryKeys.includes(this.battle.bufferedInput)) {
           this.battleLogic.doParry(this.battle, this.inputManager);
           this.battle.bufferedInput = null;
-        } else if (this.battle.bufferedInput === this.inputManager.attackKey) {
+        } else if (attackKeys.includes(this.battle.bufferedInput)) {
           this.battleLogic.startAttack(this.battle, this.inputManager);
           this.battle.bufferedInput = null;
         }

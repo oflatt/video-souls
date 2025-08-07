@@ -1,3 +1,5 @@
+import { global } from './globalState';
+
 export enum InputDirection {
   LEFT = 0b0001,
   UP = 0b0010,
@@ -5,18 +7,47 @@ export enum InputDirection {
   DOWN = 0b1000
 }
 
+export type KeybindingAction =
+  | 'attack'
+  | 'attackAlt'
+  | 'parry'
+  | 'parryAlt1'
+  | 'parryAlt2'
+  | 'up'
+  | 'down'
+  | 'left'
+  | 'right'
+  | 'escape'
+  | 'play'
+  | 'seekLeft'
+  | 'seekRight'
+  | 'seekSmallLeft'
+  | 'seekSmallRight'
+  | 'seekMediumLeft'
+  | 'seekMediumRight'
+  | 'interval'
+  | 'critical'
+  | 'delete'
+  | 'deleteAlt1'
+  | 'deleteAlt2';
+
+export function getKeybinding(action: KeybindingAction): string {
+  return global().localSave.keybindings[action];
+}
+
+export function getKeyToDirection(): Map<string, InputDirection> {
+  return new Map<string, InputDirection>([
+    [getKeybinding('up'), InputDirection.UP],
+    [getKeybinding('left'), InputDirection.LEFT],
+    [getKeybinding('down'), InputDirection.DOWN],
+    [getKeybinding('right'), InputDirection.RIGHT],
+  ]);
+}
+
 export class InputManager {
   private keyPressed = new Set<string>();
   private keyJustPressed = new Set<string>();
-  private keyToDirection = new Map<string, InputDirection>([
-    ['w', InputDirection.UP],
-    ['a', InputDirection.LEFT],
-    ['s', InputDirection.DOWN],
-    ['d', InputDirection.RIGHT],
-  ]);
   
-  public readonly parryKey = 'k';
-  public readonly attackKey = 'j';
   public mouseX = 0;
   public mouseY = 0;
 
@@ -42,16 +73,12 @@ export class InputManager {
     });
   }
 
-  public isKeyPressed(key: string): boolean {
-    return this.keyPressed.has(key);
+  public getJustPressedKeys(): Set<string> {
+    return new Set(this.keyJustPressed);
   }
 
   public wasKeyJustPressed(key: string): boolean {
     return this.keyJustPressed.has(key);
-  }
-
-  public getJustPressedKeys(): Set<string> {
-    return new Set(this.keyJustPressed);
   }
 
   public clearJustPressed() {
@@ -59,8 +86,9 @@ export class InputManager {
   }
 
   public getCurrentTargetDirection(): number {
+    const keyToDirection = getKeyToDirection();
     const directions: InputDirection[] = [];
-    this.keyToDirection.forEach((dir, key) => {
+    keyToDirection.forEach((dir, key) => {
       if (this.keyPressed.has(key)) {
         directions.push(dir);
       }
