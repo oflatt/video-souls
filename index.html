@@ -23,6 +23,7 @@
     <title>Video Souls</title>
     <link href="style.css" rel="stylesheet" />
     <link href="editor.css" rel="stylesheet" />
+    <link href="menu.css" rel="stylesheet" />
 </head>
 
 <body>
@@ -59,6 +60,7 @@
                 <label for="main-menu-sfx-volume-slider">Sound Effects</label>
                 <input id="main-menu-sfx-volume-slider" class="slider" type="range" min="0" max="100" />
             </div>
+            <button id="main-menu-rebind-controls-button" class="big-menu-button">Rebind Controls</button>
         </div>
     </div>
     <div id="floating-menu-ad">
@@ -188,6 +190,15 @@
             <h1>Autosaves</h1>
             <div id="autosaves-list"></div>
             <button id="autosaves-back-bottom">Back</button>
+        </div>
+    </template>
+    <template id="controls-rebind-template">
+        <div id="controls-rebind-panel" class="controls-rebind-panel">
+            <h2>Rebind Controls</h2>
+            <div id="controls-rebind-list">
+                <!-- Keybinding rows will be dynamically generated here -->
+            </div>
+            <button id="controls-rebind-close">Close</button>
         </div>
     </template>
     <canvas id="game-canvas"></canvas>

@@ -5,6 +5,7 @@ import { GameMode } from "./GameMode";
 import { showFloatingAlert } from "./utils";
 import { AutosavesPage } from "./AutosavesPage"; // <-- import new class
 import { global } from './globalState';
+import { ControlsRebindPanel } from './ControlsRebindPanel';
 
 export class MainMenu {
   audio: AudioPlayer;
@@ -44,6 +45,12 @@ export class MainMenu {
     this.customLevelEditButton = document.getElementById("custom-level-edit-button") as HTMLButtonElement;
     this.videoUrlInput = document.getElementById("video-url") as HTMLInputElement;
     this.autosavesButton = document.getElementById("autosaves-main-menu-button") as HTMLButtonElement;
+    const rebindControlsButton = document.getElementById("main-menu-rebind-controls-button") as HTMLButtonElement;
+    if (rebindControlsButton) {
+      rebindControlsButton.onclick = () => {
+        new ControlsRebindPanel();
+      };
+    }
 
     if (this.volumeSlider) this.volumeSlider.value = String(localSave.videoVolume);
     if (this.soundEffectVolumeSlider) this.soundEffectVolumeSlider.value = String(localSave.soundEffectVolume);
@@ -161,7 +168,7 @@ export class MainMenu {
     const levelData = this.customLevelInput.value;
     try {
       const level = parseLevelData(levelData);
-      if (level) {
+      if (level && level.video) {
         global().setLevel(level);
         global().setGameMode(GameMode.PLAYING);
         return true;

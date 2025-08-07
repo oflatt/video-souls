@@ -21,6 +21,10 @@ export class VideoPlayer {
     this.player.setLoop(loop);
   }
 
+  setPlaylist(playlist: string[]): void {
+    this.player.loadPlaylist(playlist);
+  }
+
   seekTo(inputs: number, allowSeekAhead: boolean): void {
     this._seeking = true;
     this._beforeSeekTime = this._currentTime; // Store the time before seeking

@@ -366,10 +366,14 @@ export class VideoSouls {
       this.videoPlayer.cueVideoById("PVCf3pB-3Mc");
       this.videoPlayer.playVideo();
       this.videoPlayer.setLoop(true);
+      this.videoPlayer.setPlaylist([
+        "PVCf3pB-3Mc", // Main menu video
+      ]);
     } else {
       this.elements.floatingMenu.style.display = 'none';
       this.videoPlayer.setLoop(false);
       this.mainMenu.cleanup(); // <-- cleanup main menu if switching away
+      this.videoPlayer.setPlaylist([]); // Clear playlist when not in menu
     }
 
     // load the video for editing, make new editor
