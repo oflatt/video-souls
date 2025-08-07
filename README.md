@@ -6,13 +6,13 @@ Welcome to the repo for video souls. For local development, simply serve the sta
 
 # Custom Javascript Documentation
 
-Video Souls levels allow for a custom "attackSchedule" in the level data. This allows you to have custom logic for each level controlling the order of attacks and more.
+Video Souls levels allow for a custom "attackSchedule" in the level data. This lets you control the order of attacks and boss behavior using JavaScript.
 
 ## Attack Schedule Interface
 
-The `attackSchedule` field in a level is a string of JavaScript code that defines a function. This function is called by the game engine to determine when and how the boss should transition between attack intervals.
+The `attackSchedule` field in a level is a string of JavaScript code that defines a function. This function is called by the game engine every frame to determine when and how the boss should transition between attack intervals.
 
-**The schedule function receives a single argument: `state` (the boss state object). It must return an object with the following properties:**
+**The schedule function receives a single argument: `state` (the boss state object). It must return an object with:**
 
 - `continueNormal` (boolean): If `true`, the boss continues the current interval. If `false`, the boss transitions to a new interval.
 - `transitionToInterval` (string, optional): The name of the interval to transition to (required if `continueNormal` is `false`).
@@ -32,13 +32,13 @@ The `state` object passed to your schedule function contains:
 - `intervalNamesByStart`: Array of interval names, sorted by start time.
 - `intervalNamesByEnd`: Array of interval names, sorted by end time.
 
-**Additional fields available for advanced scheduling:**
+**Additional fields for advanced scheduling:**
 
 - `hitCombo`: Current attack combo count (player's consecutive attacks).
 - `parryCombo`: Number of consecutive successful parries.
-- `parryOrBlockCombo`: Number of consecutive blocks or parries (resets on hit).
+- `parryOrBlockCombo`: Number of consecutive blocks or parries (resets on hit; increments for either block or parry).
 - `timeSinceLastHit`: Time (seconds) since last player attack.
-- `timeSincePlayerHit`: Time (seconds) since player was last hit (blocks which cause chip damage don't count). 
+- `timeSincePlayerHit`: Time (seconds) since player was last hit (resets only when taking damage, not on block).
 - `timeSinceBossHit`: Time (seconds) since boss was last hit.
 - `currentCriticalDir`: Direction of the current critical attack, or `null` if none.
 - `currentCriticalTimeLeft`: Time left (seconds) for the current critical attack, or `null` if none.
@@ -142,23 +142,23 @@ return function(state) {
 
 ## Tips
 
-- The schedule function is re-evaluated every frame, so keep it efficient.
+- The schedule function is called every frame, so keep it efficient.
 - You can use variables outside the returned function for persistent state (see the `run_each_once` example).
 - Always return an object with at least `{ continueNormal: true }` or `{ continueNormal: false, transitionToInterval: ..., intervalOffset: ... }`.
+- At the start of a battle, the engine seeks to the beginning of the "intro" interval if present.
 
 ## Debugging
 
-If your schedule code is invalid or throws an error, the boss will default to continuing the current interval.
-However an error is printed to the browser console so you can debug it. This also happens when a parsing error occurs.
+You can use `console.log`, `console.warn`, and `console.error` in your schedule code for debugging. These are available inside the schedule interpreter.
 
-We support  ES5 JavaScript: internally we use this javascript interpreter for safety: https://github.com/NeilFraser/JS-Interpreter.
+If your schedule code is invalid or throws an error, the boss will default to continuing the current interval. An error is printed to the browser console so you can debug it.
+
+We support ES5 JavaScript: internally we use this javascript interpreter for safety: https://github.com/NeilFraser/JS-Interpreter.
 
 ---
 
 # TODO
 
-- make blocks have a visual feedback
-- tutorial redo until parry is hit
 - rebindable controls (multiple parry buttons allowed)
 - ability to change things like health and other stats in the level editor
 - in the park tree video
@@ -175,5 +175,5 @@ We support  ES5 JavaScript: internally we use this javascript interpreter for sa
   - Custom weapons, upload png or use link to png
 - Video tutorial for video souls
 - ability for enemies to parry
-- make custom javascript more powerful (healing, damage, detecting or parrying attacks, ect)
+- make custom javascript more powerful (healing, damage, detecting or parrying attacks, etc)
 - documentation for custom javascript

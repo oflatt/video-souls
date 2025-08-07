@@ -301,6 +301,88 @@ button {
   display: none;
 }
 
+.battle-end-hud-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: rgba(34, 34, 34, 0.7);
+  z-index: 9999;
+}
+
+.battle-end-hud-overlay h1.win {
+  font-size: 90px;
+  color: green;
+  font-family: 'Cormorant Unicase', serif;
+}
+
+.battle-end-hud-overlay h1.lose {
+  font-size: 90px;
+  color: red;
+  font-family: 'Cormorant Unicase', serif;
+}
+
+.battle-end-hud-overlay .battle-end-buttons {
+  margin-top: 40px;
+}
+
+.battle-end-hud-overlay .battle-end-buttons button {
+  font-size: 30px;
+  margin-right: 30px;
+}
+
+.battle-end-hud-overlay .battle-end-buttons button:last-child {
+  margin-right: 0;
+}
+
+#community-levels-page {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  background: rgba(34, 34, 34, 0.85);
+  z-index: 9999;
+}
+
+#community-levels-page h1 {
+  font-size: 48px;
+  margin-top: 40px;
+  font-family: 'Cormorant Unicase', serif;
+}
+
+#community-levels-page .community-levels-desc {
+  margin-bottom: 20px;
+  font-size: 18px;
+}
+
+#community-levels-refresh {
+  margin-bottom: 20px;
+  font-size: 20px;
+}
+
+#community-levels-list {
+  width: 80%;
+  max-width: 700px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 30px;
+}
+
+#community-levels-back {
+  font-size: 20px;
+}
+
 #autosaves-page {
   position: fixed;
   top: 0;
@@ -317,14 +399,19 @@ button {
 }
 
 #autosaves-list {
-  width: 80%;
-  max-width: 700px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-bottom: 30px;
   overflow-y: auto;
   max-height: 60vh;
+}
+
+#autosaves-back {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 10;
+}
+
+#autosaves-back-bottom {
+  margin-top: 30px;
 }
 
 .autosave-entry {
