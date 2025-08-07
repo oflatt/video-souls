@@ -159,7 +159,6 @@ We support ES5 JavaScript: internally we use this javascript interpreter for saf
 
 # TODO
 
-- rebindable controls (multiple parry buttons allowed)
 - ability to change things like health and other stats in the level editor
 - in the park tree video
 - give ranks for levels (combination of time and times hit, author time part of calculation)

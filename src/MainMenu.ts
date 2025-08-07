@@ -61,6 +61,7 @@ export class MainMenu {
       this.volumeSlider.addEventListener("input", () => {
         const vol = Number(this.volumeSlider.value);
         global().localSave.videoVolume = vol;
+        global().localSave.save(); // <-- save immediately on change
         this.saveSettings();
       });
     }
