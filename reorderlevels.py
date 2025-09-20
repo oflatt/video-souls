@@ -9,16 +9,20 @@ def reorder_levels(levels_dir, old_num, new_num):
     if old_num not in nums:
         print(f"Error: {str(old_num).zfill(2)}.json not found in {levels_dir}")
         return
-    # Shift files from new_num upwards, except old_num
+    # Step 1: Move old_num to a temporary name
+    temp_name = f"__temp_level_{old_num}.json"
+    src = os.path.join(levels_dir, f"{str(old_num).zfill(2)}.json")
+    temp = os.path.join(levels_dir, temp_name)
+    shutil.move(src, temp)
+    # Step 2: Shift files from new_num upwards, except old_num
     for num in reversed(nums):
         if num >= new_num and num != old_num:
             src = os.path.join(levels_dir, f"{str(num).zfill(2)}.json")
             dst = os.path.join(levels_dir, f"{str(num+1).zfill(2)}.json")
             shutil.move(src, dst)
-    # Move the chosen file to the new name
-    src = os.path.join(levels_dir, f"{str(old_num).zfill(2)}.json")
+    # Step 3: Move temp file to new_num
     dst = os.path.join(levels_dir, f"{str(new_num).zfill(2)}.json")
-    shutil.move(src, dst)
+    shutil.move(temp, dst)
     print("Renumbering complete.")
 
 if __name__ == "__main__":
