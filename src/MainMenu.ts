@@ -11,6 +11,7 @@ export class MainMenu {
   audio: AudioPlayer;
   volumeSlider: HTMLInputElement;
   soundEffectVolumeSlider: HTMLInputElement;
+  menuVolumeSlider: HTMLInputElement;
   levelsContainer: HTMLDivElement;
   onLoadAndPlayLevel: ((level: LevelDataV0) => void) | null = null;
   exitToMenuButton: HTMLButtonElement;
@@ -32,6 +33,7 @@ export class MainMenu {
 
     this.volumeSlider = document.getElementById("main-menu-volume-slider") as HTMLInputElement;
     this.soundEffectVolumeSlider = document.getElementById("main-menu-sfx-volume-slider") as HTMLInputElement;
+    this.menuVolumeSlider = document.getElementById("main-menu-menu-volume-slider") as HTMLInputElement;
     this.levelsContainer = document.getElementById("levels-container") as HTMLDivElement;
     this.exitToMenuButton = document.getElementById("exit-to-menu-button") as HTMLButtonElement;
     this.gameEditLevelButton = document.getElementById("game-edit-level-button") as HTMLButtonElement;
@@ -54,6 +56,7 @@ export class MainMenu {
 
     if (this.volumeSlider) this.volumeSlider.value = String(localSave.videoVolume);
     if (this.soundEffectVolumeSlider) this.soundEffectVolumeSlider.value = String(localSave.soundEffectVolume);
+    if (this.menuVolumeSlider) this.menuVolumeSlider.value = String(localSave.menuVolume);
 
     this.audio.setVolume(localSave.getNormalizedSoundEffectVolume());
 
@@ -71,6 +74,13 @@ export class MainMenu {
         global().localSave.soundEffectVolume = sfxVol;
         global().localSave.save();
         this.audio.setVolume(global().localSave.getNormalizedSoundEffectVolume());
+      });
+    }
+    if (this.menuVolumeSlider) {
+      this.menuVolumeSlider.addEventListener("input", () => {
+        const menuVol = Number(this.menuVolumeSlider.value);
+        global().localSave.menuVolume = menuVol;
+        global().localSave.save();
       });
     }
 
@@ -130,7 +140,6 @@ export class MainMenu {
   saveSettings() {
     global().localSave.save();
   }
-
 
   cleanup() {
     if (this.autosavesPage) {

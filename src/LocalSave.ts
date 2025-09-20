@@ -33,6 +33,7 @@ export type Keybindings = {
 export class LocalSave {
   videoVolume: number = 100;
   soundEffectVolume: number = 50;
+  menuVolume: number = 100; // <-- new property
   autosaves: AutosaveEntry[] = [];
   editorVideoSpeed: number = 1; // <-- add property
   keybindings: Keybindings = {
@@ -115,6 +116,12 @@ export class LocalSave {
   getNormalizedSoundEffectVolume(): number {
     const v = this.soundEffectVolume;
     if (!Number.isFinite(v)) return 0.6;
+    return Math.max(0, Math.min(1, v / 100));
+  }
+
+  getNormalizedMenuVolume(): number {
+    const v = this.menuVolume;
+    if (!Number.isFinite(v)) return 1.0;
     return Math.max(0, Math.min(1, v / 100));
   }
 }

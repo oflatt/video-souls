@@ -141,7 +141,13 @@ export class VideoSouls {
 
 
     // keep the player's volume in sync with the settings
-    this.elements.player.setVolume(this.localSave.videoVolume);
+    // if we are in the menu, use menu volume
+    if (this.gameMode === GameMode.MENU) {
+      this.elements.player.setVolume(this.localSave.menuVolume);
+    } else {
+      this.elements.player.setVolume(this.localSave.videoVolume);
+    }
+    
 
     // Update battle time using the helper
     const deltaTime = this.videoPlayer.updateTime();
@@ -424,8 +430,6 @@ export class VideoSouls {
 
     this.gameMode = mode;
 
-    // Always keep YouTube player volume in sync with settings
-    this.elements.player.setVolume(this.localSave.videoVolume);
     this.mainMenu.audio.setVolume(this.localSave.getNormalizedSoundEffectVolume()); // <-- use sound effect volume
 
     this.needsFreshAutosave = true; // <-- set flag when game state changes
