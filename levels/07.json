@@ -1,0 +1,135 @@
+{
+  "video": "t6zCKDwS5v4",
+  "attackData": [
+    {
+      "time": 9.074571999999995,
+      "direction": 0,
+      "damage": 1
+    },
+    {
+      "time": 12.094799,
+      "direction": 4,
+      "damage": 1
+    },
+    {
+      "time": 15.032634000000002,
+      "direction": 0,
+      "damage": 1
+    },
+    {
+      "time": 18.175320000000003,
+      "direction": 0,
+      "damage": 1
+    },
+    {
+      "time": 21.0833,
+      "direction": 4,
+      "damage": 1
+    },
+    {
+      "time": 23.766346000000002,
+      "direction": 4,
+      "damage": 1
+    },
+    {
+      "time": 26.963069,
+      "direction": 0,
+      "damage": 1
+    },
+    {
+      "time": 29.665912,
+      "direction": 4,
+      "damage": 1
+    },
+    {
+      "time": 32.366645999999996,
+      "direction": 0,
+      "damage": 1
+    },
+    {
+      "time": 34.530072999999994,
+      "direction": 0,
+      "damage": 1
+    },
+    {
+      "time": 38.871498000000024,
+      "direction": 4,
+      "damage": 1
+    },
+    {
+      "time": 42.12583199999999,
+      "direction": 4,
+      "damage": 1
+    },
+    {
+      "time": 44.14207699999999,
+      "direction": 4,
+      "damage": 1
+    },
+    {
+      "time": 46.186505999999994,
+      "direction": 0,
+      "damage": 1
+    }
+  ],
+  "criticals": [],
+  "attackIntervals": {
+    "__type": "Map",
+    "entries": [
+      [
+        "intro",
+        {
+          "start": 0,
+          "end": 7.246885617214042,
+          "name": "intro"
+        }
+      ],
+      [
+        "2",
+        {
+          "start": 30.88335220838052,
+          "end": 40.362400906002264,
+          "name": "2"
+        }
+      ],
+      [
+        "0",
+        {
+          "start": 13.51528878822197,
+          "end": 25.13476783691959,
+          "name": "0"
+        }
+      ],
+      [
+        "4",
+        {
+          "start": 7.216308040770102,
+          "end": 13.51528878822197,
+          "name": "4"
+        }
+      ],
+      [
+        "death",
+        {
+          "start": 46.7718805209513,
+          "end": 54,
+          "name": "death"
+        }
+      ],
+      [
+        "3",
+        {
+          "start": 40.373755,
+          "end": 46.71117723669309,
+          "name": "3"
+        }
+      ]
+    ]
+  },
+  "attackSchedule": "\nreturn function(state) {\n  var currentInterval = state.availableIntervals[state.currentInterval];\n\n  // Check if we've reached or passed the end time of the current interval\n  if (state.currentTime >= currentInterval.end) {\n    var nextInterval = state.intervalNamesAlpha[Math.floor(Math.random() * state.intervalNamesAlpha.length)];\n\n    // pick again if the interval is the same as the current one\n    if (nextInterval === state.currentInterval) {\n      nextInterval = state.intervalNamesAlpha[Math.floor(Math.random() * state.intervalNamesAlpha.length)];\n    }\n    \n    return {\n      continueNormal: false,\n      transitionToInterval: nextInterval,\n      intervalOffset: 0\n    };\n  }\n  \n  // Continue with current behavior\n  return { continueNormal: true };\n}",
+  "version": "0.0.0",
+  "title": "sk8te",
+  "arrowless": false,
+  "bossDamageMultiplier": 1,
+  "bossHealth": 3
+}
