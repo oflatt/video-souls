@@ -69,14 +69,10 @@ export class LocalSave {
       if (raw) {
         const obj = JSON.parse(raw);
         const s = new LocalSave();
-        s.videoVolume = typeof obj.volume === "number" ? obj.volume : 100;
-        s.soundEffectVolume = typeof obj.soundEffectVolume === "number" ? obj.soundEffectVolume : 60; 
-        s.autosaves = Array.isArray(obj.autosaves) ? obj.autosaves : []; 
-        s.editorVideoSpeed = typeof obj.editorVideoSpeed === "number" ? obj.editorVideoSpeed : 1;
-        s.keybindings = typeof obj.keybindings === "object" && obj.keybindings !== null ? { ...s.keybindings, ...obj.keybindings } : s.keybindings;
+        Object.assign(s, obj);
         return s;
       }
-    } catch {}
+    } catch { }
     return new LocalSave();
   }
 
