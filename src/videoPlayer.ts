@@ -1,3 +1,6 @@
+import { LevelDataV0 } from "./leveldata";
+import { extractVideoID } from "./utils";
+
 export class VideoPlayer {
   private player: YT.Player;
   private _prevTime: number = 0;
@@ -60,6 +63,22 @@ export class VideoPlayer {
 
   getIframe(): HTMLIFrameElement {
     return this.player.getIframe();
+  }
+
+  getVideoId(): string | null {
+    let url =  this.player.getVideoUrl();
+    if (!url) return null;
+    return extractVideoID(url);
+  }
+
+  // if the video is cued or buffering is the length valid?
+  lengthValid(): boolean {
+      return this.getPlayerState() == YT.PlayerState.PAUSED || this.getPlayerState() == YT.PlayerState.PLAYING;
+  }
+
+  readyForEditor(level: LevelDataV0): boolean {
+    console.log("VideoPlayer readyForEditor check:", this.getPlayerState(), this.getVideoId(), level.video);
+    return this.lengthValid() && this.getVideoId() === level.video
   }
 
   // Time management methods

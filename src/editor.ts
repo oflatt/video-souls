@@ -141,7 +141,7 @@ export class Editor {
     this.markerManager.savedCursorTime = null; // <-- initialize in markerManager
   }
 
-  level() : LevelDataV0 {
+  level(): LevelDataV0 {
     return this.markerManager.level;
   }
 
@@ -312,7 +312,7 @@ export class Editor {
     }
 
     if (this.hud.titleInput.value) {
-      this.markerManager.level.title = this.hud.titleInput.value; 
+      this.markerManager.level.title = this.hud.titleInput.value;
     }
 
     // Update attack warnings every frame
@@ -407,16 +407,15 @@ export class Editor {
     var deathInterval = this.markerManager.level.attackIntervals.get("death");
     var introInterval = this.markerManager.level.attackIntervals.get("intro");
     var hasNonSpecialInterval = false;
-    for (let [name, interval] of this.markerManager.level.attackIntervals) {
+    for (let [name, _interval] of this.markerManager.level.attackIntervals) {
       if (name !== "death" && name !== "intro") {
         hasNonSpecialInterval = true;
         break;
       }
     }
 
-    let playerReady = (this.markerManager.videoPlayer.getPlayerState() == YT.PlayerState.PAUSED || this.markerManager.videoPlayer.getPlayerState() == YT.PlayerState.PLAYING);
-
-    // check the state of the player so duration is valid
+    let playerReady = this.markerManager.videoPlayer.readyForEditor(this.markerManager.level);
+    
     if (!deathInterval && playerReady) {
       let startTime = Math.max(this.markerManager.videoPlayer.getDuration() - 2, 0);
       let endTime = this.markerManager.videoPlayer.getDuration();
