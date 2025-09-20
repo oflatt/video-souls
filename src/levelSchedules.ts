@@ -198,19 +198,37 @@ return function(state) {
 import * as fs from "fs";
 import * as path from "path";
 
-// Path to the target 01.json file
-const targetPath = path.resolve(__dirname, "../levels/01.json");
-// Path to the target 02.json file
-const crabTargetPath = path.resolve(__dirname, "../levels/02.json");
+const LEVELS_DIR = path.resolve(__dirname, "../levels");
 
-function copyLevel(target: string, schedule: string, label: string) {
+function findLevelPathByTitle(title: string): string | null {
+  const files = fs.readdirSync(LEVELS_DIR).filter(f => f.endsWith('.json'));
+  for (const file of files) {
+    const filePath = path.join(LEVELS_DIR, file);
+    try {
+      const json = fs.readFileSync(filePath, "utf8");
+      const data = JSON.parse(json);
+      if (data.title === title) {
+        return filePath;
+      }
+    } catch {}
+  }
+  return null;
+}
+
+function copyLevelByTitle(title: string, schedule: string) {
+  const target = findLevelPathByTitle(title);
+  if (!target) {
+    console.warn(`Level with title '${title}' not found.`);
+    return;
+  }
   const json = fs.readFileSync(target, "utf8");
   const data = JSON.parse(json);
   data.attackSchedule = schedule;
   fs.writeFileSync(target, JSON.stringify(data, null, 2), "utf8");
+  console.log(`Updated attackSchedule for level '${title}' in file ${target}`);
 }
 
-copyLevel(targetPath, ZOMBIE_ATTACK_SCHEDULE, "zombie");
-copyLevel(crabTargetPath, CRAB_ATTACK_SCHEDULE, "crab");
-copyLevel(path.resolve(__dirname, "../levels/04.json"), PING_PONG_PLAYER_SCHEDULE, "ping pong player");
-copyLevel(path.resolve(__dirname, "../levels/00.json"), TUTORIAL_SCHEDULE, "tutorial");
+copyLevelByTitle("Zombie", ZOMBIE_ATTACK_SCHEDULE);
+copyLevelByTitle("Crab", CRAB_ATTACK_SCHEDULE);
+copyLevelByTitle("Ping Pong Pain", PING_PONG_PLAYER_SCHEDULE);
+copyLevelByTitle("Tutorial", TUTORIAL_SCHEDULE);
