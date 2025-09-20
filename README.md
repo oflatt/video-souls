@@ -163,11 +163,15 @@ We support ES5 JavaScript: internally we use this javascript interpreter for saf
 - in the park tree video
 - give ranks for levels (combination of time and times hit, author time part of calculation)
 - crits tutorial
+  turtle- belly has crit
+  music with turtle
+  attacking with back turned 
+  box painted green
   How to do critical hits, and what do they do
     they give you more damage and a quicker attack
   If you are early on your parry you may still block most of the damage
   Spamming parry makes the parry end lag longer
-- editor tutorial
+- editor tutorial (rickroll?)
 - Auto special effects preprocessing on videos?
 - Different weapons
   - Different attack speeds/damage tradeoff
