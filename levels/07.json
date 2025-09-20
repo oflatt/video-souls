@@ -1,78 +1,679 @@
 {
-  "video": "t6zCKDwS5v4",
+  "video": "aSvmlmmgb2E",
   "attackData": [
     {
-      "time": 9.074571999999995,
-      "direction": 0,
+      "time": 88.38854799999999,
+      "direction": 1,
       "damage": 1
     },
     {
-      "time": 12.094799,
-      "direction": 4,
+      "time": 88.53854799999998,
+      "direction": 7,
       "damage": 1
     },
     {
-      "time": 15.032634000000002,
-      "direction": 0,
+      "time": 88.68854799999997,
+      "direction": 1,
       "damage": 1
     },
     {
-      "time": 18.175320000000003,
-      "direction": 0,
+      "time": 88.83854799999996,
+      "direction": 7,
       "damage": 1
     },
     {
-      "time": 21.0833,
-      "direction": 4,
+      "time": 89.02103069349572,
+      "direction": 1,
       "damage": 1
     },
     {
-      "time": 23.766346000000002,
-      "direction": 4,
+      "time": 89.13854799999994,
+      "direction": 7,
       "damage": 1
     },
     {
-      "time": 26.963069,
-      "direction": 0,
+      "time": 89.28854799999993,
+      "direction": 1,
       "damage": 1
     },
     {
-      "time": 29.665912,
-      "direction": 4,
+      "time": 89.43854799999993,
+      "direction": 7,
       "damage": 1
     },
     {
-      "time": 32.366645999999996,
-      "direction": 0,
+      "time": 89.58854799999992,
+      "direction": 1,
       "damage": 1
     },
     {
-      "time": 34.530072999999994,
-      "direction": 0,
+      "time": 89.73854799999991,
+      "direction": 7,
       "damage": 1
     },
     {
-      "time": 38.871498000000024,
-      "direction": 4,
+      "time": 89.91808292422436,
+      "direction": 1,
       "damage": 1
     },
     {
-      "time": 42.12583199999999,
-      "direction": 4,
+      "time": 90.05492140009822,
+      "direction": 7,
       "damage": 1
     },
     {
-      "time": 44.14207699999999,
-      "direction": 4,
+      "time": 90.23854799999988,
+      "direction": 1,
       "damage": 1
     },
     {
-      "time": 46.186505999999994,
-      "direction": 0,
+      "time": 90.38854799999987,
+      "direction": 7,
+      "damage": 1
+    },
+    {
+      "time": 90.53854799999986,
+      "direction": 1,
+      "damage": 1
+    },
+    {
+      "time": 90.68854799999986,
+      "direction": 7,
       "damage": 1
     }
   ],
-  "criticals": [],
+  "criticals": [
+    {
+      "time": 4.361014072479248,
+      "direction": 2,
+      "multiplier": 3
+    },
+    {
+      "time": 5.451523866485596,
+      "direction": 6,
+      "multiplier": 3
+    },
+    {
+      "time": 6.580410872207642,
+      "direction": 2,
+      "multiplier": 3
+    },
+    {
+      "time": 7.695859062942505,
+      "direction": 6,
+      "multiplier": 3
+    },
+    {
+      "time": 8.733194009536744,
+      "direction": 4,
+      "multiplier": 3
+    },
+    {
+      "time": 9.85388305531311,
+      "direction": 0,
+      "multiplier": 3
+    },
+    {
+      "time": 10.891084980926514,
+      "direction": 0,
+      "multiplier": 3
+    },
+    {
+      "time": 11.897272965667725,
+      "direction": 4,
+      "multiplier": 3
+    },
+    {
+      "time": 12.94064402670288,
+      "direction": 1,
+      "multiplier": 3
+    },
+    {
+      "time": 14.021504944686889,
+      "direction": 7,
+      "multiplier": 3
+    },
+    {
+      "time": 15.064513005722047,
+      "direction": 1,
+      "multiplier": 3
+    },
+    {
+      "time": 16.093787064849852,
+      "direction": 7,
+      "multiplier": 3
+    },
+    {
+      "time": 17.08377902861023,
+      "direction": 2,
+      "multiplier": 3
+    },
+    {
+      "time": 18.108173078201293,
+      "direction": 6,
+      "multiplier": 3
+    },
+    {
+      "time": 19.118479969482422,
+      "direction": 2,
+      "multiplier": 3
+    },
+    {
+      "time": 21.126030938964846,
+      "direction": 5,
+      "multiplier": 3
+    },
+    {
+      "time": 22.09821694277954,
+      "direction": 3,
+      "multiplier": 3
+    },
+    {
+      "time": 23.116757116348268,
+      "direction": 7,
+      "multiplier": 3
+    },
+    {
+      "time": 24.055421125885008,
+      "direction": 1,
+      "multiplier": 3
+    },
+    {
+      "time": 25.050654019073487,
+      "direction": 6,
+      "multiplier": 3
+    },
+    {
+      "time": 25.60872912397766,
+      "direction": 2,
+      "multiplier": 3
+    },
+    {
+      "time": 26.087075881744386,
+      "direction": 6,
+      "multiplier": 3
+    },
+    {
+      "time": 26.984764085830687,
+      "direction": 2,
+      "multiplier": 3
+    },
+    {
+      "time": 27.46496916593933,
+      "direction": 6,
+      "multiplier": 3
+    },
+    {
+      "time": 27.990241979019164,
+      "direction": 2,
+      "multiplier": 3
+    },
+    {
+      "time": 28.906170862670898,
+      "direction": 0,
+      "multiplier": 3
+    },
+    {
+      "time": 29.36880520980835,
+      "direction": 4,
+      "multiplier": 3
+    },
+    {
+      "time": 29.857876051498412,
+      "direction": 0,
+      "multiplier": 3
+    },
+    {
+      "time": 30.815790950408935,
+      "direction": 2,
+      "multiplier": 3
+    },
+    {
+      "time": 31.27874806866455,
+      "direction": 6,
+      "multiplier": 3
+    },
+    {
+      "time": 31.781957982833863,
+      "direction": 4,
+      "multiplier": 3
+    },
+    {
+      "time": 32.27167782452393,
+      "direction": 2,
+      "multiplier": 3
+    },
+    {
+      "time": 32.73401217166138,
+      "direction": 0,
+      "multiplier": 3
+    },
+    {
+      "time": 33.66014519264221,
+      "direction": 3,
+      "multiplier": 3
+    },
+    {
+      "time": 34.57077292179871,
+      "direction": 5,
+      "multiplier": 3
+    },
+    {
+      "time": 35.486751961853024,
+      "direction": 1,
+      "multiplier": 3
+    },
+    {
+      "time": 36.38291908392334,
+      "direction": 7,
+      "multiplier": 3
+    },
+    {
+      "time": 38.19650194468689,
+      "direction": 0,
+      "multiplier": 3
+    },
+    {
+      "time": 38.70012379782104,
+      "direction": 4,
+      "multiplier": 3
+    },
+    {
+      "time": 39.172029876022336,
+      "direction": 6,
+      "multiplier": 3
+    },
+    {
+      "time": 39.63975097520447,
+      "direction": 2,
+      "multiplier": 3
+    },
+    {
+      "time": 40.47568991607666,
+      "direction": 0,
+      "multiplier": 3
+    },
+    {
+      "time": 41.79279085313416,
+      "direction": 1,
+      "multiplier": 3
+    },
+    {
+      "time": 42.73818188555908,
+      "direction": 5,
+      "multiplier": 3
+    },
+    {
+      "time": 43.57008902288818,
+      "direction": 2,
+      "multiplier": 3
+    },
+    {
+      "time": 44.05468287411499,
+      "direction": 6,
+      "multiplier": 3
+    },
+    {
+      "time": 44.51404695040893,
+      "direction": 2,
+      "multiplier": 3
+    },
+    {
+      "time": 44.95135616212463,
+      "direction": 6,
+      "multiplier": 3
+    },
+    {
+      "time": 45.38269010108948,
+      "direction": 2,
+      "multiplier": 3
+    },
+    {
+      "time": 47.03811607820129,
+      "direction": 4,
+      "multiplier": 3
+    },
+    {
+      "time": 47.96511317166138,
+      "direction": 4,
+      "multiplier": 3
+    },
+    {
+      "time": 48.766372038146976,
+      "direction": 4,
+      "multiplier": 3
+    },
+    {
+      "time": 49.6446839294281,
+      "direction": 4,
+      "multiplier": 3
+    },
+    {
+      "time": 50.93052909346008,
+      "direction": 0,
+      "multiplier": 3
+    },
+    {
+      "time": 51.10012720980835,
+      "direction": 0,
+      "multiplier": 3
+    },
+    {
+      "time": 51.37943791989136,
+      "direction": 0,
+      "multiplier": 3
+    },
+    {
+      "time": 51.61654279400635,
+      "direction": 0,
+      "multiplier": 3
+    },
+    {
+      "time": 51.785466961853025,
+      "direction": 0,
+      "multiplier": 3
+    },
+    {
+      "time": 52.010466866485594,
+      "direction": 0,
+      "multiplier": 3
+    },
+    {
+      "time": 52.20445501525879,
+      "direction": 0,
+      "multiplier": 3
+    },
+    {
+      "time": 52.41654619836426,
+      "direction": 0,
+      "multiplier": 3
+    },
+    {
+      "time": 52.61049905722046,
+      "direction": 0,
+      "multiplier": 3
+    },
+    {
+      "time": 54.26465195803833,
+      "direction": 0,
+      "multiplier": 3
+    },
+    {
+      "time": 54.441278982833865,
+      "direction": 0,
+      "multiplier": 3
+    },
+    {
+      "time": 54.64727907247925,
+      "direction": 0,
+      "multiplier": 3
+    },
+    {
+      "time": 54.86627586076355,
+      "direction": 0,
+      "multiplier": 3
+    },
+    {
+      "time": 55.09027908583069,
+      "direction": 0,
+      "multiplier": 3
+    },
+    {
+      "time": 55.2967430705719,
+      "direction": 0,
+      "multiplier": 3
+    },
+    {
+      "time": 55.48508993896484,
+      "direction": 0,
+      "multiplier": 3
+    },
+    {
+      "time": 55.679089944686886,
+      "direction": 0,
+      "multiplier": 3
+    },
+    {
+      "time": 55.8783249294281,
+      "direction": 0,
+      "multiplier": 3
+    },
+    {
+      "time": 57.099284148773194,
+      "direction": 1,
+      "multiplier": 3
+    },
+    {
+      "time": 57.9214579961853,
+      "direction": 7,
+      "multiplier": 3
+    },
+    {
+      "time": 58.78084012588501,
+      "direction": 1,
+      "multiplier": 3
+    },
+    {
+      "time": 59.58341716784668,
+      "direction": 7,
+      "multiplier": 3
+    },
+    {
+      "time": 60.41184216021728,
+      "direction": 1,
+      "multiplier": 3
+    },
+    {
+      "time": 61.23296483024597,
+      "direction": 7,
+      "multiplier": 3
+    },
+    {
+      "time": 62.03695885122681,
+      "direction": 5,
+      "multiplier": 3
+    },
+    {
+      "time": 62.77298319836426,
+      "direction": 3,
+      "multiplier": 3
+    },
+    {
+      "time": 63.55889794850159,
+      "direction": 2,
+      "multiplier": 3
+    },
+    {
+      "time": 64.37835391989135,
+      "direction": 2,
+      "multiplier": 3
+    },
+    {
+      "time": 65.13398197901917,
+      "direction": 6,
+      "multiplier": 3
+    },
+    {
+      "time": 65.91195501907349,
+      "direction": 6,
+      "multiplier": 3
+    },
+    {
+      "time": 66.71284504005432,
+      "direction": 3,
+      "multiplier": 3
+    },
+    {
+      "time": 67.49141396566772,
+      "direction": 7,
+      "multiplier": 3
+    },
+    {
+      "time": 68.26743303623962,
+      "direction": 5,
+      "multiplier": 3
+    },
+    {
+      "time": 69.03394104386902,
+      "direction": 1,
+      "multiplier": 3
+    },
+    {
+      "time": 69.74618897520446,
+      "direction": 8,
+      "multiplier": 3
+    },
+    {
+      "time": 70.15148901716614,
+      "direction": 8,
+      "multiplier": 3
+    },
+    {
+      "time": 70.55243901716614,
+      "direction": 8,
+      "multiplier": 3
+    },
+    {
+      "time": 70.9643718626709,
+      "direction": 8,
+      "multiplier": 3
+    },
+    {
+      "time": 71.36611202861023,
+      "direction": 8,
+      "multiplier": 3
+    },
+    {
+      "time": 71.73704605722045,
+      "direction": 8,
+      "multiplier": 3
+    },
+    {
+      "time": 72.08808282643128,
+      "direction": 8,
+      "multiplier": 3
+    },
+    {
+      "time": 72.4563380629425,
+      "direction": 8,
+      "multiplier": 3
+    },
+    {
+      "time": 72.8393179885559,
+      "direction": 8,
+      "multiplier": 3
+    },
+    {
+      "time": 73.21421393515014,
+      "direction": 8,
+      "multiplier": 3
+    },
+    {
+      "time": 73.59114110871887,
+      "direction": 8,
+      "multiplier": 3
+    },
+    {
+      "time": 73.92433394850158,
+      "direction": 8,
+      "multiplier": 3
+    },
+    {
+      "time": 75.3219349847412,
+      "direction": 2,
+      "multiplier": 3
+    },
+    {
+      "time": 75.7588719256134,
+      "direction": 6,
+      "multiplier": 3
+    },
+    {
+      "time": 77.33136296566772,
+      "direction": 8,
+      "multiplier": 3
+    },
+    {
+      "time": 77.69036314877319,
+      "direction": 8,
+      "multiplier": 3
+    },
+    {
+      "time": 78.02441290653992,
+      "direction": 8,
+      "multiplier": 3
+    },
+    {
+      "time": 78.36948481880188,
+      "direction": 8,
+      "multiplier": 3
+    },
+    {
+      "time": 79.39082301335144,
+      "direction": 4,
+      "multiplier": 3
+    },
+    {
+      "time": 80.26281108010865,
+      "direction": 8,
+      "multiplier": 3
+    },
+    {
+      "time": 80.63055619264222,
+      "direction": 8,
+      "multiplier": 3
+    },
+    {
+      "time": 80.9510851449585,
+      "direction": 8,
+      "multiplier": 3
+    },
+    {
+      "time": 81.29730883978272,
+      "direction": 8,
+      "multiplier": 3
+    },
+    {
+      "time": 82.37722202670288,
+      "direction": 0,
+      "multiplier": 3
+    },
+    {
+      "time": 83.15284110871887,
+      "direction": 4,
+      "multiplier": 3
+    },
+    {
+      "time": 83.88481794850159,
+      "direction": 1,
+      "multiplier": 3
+    },
+    {
+      "time": 84.63883111062621,
+      "direction": 3,
+      "multiplier": 3
+    },
+    {
+      "time": 85.32942089509582,
+      "direction": 7,
+      "multiplier": 3
+    },
+    {
+      "time": 86.08072898474121,
+      "direction": 5,
+      "multiplier": 3
+    },
+    {
+      "time": 86.83903918882751,
+      "direction": 2,
+      "multiplier": 3
+    },
+    {
+      "time": 87.82559456398637,
+      "direction": 8,
+      "multiplier": 3
+    }
+  ],
   "attackIntervals": {
     "__type": "Map",
     "entries": [
@@ -80,56 +681,32 @@
         "intro",
         {
           "start": 0,
-          "end": 7.246885617214042,
+          "end": 2,
           "name": "intro"
-        }
-      ],
-      [
-        "2",
-        {
-          "start": 30.88335220838052,
-          "end": 40.362400906002264,
-          "name": "2"
-        }
-      ],
-      [
-        "0",
-        {
-          "start": 13.51528878822197,
-          "end": 25.13476783691959,
-          "name": "0"
-        }
-      ],
-      [
-        "4",
-        {
-          "start": 7.216308040770102,
-          "end": 13.51528878822197,
-          "name": "4"
         }
       ],
       [
         "death",
         {
-          "start": 46.7718805209513,
-          "end": 54,
+          "start": 90.97282568394692,
+          "end": 93.60678277501887,
           "name": "death"
         }
       ],
       [
-        "3",
+        "0",
         {
-          "start": 40.373755,
-          "end": 46.71117723669309,
-          "name": "3"
+          "start": 2,
+          "end": 90.97282568394692,
+          "name": "0"
         }
       ]
     ]
   },
   "attackSchedule": "\nreturn function(state) {\n  var currentInterval = state.availableIntervals[state.currentInterval];\n\n  // Check if we've reached or passed the end time of the current interval\n  if (state.currentTime >= currentInterval.end) {\n    var nextInterval = state.intervalNamesAlpha[Math.floor(Math.random() * state.intervalNamesAlpha.length)];\n\n    // pick again if the interval is the same as the current one\n    if (nextInterval === state.currentInterval) {\n      nextInterval = state.intervalNamesAlpha[Math.floor(Math.random() * state.intervalNamesAlpha.length)];\n    }\n    \n    return {\n      continueNormal: false,\n      transitionToInterval: nextInterval,\n      intervalOffset: 0\n    };\n  }\n  \n  // Continue with current behavior\n  return { continueNormal: true };\n}",
   "version": "0.0.0",
-  "title": "sk8te",
+  "title": "Don't let him charge up",
   "arrowless": false,
-  "bossDamageMultiplier": 1,
-  "bossHealth": 3
+  "bossDamageMultiplier": 3,
+  "bossHealth": 37
 }

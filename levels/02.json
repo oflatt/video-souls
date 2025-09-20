@@ -1,109 +1,78 @@
 {
-  "video": "vF2KdyPb4C8",
+  "video": "t6zCKDwS5v4",
   "attackData": [
     {
-      "time": 8.980152000000006,
-      "direction": 7,
-      "damage": 1
-    },
-    {
-      "time": 12.030152000000014,
+      "time": 9.074571999999995,
       "direction": 0,
       "damage": 1
     },
     {
-      "time": 15.048437000000009,
-      "direction": 7,
+      "time": 12.094799,
+      "direction": 4,
       "damage": 1
     },
     {
-      "time": 17.65985600000001,
-      "direction": 3,
-      "damage": 1
-    },
-    {
-      "time": 20.85985600000001,
+      "time": 15.032634000000002,
       "direction": 0,
       "damage": 1
     },
     {
-      "time": 23.045599762686933,
-      "direction": 8,
-      "damage": 2
-    },
-    {
-      "time": 34.07733199999998,
-      "direction": 7,
-      "damage": 1
-    },
-    {
-      "time": 36.61661300000002,
-      "direction": 1,
-      "damage": 1
-    },
-    {
-      "time": 39.26734399999998,
-      "direction": 5,
-      "damage": 1
-    },
-    {
-      "time": 41.574316999999965,
+      "time": 18.175320000000003,
       "direction": 0,
       "damage": 1
     },
     {
-      "time": 44.907788,
-      "direction": 8,
-      "damage": 2
-    },
-    {
-      "time": 63.091732729331824,
-      "direction": 6,
+      "time": 21.0833,
+      "direction": 4,
       "damage": 1
     },
     {
-      "time": 65.660587,
-      "direction": 7,
+      "time": 23.766346000000002,
+      "direction": 4,
       "damage": 1
     },
     {
-      "time": 68.96942242355605,
-      "direction": 5,
+      "time": 26.963069,
+      "direction": 0,
       "damage": 1
     },
     {
-      "time": 71.4953370249024,
-      "direction": 6,
+      "time": 29.665912,
+      "direction": 4,
+      "damage": 1
+    },
+    {
+      "time": 32.366645999999996,
+      "direction": 0,
+      "damage": 1
+    },
+    {
+      "time": 34.530072999999994,
+      "direction": 0,
+      "damage": 1
+    },
+    {
+      "time": 38.871498000000024,
+      "direction": 4,
+      "damage": 1
+    },
+    {
+      "time": 42.12583199999999,
+      "direction": 4,
+      "damage": 1
+    },
+    {
+      "time": 44.14207699999999,
+      "direction": 4,
+      "damage": 1
+    },
+    {
+      "time": 46.186505999999994,
+      "direction": 0,
       "damage": 1
     }
   ],
-  "criticals": [
-    {
-      "time": 18.840113,
-      "direction": 4,
-      "multiplier": 1.5
-    },
-    {
-      "time": 24.960847,
-      "direction": 6,
-      "multiplier": 1.5
-    },
-    {
-      "time": 25.960847,
-      "direction": 2,
-      "multiplier": 1.5
-    },
-    {
-      "time": 34.840113,
-      "direction": 4,
-      "multiplier": 1.5
-    },
-    {
-      "time": 42.58118784951177,
-      "direction": 8,
-      "multiplier": 1.5
-    }
-  ],
+  "criticals": [],
   "attackIntervals": {
     "__type": "Map",
     "entries": [
@@ -111,72 +80,56 @@
         "intro",
         {
           "start": 0,
-          "end": 7.518884337901347,
+          "end": 7.246885617214042,
           "name": "intro"
-        }
-      ],
-      [
-        "0",
-        {
-          "start": 7.556583479748899,
-          "end": 16.114288679143144,
-          "name": "0"
-        }
-      ],
-      [
-        "death",
-        {
-          "start": 94.87067776190399,
-          "end": 103.92659497543251,
-          "name": "death"
-        }
-      ],
-      [
-        "5",
-        {
-          "start": 59.33731802120142,
-          "end": 74.49486403146481,
-          "name": "5"
-        }
-      ],
-      [
-        "6",
-        {
-          "start": 24.360423799049723,
-          "end": 26.614840806819522,
-          "name": "6"
-        }
-      ],
-      [
-        "1",
-        {
-          "start": 16.2273861046858,
-          "end": 21.682651756629387,
-          "name": "1"
         }
       ],
       [
         "2",
         {
-          "start": 21.531213089289658,
-          "end": 24.47491143070935,
+          "start": 30.88335220838052,
+          "end": 40.362400906002264,
           "name": "2"
+        }
+      ],
+      [
+        "0",
+        {
+          "start": 13.51528878822197,
+          "end": 25.13476783691959,
+          "name": "0"
         }
       ],
       [
         "4",
         {
-          "start": 32.42696953373639,
-          "end": 45.54938572937043,
+          "start": 7.216308040770102,
+          "end": 13.51528878822197,
           "name": "4"
+        }
+      ],
+      [
+        "death",
+        {
+          "start": 46.7718805209513,
+          "end": 54,
+          "name": "death"
+        }
+      ],
+      [
+        "3",
+        {
+          "start": 40.373755,
+          "end": 46.71117723669309,
+          "name": "3"
         }
       ]
     ]
   },
-  "attackSchedule": "\nreturn function(state) {\n  // Check if current interval is completed (reached the end time)\n  var currentInterval = state.availableIntervals[state.currentInterval];\n\n  // Check if we've reached or passed the end time of the current interval\n  if (state.currentTime >= currentInterval.end) {\n    // Pick a random attack interval, but interval '5' is 1/3 as likely\n    var intervals = state.intervalNamesAlpha.slice();\n    var weighted = [];\n    for (var i = 0; i < intervals.length; i++) {\n      if (intervals[i] === \"5\") {\n        weighted.push(\"5\"); // only one entry for '5'\n      } else {\n        weighted.push(intervals[i]);\n        weighted.push(intervals[i]);\n        weighted.push(intervals[i]); // triple entry for others\n      }\n    }\n    var randomIndex = Math.floor(Math.random() * weighted.length);\n    var nextInterval = weighted[randomIndex];\n\n    // pick again if the interval is the same as the current one\n    if (nextInterval === state.currentInterval) {\n      nextInterval = weighted[Math.floor(Math.random() * weighted.length)];\n    }\n\n    return {\n      continueNormal: false,\n      transitionToInterval: nextInterval,\n      intervalOffset: 0\n    };\n  }\n  // Continue with current behavior\n  return { continueNormal: true };\n};",
+  "attackSchedule": "\nreturn function(state) {\n  var currentInterval = state.availableIntervals[state.currentInterval];\n\n  // Check if we've reached or passed the end time of the current interval\n  if (state.currentTime >= currentInterval.end) {\n    var nextInterval = state.intervalNamesAlpha[Math.floor(Math.random() * state.intervalNamesAlpha.length)];\n\n    // pick again if the interval is the same as the current one\n    if (nextInterval === state.currentInterval) {\n      nextInterval = state.intervalNamesAlpha[Math.floor(Math.random() * state.intervalNamesAlpha.length)];\n    }\n    \n    return {\n      continueNormal: false,\n      transitionToInterval: nextInterval,\n      intervalOffset: 0\n    };\n  }\n  \n  // Continue with current behavior\n  return { continueNormal: true };\n}",
   "version": "0.0.0",
-  "title": "Crab",
+  "title": "sk8ter",
   "arrowless": false,
-  "bossDamageMultiplier": 2,
-  "bossHealth": 5
+  "bossDamageMultiplier": 1,
+  "bossHealth": 3
 }
