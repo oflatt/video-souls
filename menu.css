@@ -78,25 +78,6 @@
   align-items: center;
 }
 
-
-#js-docs-link {
-  font-size: 20px;
-  padding: 5px 10px;
-  background: #333;
-  color: #ffd700;
-  border-radius: 6px;
-  text-decoration: none;
-  display: inline-block;
-  margin-bottom: 0;
-  vertical-align: middle;
-  line-height: 1.2;
-}
-
-#js-docs-link:hover {
-  background: #444;
-  color: #fff700;
-}
-
 #settings-title {
   margin-bottom: 8px;
   text-align: center;
