@@ -1,131 +1,156 @@
 {
-  "video": "d9_-wHMjIHM",
+  "video": "Do3pZk4YdZc",
   "attackData": [
     {
-      "time": 8.49598,
-      "direction": 3,
+      "time": 8.239362000000002,
+      "direction": 8,
       "damage": 1
     },
     {
-      "time": 12.111332,
-      "direction": 1,
-      "damage": 1
-    },
-    {
-      "time": 12.977969,
-      "direction": 4,
-      "damage": 1
-    },
-    {
-      "time": 17.662457,
+      "time": 11.170191,
       "direction": 6,
-      "damage": 1.7
-    },
-    {
-      "time": 21.870346,
-      "direction": 3,
       "damage": 1
     },
     {
-      "time": 24.271598,
+      "time": 13.686481000000002,
+      "direction": 6,
+      "damage": 1
+    },
+    {
+      "time": 16.053018000000005,
+      "direction": 6,
+      "damage": 1
+    },
+    {
+      "time": 17.088718,
+      "direction": 2,
+      "damage": 1
+    },
+    {
+      "time": 17.949884,
+      "direction": 6,
+      "damage": 1
+    },
+    {
+      "time": 18.743807000000004,
+      "direction": 2,
+      "damage": 1
+    },
+    {
+      "time": 23.511179000000002,
       "direction": 0,
       "damage": 1
     },
     {
-      "time": 25.814068,
-      "direction": 4,
+      "time": 25.499566,
+      "direction": 2,
       "damage": 1
     },
     {
-      "time": 30.540659,
-      "direction": 5,
-      "damage": 1.7
+      "time": 26.334831,
+      "direction": 0,
+      "damage": 1
     },
     {
-      "time": 35.34559199999998,
+      "time": 27.444046999999994,
+      "direction": 2,
+      "damage": 1
+    },
+    {
+      "time": 28.180159000000003,
+      "direction": 0,
+      "damage": 1
+    },
+    {
+      "time": 30.112405000000003,
+      "direction": 8,
+      "damage": 1
+    },
+    {
+      "time": 32.51395399999997,
+      "direction": 3,
+      "damage": 1
+    },
+    {
+      "time": 33.79939999999999,
+      "direction": 5,
+      "damage": 1
+    },
+    {
+      "time": 37.979032999999994,
+      "direction": 0,
+      "damage": 1
+    },
+    {
+      "time": 43.570257,
+      "direction": 6,
+      "damage": 1
+    },
+    {
+      "time": 44.177345,
+      "direction": 2,
+      "damage": 1
+    },
+    {
+      "time": 44.896505000000005,
+      "direction": 6,
+      "damage": 1
+    },
+    {
+      "time": 46.14201200000001,
       "direction": 1,
       "damage": 1
     },
     {
-      "time": 36.924592000000004,
-      "direction": 2,
-      "damage": 1
-    },
-    {
-      "time": 40.718407,
-      "direction": 3,
-      "damage": 1
-    },
-    {
-      "time": 43.52193996566773,
-      "direction": 2,
-      "damage": 1
-    },
-    {
-      "time": 49.392227,
+      "time": 46.84721100000002,
       "direction": 7,
       "damage": 1
     },
     {
-      "time": 55.765225,
-      "direction": 3,
+      "time": 47.44259099999999,
+      "direction": 1,
       "damage": 1
     },
     {
-      "time": 58.59395793610382,
+      "time": 48.96860599999997,
+      "direction": 1,
+      "damage": 1
+    },
+    {
+      "time": 50.2686059999999,
+      "direction": 1,
+      "damage": 1
+    },
+    {
+      "time": 53.745256,
+      "direction": 6,
+      "damage": 1
+    },
+    {
+      "time": 55.388358,
       "direction": 2,
       "damage": 1
     },
     {
-      "time": 60.31218703623962,
-      "direction": 2,
-      "damage": 1
-    },
-    {
-      "time": 62.65483803433227,
-      "direction": 7,
+      "time": 57.65371100000004,
+      "direction": 6,
       "damage": 1
     }
   ],
   "criticals": [
     {
-      "time": 10.129145020980834,
-      "direction": 3,
+      "time": 21.709777,
+      "direction": 4,
       "multiplier": 1.5
     },
     {
-      "time": 19.420728061988832,
-      "direction": 6,
+      "time": 35.903181,
+      "direction": 1,
       "multiplier": 1.5
     },
     {
-      "time": 28.278100989509582,
-      "direction": 0,
-      "multiplier": 1.5
-    },
-    {
-      "time": 32.448415032424926,
-      "direction": 5,
-      "multiplier": 1.5
-    },
-    {
-      "time": 46.344146,
-      "direction": 8,
-      "multiplier": 1.5
-    },
-    {
-      "time": 51.53865307629395,
-      "direction": 7,
-      "multiplier": 1.5
-    },
-    {
-      "time": 52.154149025749206,
-      "direction": 3,
-      "multiplier": 1.5
-    },
-    {
-      "time": 53.49710208296967,
-      "direction": 7,
+      "time": 40.921498,
+      "direction": 2,
       "multiplier": 1.5
     }
   ],
@@ -136,32 +161,56 @@
         "intro",
         {
           "start": 0,
-          "end": 5.80973952434881,
+          "end": 9.479048697621744,
           "name": "intro"
-        }
-      ],
-      [
-        "death",
-        {
-          "start": 63.60873442808607,
-          "end": 73.78613193657985,
-          "name": "death"
         }
       ],
       [
         "0",
         {
-          "start": 5.840317100792752,
-          "end": 63.60873442808607,
+          "start": 9.475223084840554,
+          "end": 20.71250519949356,
           "name": "0"
+        }
+      ],
+      [
+        "2",
+        {
+          "start": 28.891118809566457,
+          "end": 39.496719385230094,
+          "name": "2"
+        }
+      ],
+      [
+        "3",
+        {
+          "start": 39.536103,
+          "end": 51.73139340355053,
+          "name": "3"
+        }
+      ],
+      [
+        "death",
+        {
+          "start": 51.73139340355053,
+          "end": 61.173370091602166,
+          "name": "death"
+        }
+      ],
+      [
+        "1",
+        {
+          "start": 20.728548,
+          "end": 28.936828439632077,
+          "name": "1"
         }
       ]
     ]
   },
-  "attackSchedule": "\nreturn function(state) {\n  var currentInterval = state.availableIntervals[state.currentInterval];\n\n  // Check if we've reached or passed the end time of the current interval\n  if (state.currentTime >= currentInterval.end) {\n    var nextInterval = state.intervalNamesAlpha[Math.floor(Math.random() * state.intervalNamesAlpha.length)];\n\n    // pick again if the interval is the same as the current one\n    if (nextInterval === state.currentInterval) {\n      nextInterval = state.intervalNamesAlpha[Math.floor(Math.random() * state.intervalNamesAlpha.length)];\n    }\n    \n    return {\n      continueNormal: false,\n      transitionToInterval: nextInterval,\n      intervalOffset: 0\n    };\n  }\n  \n  // Continue with current behavior\n  return { continueNormal: true };\n}",
+  "attackSchedule": "\nreturn function(state) {\n  var currentInterval = state.availableIntervals[state.currentInterval];\n\n  // Check if we've reached or passed the end time of the current interval\n  if (state.currentTime >= currentInterval.end) {\n    var intervals = state.intervalNamesAlpha.slice();\n    var weighted = [];\n    var lowHealth = state.healthPercentage < (1/3);\n\n    for (var i = 0; i < intervals.length; i++) {\n      if (intervals[i] === \"3\") {\n        if (lowHealth) {\n          // If under 1/3 health, interval 3 is 3x as likely\n          weighted.push(\"3\");\n          weighted.push(\"3\");\n          weighted.push(\"3\");\n        }\n        // If not low health, do not add interval 3 at all\n      } else {\n        weighted.push(intervals[i]);\n      }\n    }\n\n    // If not low health and weighted is empty (all intervals were \"3\"), fallback to all intervals except \"3\"\n    if (weighted.length === 0) {\n      weighted = intervals.filter(function(x) { return x !== \"3\"; });\n      // If still empty, fallback to all intervals\n      if (weighted.length === 0) weighted = intervals.slice();\n    }\n\n    var randomIndex = Math.floor(Math.random() * weighted.length);\n    var nextInterval = weighted[randomIndex];\n\n    // pick again if the interval is the same as the current one\n    if (nextInterval === state.currentInterval) {\n      nextInterval = weighted[Math.floor(Math.random() * weighted.length)];\n    }\n\n    return {\n      continueNormal: false,\n      transitionToInterval: nextInterval,\n      intervalOffset: 0\n    };\n  }\n  // Continue with current behavior\n  return { continueNormal: true };\n};\n",
   "version": "0.0.0",
-  "title": "Jelly",
+  "title": "Ping Pong Pain",
   "arrowless": false,
-  "bossDamageMultiplier": 2,
-  "bossHealth": 5
+  "bossDamageMultiplier": 1,
+  "bossHealth": 5.5
 }
