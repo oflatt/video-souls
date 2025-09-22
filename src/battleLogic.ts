@@ -7,6 +7,7 @@ import { AttackData, getAttacksInInterval, LevelDataV0 } from './leveldata';
 import { BattleAnim } from './battleAnim';
 import { InputManager } from './inputmanager';
 import { ATTACK_COMBO_DAMAGE_MULT, ATTACK_COMBO_STARTUP_TIMES, ATTACK_DURATION, ATTACK_END_LAG, BLOCK_WINDOW, COMBO_EXTEND_TIME, CRITICAL_TIME, PARRY_FORGIVENESS_TIME, PARRY_WINDOW, STAGGER_TIME } from './constants';
+import { global } from './globalState';
 
 
 const attackedPosition = [0.7, 0.4];
@@ -15,11 +16,9 @@ const attackedAngle = Math.PI / 2;
 export class BattleLogic {
   private audio: AudioPlayer;
   private attackSchedule: AttackSchedule;
-  private level: LevelDataV0;
 
   constructor(audio: AudioPlayer, level: LevelDataV0) {
     this.audio = audio;
-    this.level = level;
     this.attackSchedule = new AttackSchedule(level.attackSchedule); // <-- pass schedule string
   }
 
@@ -36,7 +35,7 @@ export class BattleLogic {
     attackData: any[],
     inputManager: InputManager
   ) {
-    const attacks = getAttacksInInterval(this.level, prevTime, currentTime);
+    const attacks = getAttacksInInterval(global().level(), prevTime, currentTime);
     if (attacks.length > 0) {
       const attack = attacks[0];
 
@@ -64,7 +63,7 @@ export class BattleLogic {
     }
 
     // Detect criticals in this frame
-    const criticals = this.getCriticalsInInterval(this.level.criticals, prevTime, currentTime);
+    const criticals = this.getCriticalsInInterval(global().level().criticals, prevTime, currentTime);
     if (criticals.length > 0) {
       const crit = criticals[0];
       battle.currentCritical = {
@@ -268,7 +267,7 @@ export class BattleLogic {
     this.audio.playBlockedSound();
     battle.lastPlayerHealth = battle.playerHealth;
     battle.timeSinceLastBlock = 0;  // Reset duration
-    battle.playerHealth -= 0.2 * attackDamage * 0.1 * this.level.bossDamageMultiplier;
+    battle.playerHealth -= 0.2 * attackDamage * 0.1 * global().level().bossDamageMultiplier;
     battle.anim.state = AttackAnimation.NONE;
     // recent missed parries reset
     battle.numRecentMissedParries = 0;
@@ -280,7 +279,7 @@ export class BattleLogic {
     this.audio.playPlayerHitSound();
     battle.lastPlayerHealth = battle.playerHealth;
     // Use bossDamageMultiplier from level data
-    battle.playerHealth -= attackDamage * 0.1 * this.level.bossDamageMultiplier;
+    battle.playerHealth -= attackDamage * 0.1 * global().level().bossDamageMultiplier;
     battle.timeSincePlayerHit = 0;  // Reset duration
     battle.hitCombo = 0;
     battle.parryCombo = 0; // <-- reset parry combo on hit

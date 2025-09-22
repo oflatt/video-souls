@@ -1,6 +1,7 @@
 import { BattleState } from './battle';
 import { BossState, BossScheduleResult, AttackInterval } from './editor';
 import { VideoPlayer } from './videoPlayer';
+import { global } from './globalState';
 
 
 export class AttackSchedule {
@@ -117,8 +118,9 @@ export class AttackSchedule {
         .sort((a, b) => a[1].end - b[1].end)
         .map(([key]) => key);
 
+      const bossMaxHealth = global().level().bossHealth;
       const bossState = {
-        healthPercentage: battle.bossHealth,
+        healthPercentage: battle.bossHealth / bossMaxHealth,
         currentInterval: battle.currentInterval,
         currentTime: currentTime,
         intervalElapsedTime: intervalElapsedTime,

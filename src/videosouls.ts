@@ -70,7 +70,7 @@ export class VideoSouls {
     this.localSave = LocalSave.load();
     this.mainMenu = new MainMenu(this.localSave); 
     this.editor = new Editor(new LevelDataV0(), graphics, this.videoPlayer);
-    this.battleRenderer = new BattleRenderer(this.elements.canvas, this.editor.level());
+    this.battleRenderer = new BattleRenderer(this.elements.canvas);
     this.battleLogic = new BattleLogic(this.mainMenu.audio, this.editor.level());
     this.gameMode = GameMode.MENU;
     this.battle = initialBattleState();
@@ -123,6 +123,10 @@ export class VideoSouls {
 
   setLevel(level: LevelDataV0) {
     this.events.push(new EventData(EventType.SetLevel, level));
+  }
+
+  level(): LevelDataV0 {
+    return this.editor.level();
   }
 
   mainLoop(_time: DOMHighResTimeStamp) {
@@ -361,7 +365,7 @@ export class VideoSouls {
       this.battle.lastBossHealth = this.editor.level().bossHealth;
 
       this.battleLogic = new BattleLogic(this.mainMenu.audio, this.editor.level());
-      this.battleRenderer = new BattleRenderer(this.elements.canvas, this.editor.level());
+      this.battleRenderer = new BattleRenderer(this.elements.canvas);
     } else {
       this.elements.gameHUD.style.display = 'none';
     }

@@ -95,11 +95,9 @@ export function drawCritical(
 
 export class BattleRenderer {
   private canvas: HTMLCanvasElement;
-  private level: LevelDataV0; // <-- Add level reference
 
-  constructor(canvas: HTMLCanvasElement, level: LevelDataV0) {
+  constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
-    this.level = level;
   }
 
   private drawAttackWarningArrow(
