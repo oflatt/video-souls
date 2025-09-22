@@ -1,197 +1,332 @@
 {
-  "video": "HhsJ2VK_rhA",
+  "video": "PhLW1TgKPwA",
   "attackData": [
     {
-      "time": 5.813608574644571,
-      "direction": 2,
+      "time": 8.100618,
+      "direction": 1,
       "damage": 1
     },
     {
-      "time": 7.31992241535859,
+      "time": 11.311765000000001,
       "direction": 6,
       "damage": 1
     },
     {
-      "time": 10.352635675336895,
-      "direction": 7,
+      "time": 13.831749000000006,
+      "direction": 1,
       "damage": 1
     },
     {
-      "time": 13.56725105232736,
-      "direction": 8,
-      "damage": 0.7
-    },
-    {
-      "time": 13.817251052327364,
-      "direction": 8,
-      "damage": 0.7
-    },
-    {
-      "time": 14.067251052327368,
-      "direction": 8,
-      "damage": 0.7
-    },
-    {
-      "time": 14.317251052327371,
-      "direction": 8,
-      "damage": 0.7
-    },
-    {
-      "time": 14.617251052327376,
-      "direction": 8,
-      "damage": 0.7
-    },
-    {
-      "time": 17.562277771983286,
-      "direction": 2,
-      "damage": 0.6
-    },
-    {
-      "time": 17.879497492982587,
-      "direction": 2,
-      "damage": 0.6
-    },
-    {
-      "time": 18.17949749298259,
-      "direction": 2,
-      "damage": 0.6
-    },
-    {
-      "time": 18.479497492982595,
-      "direction": 2,
-      "damage": 0.6
-    },
-    {
-      "time": 18.7794974929826,
-      "direction": 2,
-      "damage": 0.6
-    },
-    {
-      "time": 20.27949749298262,
-      "direction": 3,
+      "time": 16.632125000000006,
+      "direction": 1,
       "damage": 1
     },
     {
-      "time": 21.779497492982642,
-      "direction": 7,
-      "damage": 1
-    },
-    {
-      "time": 24.47949749298268,
-      "direction": 2,
-      "damage": 1
-    },
-    {
-      "time": 26.479497492982702,
+      "time": 20.1727066817667,
       "direction": 6,
       "damage": 1
     },
     {
-      "time": 26.92949749298271,
-      "direction": 2,
-      "damage": 1
-    },
-    {
-      "time": 27.329497492982714,
+      "time": 23.018120045300112,
       "direction": 6,
       "damage": 1
     },
     {
-      "time": 29.653025216938225,
-      "direction": 2,
-      "damage": 0.6
+      "time": 28.47943399999999,
+      "direction": 1,
+      "damage": 1
     },
     {
-      "time": 29.92949749298275,
-      "direction": 2,
-      "damage": 0.6
+      "time": 30.097115000000002,
+      "direction": 1,
+      "damage": 1
     },
     {
-      "time": 30.229497492982755,
-      "direction": 2,
-      "damage": 0.6
+      "time": 31.434990000000006,
+      "direction": 1,
+      "damage": 1
     },
     {
-      "time": 30.52949749298276,
-      "direction": 2,
-      "damage": 0.6
+      "time": 33.38052095130237,
+      "direction": 6,
+      "damage": 1
     },
     {
-      "time": 30.829497492982764,
+      "time": 36.371987999999995,
       "direction": 2,
-      "damage": 0.6
+      "damage": 1
     },
     {
-      "time": 32.779497492982735,
-      "direction": 7,
+      "time": 38.82890999999997,
+      "direction": 1,
+      "damage": 1
+    },
+    {
+      "time": 40.24844999999999,
+      "direction": 1,
+      "damage": 1
+    },
+    {
+      "time": 42.085477,
+      "direction": 6,
+      "damage": 1
+    },
+    {
+      "time": 45.29164599999999,
+      "direction": 2,
+      "damage": 1
+    },
+    {
+      "time": 47.473554,
+      "direction": 1,
+      "damage": 1
+    },
+    {
+      "time": 49.54846,
+      "direction": 6,
+      "damage": 1
+    },
+    {
+      "time": 53.172887,
+      "direction": 6,
+      "damage": 1
+    },
+    {
+      "time": 56.229983,
+      "direction": 2,
+      "damage": 1
+    },
+    {
+      "time": 57.74033,
+      "direction": 1,
+      "damage": 1
+    },
+    {
+      "time": 59.078257,
+      "direction": 1,
+      "damage": 1
+    },
+    {
+      "time": 61.202594,
+      "direction": 6,
+      "damage": 1
+    },
+    {
+      "time": 64.087158,
+      "direction": 6,
+      "damage": 1
+    },
+    {
+      "time": 69.56398640996602,
+      "direction": 6,
+      "damage": 1
+    },
+    {
+      "time": 72.45186862967157,
+      "direction": 2,
+      "damage": 1
+    },
+    {
+      "time": 75.370175,
+      "direction": 6,
+      "damage": 1
+    },
+    {
+      "time": 78.207274,
+      "direction": 2,
+      "damage": 1
+    },
+    {
+      "time": 81.117416,
+      "direction": 1,
+      "damage": 1
+    },
+    {
+      "time": 82.46434,
+      "direction": 1,
+      "damage": 1
+    },
+    {
+      "time": 84.416988,
+      "direction": 6,
+      "damage": 1
+    },
+    {
+      "time": 86.84195499999998,
+      "direction": 1,
+      "damage": 1
+    },
+    {
+      "time": 88.344819,
+      "direction": 1,
+      "damage": 1
+    },
+    {
+      "time": 89.839488,
+      "direction": 1,
+      "damage": 1
+    },
+    {
+      "time": 91.898427,
+      "direction": 2,
+      "damage": 1
+    },
+    {
+      "time": 92.85027800000003,
+      "direction": 6,
+      "damage": 1
+    },
+    {
+      "time": 94.275824,
+      "direction": 2,
+      "damage": 1
+    },
+    {
+      "time": 97.24986399999999,
+      "direction": 1,
+      "damage": 1
+    },
+    {
+      "time": 99.150641,
+      "direction": 6,
+      "damage": 1
+    },
+    {
+      "time": 101.564555,
+      "direction": 1,
+      "damage": 1
+    },
+    {
+      "time": 102.98734900000001,
+      "direction": 1,
+      "damage": 1
+    },
+    {
+      "time": 105.1175,
+      "direction": 2,
+      "damage": 1
+    },
+    {
+      "time": 109.037708,
+      "direction": 6,
+      "damage": 1
+    },
+    {
+      "time": 111.76712199999999,
+      "direction": 2,
+      "damage": 1
+    },
+    {
+      "time": 120.6463,
+      "direction": 6,
+      "damage": 1
+    },
+    {
+      "time": 123.539828,
+      "direction": 2,
       "damage": 1
     }
   ],
   "criticals": [
     {
-      "time": 8.757154,
-      "direction": 3,
-      "multiplier": 1.5
-    },
-    {
-      "time": 15.330663,
+      "time": 25.05509,
       "direction": 8,
-      "multiplier": 1.5
+      "multiplier": 8
     },
     {
-      "time": 16.830663,
-      "direction": 1,
-      "multiplier": 1.5
+      "time": 50.86871501268387,
+      "direction": 8,
+      "multiplier": 8
     },
     {
-      "time": 23.330663,
+      "time": 53.80804077010192,
       "direction": 6,
-      "multiplier": 1.5
+      "multiplier": 8
     },
     {
-      "time": 27.830663,
+      "time": 64.81749515821457,
+      "direction": 8,
+      "multiplier": 8
+    },
+    {
+      "time": 67.1214068111146,
+      "direction": 8,
+      "multiplier": 8
+    },
+    {
+      "time": 71.23544373757863,
       "direction": 6,
-      "multiplier": 1.5
+      "multiplier": 4
     },
     {
-      "time": 28.280663000000008,
+      "time": 76.91689804005432,
+      "direction": 6,
+      "multiplier": 4
+    },
+    {
+      "time": 85.829783,
       "direction": 2,
-      "multiplier": 1.5
+      "multiplier": 4
+    },
+    {
+      "time": 95.532292,
+      "direction": 2,
+      "multiplier": 4
+    },
+    {
+      "time": 105.43601359003394,
+      "direction": 6,
+      "multiplier": 4
+    },
+    {
+      "time": 113.87610592389679,
+      "direction": 8,
+      "multiplier": 8
+    },
+    {
+      "time": 116.03140819025803,
+      "direction": 8,
+      "multiplier": 8
+    },
+    {
+      "time": 118.50090003204345,
+      "direction": 8,
+      "multiplier": 8
     }
   ],
   "attackIntervals": {
     "__type": "Map",
     "entries": [
       [
-        "2",
-        {
-          "start": 4.694485842026825,
-          "end": 33.3532041728763,
-          "name": "2"
-        }
-      ],
-      [
         "intro",
         {
-          "start": 0.17883755588673622,
-          "end": 4.783904619970194,
+          "start": 0,
+          "end": 7.357729331823329,
           "name": "intro"
         }
       ],
       [
         "death",
         {
-          "start": 64.38152011922504,
-          "end": 68.31594634873323,
+          "start": 124.1013590033975,
+          "end": 130.501,
           "name": "death"
+        }
+      ],
+      [
+        "0",
+        {
+          "start": 7.214396942242355,
+          "end": 124.1013590033975,
+          "name": "0"
         }
       ]
     ]
   },
   "attackSchedule": "\nreturn function(state) {\n  var currentInterval = state.availableIntervals[state.currentInterval];\n\n  // Check if we've reached or passed the end time of the current interval\n  if (state.currentTime >= currentInterval.end) {\n    var nextInterval = state.intervalNamesAlpha[Math.floor(Math.random() * state.intervalNamesAlpha.length)];\n\n    // pick again if the interval is the same as the current one\n    if (nextInterval === state.currentInterval) {\n      nextInterval = state.intervalNamesAlpha[Math.floor(Math.random() * state.intervalNamesAlpha.length)];\n    }\n    \n    return {\n      continueNormal: false,\n      transitionToInterval: nextInterval,\n      intervalOffset: 0\n    };\n  }\n  \n  // Continue with current behavior\n  return { continueNormal: true };\n}",
   "version": "0.0.0",
-  "title": "Rice Cooker",
+  "title": "turtle!",
   "arrowless": false,
   "bossDamageMultiplier": 1,
-  "bossHealth": 3
+  "bossHealth": 14
 }

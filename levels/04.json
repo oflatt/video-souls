@@ -1,297 +1,87 @@
 {
-  "video": "PhLW1TgKPwA",
+  "video": "udENR1eZPAw",
   "attackData": [
     {
-      "time": 8.100618,
-      "direction": 1,
+      "time": 8.203031000000001,
+      "direction": 0,
       "damage": 1
     },
     {
-      "time": 11.311765000000001,
-      "direction": 6,
-      "damage": 1
-    },
-    {
-      "time": 13.831749000000006,
-      "direction": 1,
-      "damage": 1
-    },
-    {
-      "time": 16.632125000000006,
-      "direction": 1,
-      "damage": 1
-    },
-    {
-      "time": 20.1727066817667,
-      "direction": 6,
-      "damage": 1
-    },
-    {
-      "time": 23.018120045300112,
-      "direction": 6,
-      "damage": 1
-    },
-    {
-      "time": 28.47943399999999,
-      "direction": 1,
-      "damage": 1
-    },
-    {
-      "time": 30.097115000000002,
-      "direction": 1,
-      "damage": 1
-    },
-    {
-      "time": 31.434990000000006,
-      "direction": 1,
-      "damage": 1
-    },
-    {
-      "time": 33.38052095130237,
-      "direction": 6,
-      "damage": 1
-    },
-    {
-      "time": 36.371987999999995,
+      "time": 10.639191000000006,
       "direction": 2,
       "damage": 1
     },
     {
-      "time": 38.82890999999997,
-      "direction": 1,
-      "damage": 1
-    },
-    {
-      "time": 40.24844999999999,
-      "direction": 1,
-      "damage": 1
-    },
-    {
-      "time": 42.085477,
-      "direction": 6,
-      "damage": 1
-    },
-    {
-      "time": 45.29164599999999,
+      "time": 12.441312000000002,
       "direction": 2,
       "damage": 1
     },
     {
-      "time": 47.473554,
-      "direction": 1,
+      "time": 15.372219000000003,
+      "direction": 4,
       "damage": 1
     },
     {
-      "time": 49.54846,
-      "direction": 6,
-      "damage": 1
-    },
-    {
-      "time": 53.172887,
-      "direction": 6,
-      "damage": 1
-    },
-    {
-      "time": 56.229983,
+      "time": 17.08918902536774,
       "direction": 2,
       "damage": 1
     },
     {
-      "time": 57.74033,
-      "direction": 1,
+      "time": 19.143944000000005,
+      "direction": 0,
       "damage": 1
     },
     {
-      "time": 59.078257,
-      "direction": 1,
+      "time": 21.61703,
+      "direction": 0,
       "damage": 1
     },
     {
-      "time": 61.202594,
-      "direction": 6,
-      "damage": 1
-    },
-    {
-      "time": 64.087158,
-      "direction": 6,
-      "damage": 1
-    },
-    {
-      "time": 69.56398640996602,
-      "direction": 6,
-      "damage": 1
-    },
-    {
-      "time": 72.45186862967157,
+      "time": 24.103188000000006,
       "direction": 2,
       "damage": 1
     },
     {
-      "time": 75.370175,
+      "time": 25.314021,
       "direction": 6,
       "damage": 1
     },
     {
-      "time": 78.207274,
+      "time": 31.88591,
+      "direction": 8,
+      "damage": 2
+    },
+    {
+      "time": 34.27870599999999,
+      "direction": 8,
+      "damage": 2
+    },
+    {
+      "time": 36.099567,
+      "direction": 7,
+      "damage": 1
+    },
+    {
+      "time": 37.43734299999999,
       "direction": 2,
       "damage": 1
     },
     {
-      "time": 81.117416,
-      "direction": 1,
-      "damage": 1
+      "time": 44.175907,
+      "direction": 8,
+      "damage": 1.5
     },
     {
-      "time": 82.46434,
-      "direction": 1,
-      "damage": 1
-    },
-    {
-      "time": 84.416988,
-      "direction": 6,
-      "damage": 1
-    },
-    {
-      "time": 86.84195499999998,
-      "direction": 1,
-      "damage": 1
-    },
-    {
-      "time": 88.344819,
-      "direction": 1,
-      "damage": 1
-    },
-    {
-      "time": 89.839488,
-      "direction": 1,
-      "damage": 1
-    },
-    {
-      "time": 91.898427,
-      "direction": 2,
-      "damage": 1
-    },
-    {
-      "time": 92.85027800000003,
-      "direction": 6,
-      "damage": 1
-    },
-    {
-      "time": 94.275824,
-      "direction": 2,
-      "damage": 1
-    },
-    {
-      "time": 97.24986399999999,
-      "direction": 1,
-      "damage": 1
-    },
-    {
-      "time": 99.150641,
-      "direction": 6,
-      "damage": 1
-    },
-    {
-      "time": 101.564555,
-      "direction": 1,
-      "damage": 1
-    },
-    {
-      "time": 102.98734900000001,
-      "direction": 1,
-      "damage": 1
-    },
-    {
-      "time": 105.1175,
-      "direction": 2,
-      "damage": 1
-    },
-    {
-      "time": 109.037708,
-      "direction": 6,
-      "damage": 1
-    },
-    {
-      "time": 111.76712199999999,
-      "direction": 2,
-      "damage": 1
-    },
-    {
-      "time": 120.6463,
-      "direction": 6,
-      "damage": 1
-    },
-    {
-      "time": 123.539828,
-      "direction": 2,
-      "damage": 1
+      "time": 46.454064,
+      "direction": 8,
+      "damage": 1.5
     }
   ],
   "criticals": [
     {
-      "time": 25.05509,
+      "time": 55.975,
       "direction": 8,
-      "multiplier": 8
-    },
-    {
-      "time": 50.86871501268387,
-      "direction": 8,
-      "multiplier": 8
-    },
-    {
-      "time": 53.80804077010192,
-      "direction": 6,
-      "multiplier": 8
-    },
-    {
-      "time": 64.81749515821457,
-      "direction": 8,
-      "multiplier": 8
-    },
-    {
-      "time": 67.1214068111146,
-      "direction": 8,
-      "multiplier": 8
-    },
-    {
-      "time": 71.23544373757863,
-      "direction": 6,
-      "multiplier": 4
-    },
-    {
-      "time": 76.91689804005432,
-      "direction": 6,
-      "multiplier": 4
-    },
-    {
-      "time": 85.829783,
-      "direction": 2,
-      "multiplier": 4
-    },
-    {
-      "time": 95.532292,
-      "direction": 2,
-      "multiplier": 4
-    },
-    {
-      "time": 105.43601359003394,
-      "direction": 6,
-      "multiplier": 4
-    },
-    {
-      "time": 113.87610592389679,
-      "direction": 8,
-      "multiplier": 8
-    },
-    {
-      "time": 116.03140819025803,
-      "direction": 8,
-      "multiplier": 8
-    },
-    {
-      "time": 118.50090003204345,
-      "direction": 8,
-      "multiplier": 8
+      "multiplier": 1.5
     }
   ],
   "attackIntervals": {
@@ -301,32 +91,64 @@
         "intro",
         {
           "start": 0,
-          "end": 7.357729331823329,
+          "end": 6.53128369195923,
           "name": "intro"
         }
       ],
       [
         "death",
         {
-          "start": 124.1013590033975,
-          "end": 130.501,
+          "start": 48.18004926387316,
+          "end": 55.721,
           "name": "death"
         }
       ],
       [
         "0",
         {
-          "start": 7.214396942242355,
-          "end": 124.1013590033975,
+          "start": 6.562835787089468,
+          "end": 14.07223442808607,
           "name": "0"
+        }
+      ],
+      [
+        "1",
+        {
+          "start": 13.882921857304643,
+          "end": 20.256445073612685,
+          "name": "1"
+        }
+      ],
+      [
+        "4",
+        {
+          "start": 43.06228765571914,
+          "end": 48.23103057757645,
+          "name": "4"
+        }
+      ],
+      [
+        "3",
+        {
+          "start": 20.238938,
+          "end": 26.731917394757744,
+          "name": "3"
+        }
+      ],
+      [
+        "2",
+        {
+          "start": 26.731917394757744,
+          "end": 43.60135900339751,
+          "name": "2"
         }
       ]
     ]
   },
-  "attackSchedule": "\nreturn function(state) {\n  var currentInterval = state.availableIntervals[state.currentInterval];\n\n  // Check if we've reached or passed the end time of the current interval\n  if (state.currentTime >= currentInterval.end) {\n    var nextInterval = state.intervalNamesAlpha[Math.floor(Math.random() * state.intervalNamesAlpha.length)];\n\n    // pick again if the interval is the same as the current one\n    if (nextInterval === state.currentInterval) {\n      nextInterval = state.intervalNamesAlpha[Math.floor(Math.random() * state.intervalNamesAlpha.length)];\n    }\n    \n    return {\n      continueNormal: false,\n      transitionToInterval: nextInterval,\n      intervalOffset: 0\n    };\n  }\n  \n  // Continue with current behavior\n  return { continueNormal: true };\n}",
+  "attackSchedule": "\nvar didStartAttack = false;\nvar didSpecialAttack = false;\nreturn function(state) {\n  console.log('Loan Shark health:', state.healthPercentage);\n  var currentInterval = state.availableIntervals[state.currentInterval];\n  // Always start with attack 0 at the beginning\n  if (!didStartAttack) {\n    didStartAttack = true;\n    return {\n      continueNormal: false,\n      transitionToInterval: \"0\",\n      intervalOffset: 0\n    };\n  }\n  // If health is below 0.6 and we haven't done attack 2 yet, do it once\n  if (state.healthPercentage < 0.6 && !didSpecialAttack) {\n    didSpecialAttack = true;\n    console.log('Loan Shark: Doing special attack 2!');\n    return {\n      continueNormal: false,\n      transitionToInterval: \"2\",\n      intervalOffset: 0\n    };\n  }\n  // After doing attack 2, resume normal behavior (excluding 2)\n  if (state.currentTime >= currentInterval.end) {\n    var intervals = state.intervalNamesAlpha.filter(function(x) { return x !== \"2\"; });\n    var randomIndex = Math.floor(Math.random() * intervals.length);\n    var nextInterval = intervals[randomIndex];\n    // pick again if the interval is the same as the current one\n    if (nextInterval === state.currentInterval) {\n      nextInterval = intervals[Math.floor(Math.random() * intervals.length)];\n    }\n    return {\n      continueNormal: false,\n      transitionToInterval: nextInterval,\n      intervalOffset: 0\n    };\n  }\n  // Continue with current behavior\n  return { continueNormal: true };\n};\n",
   "version": "0.0.0",
-  "title": "turtle!",
+  "title": "Loan Shark",
   "arrowless": false,
   "bossDamageMultiplier": 1,
-  "bossHealth": 14
+  "bossHealth": 8
 }
