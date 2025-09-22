@@ -1,332 +1,40 @@
 {
-  "video": "PhLW1TgKPwA",
-  "attackData": [
-    {
-      "time": 8.100618,
-      "direction": 1,
-      "damage": 1
-    },
-    {
-      "time": 11.311765000000001,
-      "direction": 6,
-      "damage": 1
-    },
-    {
-      "time": 13.831749000000006,
-      "direction": 1,
-      "damage": 1
-    },
-    {
-      "time": 16.632125000000006,
-      "direction": 1,
-      "damage": 1
-    },
-    {
-      "time": 20.1727066817667,
-      "direction": 6,
-      "damage": 1
-    },
-    {
-      "time": 23.018120045300112,
-      "direction": 6,
-      "damage": 1
-    },
-    {
-      "time": 28.47943399999999,
-      "direction": 1,
-      "damage": 1
-    },
-    {
-      "time": 30.097115000000002,
-      "direction": 1,
-      "damage": 1
-    },
-    {
-      "time": 31.434990000000006,
-      "direction": 1,
-      "damage": 1
-    },
-    {
-      "time": 33.38052095130237,
-      "direction": 6,
-      "damage": 1
-    },
-    {
-      "time": 36.371987999999995,
-      "direction": 2,
-      "damage": 1
-    },
-    {
-      "time": 38.82890999999997,
-      "direction": 1,
-      "damage": 1
-    },
-    {
-      "time": 40.24844999999999,
-      "direction": 1,
-      "damage": 1
-    },
-    {
-      "time": 42.085477,
-      "direction": 6,
-      "damage": 1
-    },
-    {
-      "time": 45.29164599999999,
-      "direction": 2,
-      "damage": 1
-    },
-    {
-      "time": 47.473554,
-      "direction": 1,
-      "damage": 1
-    },
-    {
-      "time": 49.54846,
-      "direction": 6,
-      "damage": 1
-    },
-    {
-      "time": 53.172887,
-      "direction": 6,
-      "damage": 1
-    },
-    {
-      "time": 56.229983,
-      "direction": 2,
-      "damage": 1
-    },
-    {
-      "time": 57.74033,
-      "direction": 1,
-      "damage": 1
-    },
-    {
-      "time": 59.078257,
-      "direction": 1,
-      "damage": 1
-    },
-    {
-      "time": 61.202594,
-      "direction": 6,
-      "damage": 1
-    },
-    {
-      "time": 64.087158,
-      "direction": 6,
-      "damage": 1
-    },
-    {
-      "time": 69.56398640996602,
-      "direction": 6,
-      "damage": 1
-    },
-    {
-      "time": 72.45186862967157,
-      "direction": 2,
-      "damage": 1
-    },
-    {
-      "time": 75.370175,
-      "direction": 6,
-      "damage": 1
-    },
-    {
-      "time": 78.207274,
-      "direction": 2,
-      "damage": 1
-    },
-    {
-      "time": 81.117416,
-      "direction": 1,
-      "damage": 1
-    },
-    {
-      "time": 82.46434,
-      "direction": 1,
-      "damage": 1
-    },
-    {
-      "time": 84.416988,
-      "direction": 6,
-      "damage": 1
-    },
-    {
-      "time": 86.84195499999998,
-      "direction": 1,
-      "damage": 1
-    },
-    {
-      "time": 88.344819,
-      "direction": 1,
-      "damage": 1
-    },
-    {
-      "time": 89.839488,
-      "direction": 1,
-      "damage": 1
-    },
-    {
-      "time": 91.898427,
-      "direction": 2,
-      "damage": 1
-    },
-    {
-      "time": 92.85027800000003,
-      "direction": 6,
-      "damage": 1
-    },
-    {
-      "time": 94.275824,
-      "direction": 2,
-      "damage": 1
-    },
-    {
-      "time": 97.24986399999999,
-      "direction": 1,
-      "damage": 1
-    },
-    {
-      "time": 99.150641,
-      "direction": 6,
-      "damage": 1
-    },
-    {
-      "time": 101.564555,
-      "direction": 1,
-      "damage": 1
-    },
-    {
-      "time": 102.98734900000001,
-      "direction": 1,
-      "damage": 1
-    },
-    {
-      "time": 105.1175,
-      "direction": 2,
-      "damage": 1
-    },
-    {
-      "time": 109.037708,
-      "direction": 6,
-      "damage": 1
-    },
-    {
-      "time": 111.76712199999999,
-      "direction": 2,
-      "damage": 1
-    },
-    {
-      "time": 120.6463,
-      "direction": 6,
-      "damage": 1
-    },
-    {
-      "time": 123.539828,
-      "direction": 2,
-      "damage": 1
-    }
-  ],
-  "criticals": [
-    {
-      "time": 25.05509,
-      "direction": 8,
-      "multiplier": 8
-    },
-    {
-      "time": 50.86871501268387,
-      "direction": 8,
-      "multiplier": 8
-    },
-    {
-      "time": 53.80804077010192,
-      "direction": 6,
-      "multiplier": 8
-    },
-    {
-      "time": 64.81749515821457,
-      "direction": 8,
-      "multiplier": 8
-    },
-    {
-      "time": 67.1214068111146,
-      "direction": 8,
-      "multiplier": 8
-    },
-    {
-      "time": 71.23544373757863,
-      "direction": 6,
-      "multiplier": 4
-    },
-    {
-      "time": 76.91689804005432,
-      "direction": 6,
-      "multiplier": 4
-    },
-    {
-      "time": 85.829783,
-      "direction": 2,
-      "multiplier": 4
-    },
-    {
-      "time": 95.532292,
-      "direction": 2,
-      "multiplier": 4
-    },
-    {
-      "time": 105.43601359003394,
-      "direction": 6,
-      "multiplier": 4
-    },
-    {
-      "time": 113.87610592389679,
-      "direction": 8,
-      "multiplier": 8
-    },
-    {
-      "time": 116.03140819025803,
-      "direction": 8,
-      "multiplier": 8
-    },
-    {
-      "time": 118.50090003204345,
-      "direction": 8,
-      "multiplier": 8
-    }
-  ],
+  "video": "137V5TJCRzM",
+  "attackData": [],
+  "criticals": [],
   "attackIntervals": {
     "__type": "Map",
     "entries": [
       [
-        "intro",
-        {
-          "start": 0,
-          "end": 7.357729331823329,
-          "name": "intro"
-        }
-      ],
-      [
         "death",
         {
-          "start": 124.1013590033975,
-          "end": 130.501,
+          "start": 50.666666666666664,
+          "end": 52.666666666666664,
           "name": "death"
         }
       ],
       [
-        "0",
+        "6",
         {
-          "start": 7.214396942242355,
-          "end": 124.1013590033975,
-          "name": "0"
+          "start": 49.88180341213064,
+          "end": 50.666666,
+          "name": "6"
+        }
+      ],
+      [
+        "intro",
+        {
+          "start": 0,
+          "end": 50.782788367029546,
+          "name": "intro"
         }
       ]
     ]
   },
   "attackSchedule": "\nreturn function(state) {\n  var currentInterval = state.availableIntervals[state.currentInterval];\n\n  // Check if we've reached or passed the end time of the current interval\n  if (state.currentTime >= currentInterval.end) {\n    var nextInterval = state.intervalNamesAlpha[Math.floor(Math.random() * state.intervalNamesAlpha.length)];\n\n    // pick again if the interval is the same as the current one\n    if (nextInterval === state.currentInterval) {\n      nextInterval = state.intervalNamesAlpha[Math.floor(Math.random() * state.intervalNamesAlpha.length)];\n    }\n    \n    return {\n      continueNormal: false,\n      transitionToInterval: nextInterval,\n      intervalOffset: 0\n    };\n  }\n  \n  // Continue with current behavior\n  return { continueNormal: true };\n}",
   "version": "0.0.0",
-  "title": "turtle!",
+  "title": "Critical Hit Tutorial",
   "arrowless": false,
   "bossDamageMultiplier": 1,
-  "bossHealth": 14
+  "bossHealth": 0
 }
