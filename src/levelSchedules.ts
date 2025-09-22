@@ -193,6 +193,39 @@ return function(state) {
 };
 `
 
+export const LOAN_SHARK_SCHEDULE = `
+var didSpecialAttack = false;
+return function(state) {
+  var currentInterval = state.availableIntervals[state.currentInterval];
+  // If health is below 0.6 and we haven't done attack 2 yet, do it once
+  if (state.healthPercentage < 0.6 && !didSpecialAttack) {
+    didSpecialAttack = true;
+    return {
+      continueNormal: false,
+      transitionToInterval: "2",
+      intervalOffset: 0
+    };
+  }
+  // After doing attack 2, resume normal behavior (excluding 2)
+  if (state.currentTime >= currentInterval.end) {
+    var intervals = state.intervalNamesAlpha.filter(function(x) { return x !== "2"; });
+    var randomIndex = Math.floor(Math.random() * intervals.length);
+    var nextInterval = intervals[randomIndex];
+    // pick again if the interval is the same as the current one
+    if (nextInterval === state.currentInterval) {
+      nextInterval = intervals[Math.floor(Math.random() * intervals.length)];
+    }
+    return {
+      continueNormal: false,
+      transitionToInterval: nextInterval,
+      intervalOffset: 0
+    };
+  }
+  // Continue with current behavior
+  return { continueNormal: true };
+};
+`
+
 // Usage: ts-node src/levelSchedules.ts
 
 import * as fs from "fs";
@@ -232,3 +265,4 @@ copyLevelByTitle("Zombie", ZOMBIE_ATTACK_SCHEDULE);
 copyLevelByTitle("Crab", CRAB_ATTACK_SCHEDULE);
 copyLevelByTitle("Ping Pong Pain", PING_PONG_PLAYER_SCHEDULE);
 copyLevelByTitle("Tutorial", TUTORIAL_SCHEDULE);
+copyLevelByTitle("Loan Shark", LOAN_SHARK_SCHEDULE);
