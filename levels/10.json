@@ -1,0 +1,40 @@
+{
+  "video": "137V5TJCRzM",
+  "attackData": [],
+  "criticals": [],
+  "attackIntervals": {
+    "__type": "Map",
+    "entries": [
+      [
+        "death",
+        {
+          "start": 50.666666666666664,
+          "end": 52.666666666666664,
+          "name": "death"
+        }
+      ],
+      [
+        "6",
+        {
+          "start": 49.88180341213064,
+          "end": 50.666666,
+          "name": "6"
+        }
+      ],
+      [
+        "intro",
+        {
+          "start": 0,
+          "end": 50.782788367029546,
+          "name": "intro"
+        }
+      ]
+    ]
+  },
+  "attackSchedule": "\nreturn function(state) {\n  var currentInterval = state.availableIntervals[state.currentInterval];\n\n  // Check if we've reached or passed the end time of the current interval\n  if (state.currentTime >= currentInterval.end) {\n    var nextInterval = state.intervalNamesAlpha[Math.floor(Math.random() * state.intervalNamesAlpha.length)];\n\n    // pick again if the interval is the same as the current one\n    if (nextInterval === state.currentInterval) {\n      nextInterval = state.intervalNamesAlpha[Math.floor(Math.random() * state.intervalNamesAlpha.length)];\n    }\n    \n    return {\n      continueNormal: false,\n      transitionToInterval: nextInterval,\n      intervalOffset: 0\n    };\n  }\n  \n  // Continue with current behavior\n  return { continueNormal: true };\n}",
+  "version": "0.0.0",
+  "title": "Critical Hit Tutorial",
+  "arrowless": false,
+  "bossDamageMultiplier": 1,
+  "bossHealth": 0
+}
