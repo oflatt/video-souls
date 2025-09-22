@@ -194,12 +194,24 @@ return function(state) {
 `
 
 export const LOAN_SHARK_SCHEDULE = `
+var didStartAttack = false;
 var didSpecialAttack = false;
 return function(state) {
+  console.log('Loan Shark health:', state.healthPercentage);
   var currentInterval = state.availableIntervals[state.currentInterval];
+  // Always start with attack 0 at the beginning
+  if (!didStartAttack) {
+    didStartAttack = true;
+    return {
+      continueNormal: false,
+      transitionToInterval: "0",
+      intervalOffset: 0
+    };
+  }
   // If health is below 0.6 and we haven't done attack 2 yet, do it once
   if (state.healthPercentage < 0.6 && !didSpecialAttack) {
     didSpecialAttack = true;
+    console.log('Loan Shark: Doing special attack 2!');
     return {
       continueNormal: false,
       transitionToInterval: "2",
