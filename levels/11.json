@@ -1,0 +1,187 @@
+{
+  "video": "ui2s-Syw-do",
+  "attackData": [
+    {
+      "time": 3.4272769999999992,
+      "direction": 6,
+      "damage": 1
+    },
+    {
+      "time": 6.327276999999994,
+      "direction": 2,
+      "damage": 1
+    },
+    {
+      "time": 8.927276999999998,
+      "direction": 6,
+      "damage": 1
+    },
+    {
+      "time": 9.459797000000005,
+      "direction": 2,
+      "damage": 1
+    },
+    {
+      "time": 11.536731000000005,
+      "direction": 4,
+      "damage": 1
+    },
+    {
+      "time": 11.786731000000009,
+      "direction": 4,
+      "damage": 1
+    },
+    {
+      "time": 14.046599999999998,
+      "direction": 6,
+      "damage": 1
+    },
+    {
+      "time": 14.496600000000004,
+      "direction": 2,
+      "damage": 1
+    },
+    {
+      "time": 16.933519,
+      "direction": 6,
+      "damage": 1
+    },
+    {
+      "time": 17.426508,
+      "direction": 2,
+      "damage": 1
+    },
+    {
+      "time": 20.487256000000006,
+      "direction": 5,
+      "damage": 1
+    },
+    {
+      "time": 21.687256000000023,
+      "direction": 3,
+      "damage": 1
+    },
+    {
+      "time": 23.02460600000001,
+      "direction": 8,
+      "damage": 1
+    },
+    {
+      "time": 23.324606000000013,
+      "direction": 8,
+      "damage": 1
+    },
+    {
+      "time": 26.249444000000018,
+      "direction": 0,
+      "damage": 1
+    },
+    {
+      "time": 28.981863,
+      "direction": 4,
+      "damage": 1
+    },
+    {
+      "time": 30.095037,
+      "direction": 2,
+      "damage": 1
+    },
+    {
+      "time": 34.89012099999999,
+      "direction": 6,
+      "damage": 1
+    },
+    {
+      "time": 36.74012099999989,
+      "direction": 6,
+      "damage": 1
+    }
+  ],
+  "criticals": [
+    {
+      "time": 32.736374,
+      "direction": 6,
+      "multiplier": 1.5
+    },
+    {
+      "time": 34.081852,
+      "direction": 2,
+      "multiplier": 1.5
+    }
+  ],
+  "attackIntervals": {
+    "__type": "Map",
+    "entries": [
+      [
+        "intro",
+        {
+          "start": 0,
+          "end": 3.191364696734059,
+          "name": "intro"
+        }
+      ],
+      [
+        "death",
+        {
+          "start": 37.8596632970451,
+          "end": 43.201,
+          "name": "death"
+        }
+      ],
+      [
+        "1",
+        {
+          "start": 7.760055209953343,
+          "end": 12.832645412130637,
+          "name": "1"
+        }
+      ],
+      [
+        "2",
+        {
+          "start": 12.81877,
+          "end": 18.644288491446346,
+          "name": "2"
+        }
+      ],
+      [
+        "3",
+        {
+          "start": 18.65268,
+          "end": 24.590304821150855,
+          "name": "3"
+        }
+      ],
+      [
+        "4",
+        {
+          "start": 24.556711508553654,
+          "end": 31.510527216174182,
+          "name": "4"
+        }
+      ],
+      [
+        "5",
+        {
+          "start": 31.577713841368585,
+          "end": 37.8596632970451,
+          "name": "5"
+        }
+      ],
+      [
+        "0",
+        {
+          "start": 2.049192068429238,
+          "end": 7.827241835147745,
+          "name": "0"
+        }
+      ]
+    ]
+  },
+  "attackSchedule": "\nreturn function(state) {\n  var currentInterval = state.availableIntervals[state.currentInterval];\n\n  // Check if we've reached or passed the end time of the current interval\n  if (state.currentTime >= currentInterval.end) {\n    var nextInterval = state.intervalNamesAlpha[Math.floor(Math.random() * state.intervalNamesAlpha.length)];\n\n    // pick again if the interval is the same as the current one\n    if (nextInterval === state.currentInterval) {\n      nextInterval = state.intervalNamesAlpha[Math.floor(Math.random() * state.intervalNamesAlpha.length)];\n    }\n    \n    return {\n      continueNormal: false,\n      transitionToInterval: nextInterval,\n      intervalOffset: 0\n    };\n  }\n  \n  // Continue with current behavior\n  return { continueNormal: true };\n}",
+  "version": "0.0.0",
+  "title": "Crazy Boxer",
+  "arrowless": false,
+  "bossDamageMultiplier": 1,
+  "bossHealth": 4
+}
