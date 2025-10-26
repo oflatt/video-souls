@@ -1,6 +1,6 @@
 import { LocalSave } from "./LocalSave";
 import { AudioPlayer } from "./audioPlayer";
-import { LevelDataV0, parseLevelData, validateLevelData } from "./leveldata";
+import { LevelDataV0, LevelMeta, parseLevelData, validateLevelData } from "./leveldata";
 import { GameMode } from "./GameMode";
 import { showFloatingAlert } from "./utils";
 import { AutosavesPage } from "./AutosavesPage"; // <-- import new class
@@ -156,19 +156,27 @@ export class MainMenu {
     this.levelsContainer.innerHTML = '';
 
     for (const levelFile of levelFiles) {
-      let titleText = "";
       const level = await this.fetchAndParseLevelFile(levelFile);
-      if (level && level.title) {
+      if (!level) continue;
+
+      let titleText = "";
+      if (level.title) {
         titleText = String(level.title);
       }
+      const displayName = this.getLevelDisplayName(levelFile);
       const button = document.createElement('button');
       button.textContent = titleText
-        ? `${this.getLevelDisplayName(levelFile)} — ${titleText}`
-        : this.getLevelDisplayName(levelFile);
+        ? `${displayName} — ${titleText}`
+        : displayName;
       button.className = 'level-button';
       button.addEventListener('click', () => {
-          global().setLevel(level!);
-          global().setGameMode(GameMode.PLAYING);
+        const meta: LevelMeta = {
+          source: "official",
+          id: titleText || displayName,
+          displayName: titleText || displayName,
+        };
+        global().setLevel(level, meta);
+        global().setGameMode(GameMode.PLAYING);
       });
       this.levelsContainer.appendChild(button);
     }
@@ -179,7 +187,7 @@ export class MainMenu {
     try {
       const level = parseLevelData(levelData);
       if (level && level.video) {
-        global().setLevel(level);
+        global().setLevel(level, null);
         global().setGameMode(GameMode.PLAYING);
         return true;
       } else {

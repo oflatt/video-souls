@@ -35,7 +35,7 @@ export class AutosavesPage {
         // serialize the level data to a string
         const level = parseLevelData(entry.level);
         if (level) {
-          global().setLevel(level);
+          global().setLevel(level, null);
         }
         global().setGameMode(GameMode.EDITING);
       };

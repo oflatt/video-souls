@@ -25,6 +25,8 @@ export type BattleState = {
   hitCombo: number,
   parryCombo: number,
   parryOrBlockCombo: number,
+  hitsTaken: number,
+  blocksPerformed: number,
   timeSinceLastHit: number, 
   bufferedInput: string | null,
   playerHealth: number,
@@ -72,6 +74,8 @@ export function initialBattleState(): BattleState {
     hitCombo: 0,
     parryCombo: 0,
     parryOrBlockCombo: 0,
+    hitsTaken: 0,
+    blocksPerformed: 0,
     timeSinceLastHit: 1000,  // Large initial value
     bufferedInput: null,
     playerHealth: 1.0,

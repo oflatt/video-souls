@@ -5,6 +5,14 @@ export type AutosaveEntry = {
   timestamp: number;
 };
 
+export type SavedBattleScore = {
+  hitsTaken: number;
+  blocks: number;
+  rank: string;
+  score: number;
+  timestamp: number;
+};
+
 export type Keybindings = {
   attack: string;
   attackAlt: string;
@@ -36,6 +44,8 @@ export class LocalSave {
   menuVolume: number = 100; // <-- new property
   autosaves: AutosaveEntry[] = [];
   editorVideoSpeed: number = 1; // <-- add property
+  levelBestScores: Record<string, SavedBattleScore> = {};
+  levelRecentScores: Record<string, SavedBattleScore> = {};
   keybindings: Keybindings = {
     attack: 'j',
     attackAlt: 'h',
@@ -103,6 +113,26 @@ export class LocalSave {
     }
   }
 
+  recordLevelScore(levelId: string, score: SavedBattleScore): boolean {
+    const currentBest = this.levelBestScores[levelId];
+    this.levelRecentScores[levelId] = score;
+    let updated = false;
+    if (!currentBest || isNewScoreBetter(score, currentBest)) {
+      this.levelBestScores[levelId] = score;
+      updated = true;
+    }
+    this.save();
+    return updated;
+  }
+
+  getLevelScore(levelId: string): SavedBattleScore | undefined {
+    return this.levelBestScores[levelId];
+  }
+
+  getLevelRecentScore(levelId: string): SavedBattleScore | undefined {
+    return this.levelRecentScores[levelId];
+  }
+
   getNormalizedVolume(): number {
     const v = this.videoVolume;
     if (!Number.isFinite(v)) return 1;
@@ -120,4 +150,14 @@ export class LocalSave {
     if (!Number.isFinite(v)) return 1.0;
     return Math.max(0, Math.min(1, v / 100));
   }
+}
+
+function isNewScoreBetter(newScore: SavedBattleScore, oldScore: SavedBattleScore): boolean {
+  if (newScore.rank === "S+" && oldScore.rank !== "S+") return true;
+  if (oldScore.rank === "S+" && newScore.rank !== "S+") return false;
+  if (newScore.score < oldScore.score) return true;
+  if (newScore.score > oldScore.score) return false;
+  if (newScore.hitsTaken !== oldScore.hitsTaken) return newScore.hitsTaken < oldScore.hitsTaken;
+  if (newScore.blocks !== oldScore.blocks) return newScore.blocks < oldScore.blocks;
+  return false;
 }

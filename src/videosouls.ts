@@ -1,19 +1,24 @@
 // main.ts
 
 import { Editor } from './editor';
-import { levelDataFromVideo, LevelDataV0,  BossState, BossScheduleResult, stringifyLevelData,  } from './leveldata';
+import { levelDataFromVideo, LevelDataV0,  BossState, BossScheduleResult, stringifyLevelData, LevelMeta,  } from './leveldata';
 import { Graphics } from './graphics';
 import { InputManager, InputDirection, getKeybinding } from './inputmanager';
 import { BattleRenderer } from './battleRenderer';
 import { BattleLogic } from './battleLogic';
 import { AttackAnimation, BattleState, initialBattleState, directionNumToSwordAngle, updateBattleTime } from './battle';
 import { VideoPlayer } from './videoPlayer';
-import { LocalSave } from './LocalSave';
+import { LocalSave, SavedBattleScore } from './LocalSave';
 import { CommunityLevelsPage } from "./CommunityLevelsPage";
 import { extractVideoID, showFloatingAlert } from './utils';
 import { MainMenu } from './MainMenu'; // <-- import MainMenu
 import { GameMode } from './GameMode';
 import { EventData, EventType, setVideoSouls } from './globalState';
+
+type LevelLoadEventData = {
+  level: LevelDataV0;
+  meta: LevelMeta | null;
+};
 
 // Create a global graphics instance and export it
 export const graphics = new Graphics(document.querySelector<HTMLCanvasElement>("#game-canvas")!);
@@ -47,6 +52,7 @@ export class VideoSouls {
   needsFreshAutosave: boolean = true; // <-- track if we need a fresh autosave
   lastAutosaveTime: number = 0; // <-- track last autosave timestamp
   events: EventData[];
+  currentLevelMeta: LevelMeta | null = null;
 
   constructor(player: YT.Player) {
     this.videoPlayer = new VideoPlayer(player);
@@ -74,6 +80,7 @@ export class VideoSouls {
     this.battleLogic = new BattleLogic(this.mainMenu.audio, this.editor.level());
     this.gameMode = GameMode.MENU;
     this.battle = initialBattleState();
+    this.currentLevelMeta = null;
 
     // Set initial sound effect volume
     this.mainMenu.audio.setVolume(this.localSave.getNormalizedSoundEffectVolume());
@@ -121,8 +128,8 @@ export class VideoSouls {
     this.elements.canvas.height = window.innerHeight;
   }
 
-  setLevel(level: LevelDataV0) {
-    this.events.push(new EventData(EventType.SetLevel, level));
+  setLevel(level: LevelDataV0, meta: LevelMeta | null) {
+    this.events.push(new EventData(EventType.SetLevel, { level, meta } as LevelLoadEventData));
   }
 
   level(): LevelDataV0 {
@@ -133,7 +140,9 @@ export class VideoSouls {
     // do any events
     for (const event of this.events) {
       if (event.event == EventType.SetLevel) {
-        this.editor.setLevel(event.data as LevelDataV0);
+  const payload = event.data as LevelLoadEventData;
+        this.editor.setLevel(payload.level);
+        this.currentLevelMeta = payload.meta ?? null;
       }
       if (event.event == EventType.SetGameMode) {
         this.setGameModeNow(event.data as GameMode);
@@ -359,8 +368,8 @@ export class VideoSouls {
     if (mode === GameMode.PLAYING) {
       this.elements.gameHUD.style.display = 'flex';
       // reset the sword state
-      this.battle = initialBattleState();
-      // Set bossHealth from level data
+  this.battle = initialBattleState();
+  // Set bossHealth from level data
       this.battle.bossHealth = this.editor.level().bossHealth;
       this.battle.lastBossHealth = this.editor.level().bossHealth;
 
@@ -450,7 +459,7 @@ export class VideoSouls {
     // Create and show new page, wire up callbacks
     this.communityLevelsPage = new CommunityLevelsPage(
       () => this.hideCommunityLevelsPage(),
-      (level: LevelDataV0) => this.loadCommunityLevel(level)
+      (level: LevelDataV0, meta: LevelMeta) => this.loadCommunityLevel(level, meta)
     );
   }
 
@@ -462,8 +471,8 @@ export class VideoSouls {
     this.elements.floatingMenu.style.display = "flex";
   }
 
-  loadCommunityLevel(level: LevelDataV0) {
-    this.editor.markerManager.level = level;
+  loadCommunityLevel(level: LevelDataV0, meta: LevelMeta) {
+    this.setLevel(level, meta);
     this.hideCommunityLevelsPage();
     this.setGameMode(GameMode.PLAYING);
   }
@@ -472,7 +481,7 @@ export class VideoSouls {
   recordVideo(videoUrl: string) {
     const videoId = extractVideoID(videoUrl);
     if (videoId != null) {
-      this.setLevel(levelDataFromVideo(videoId));
+      this.setLevel(levelDataFromVideo(videoId), null);
       this.setGameMode(GameMode.EDITING);
     } else {
       showFloatingAlert('Invalid YouTube URL', 30, "20px");
@@ -520,6 +529,105 @@ export class VideoSouls {
     const retryBtn = hudClone.querySelector<HTMLButtonElement>("#retry-button");
     if (retryBtn) retryBtn.onclick = () => this.setGameMode(GameMode.PLAYING);
     hudClone.style.display = "flex";
+
+    if (type === "win") {
+      this.populateWinHud(hudClone);
+    }
+  }
+
+  private populateWinHud(root: HTMLElement) {
+    const hits = this.battle.hitsTaken ?? 0;
+    const blocks = this.battle.blocksPerformed ?? 0;
+    const blockPenalty = blocks * 0.25;
+    const grade = this.calculateBattleGrade(hits, blocks);
+    const totalPenalty = grade.score;
+
+    const hitsElem = root.querySelector<HTMLElement>("#battle-hits-value");
+    if (hitsElem) hitsElem.textContent = hits.toString();
+
+    const blocksElem = root.querySelector<HTMLElement>("#battle-blocks-value");
+    if (blocksElem) blocksElem.textContent = blocks.toString();
+
+    const blockPenaltyElem = root.querySelector<HTMLElement>("#battle-block-penalty-value");
+    if (blockPenaltyElem) blockPenaltyElem.textContent = blockPenalty.toFixed(2);
+
+    const totalPenaltyElem = root.querySelector<HTMLElement>("#battle-score-value");
+    if (totalPenaltyElem) totalPenaltyElem.textContent = totalPenalty.toFixed(2);
+
+    const rankElem = root.querySelector<HTMLElement>("#battle-rank-letter");
+    if (rankElem) rankElem.textContent = grade.rank;
+
+    const rankLabelElem = root.querySelector<HTMLElement>("#battle-rank-label");
+    if (rankLabelElem) {
+      rankLabelElem.textContent = grade.label ?? "";
+      rankLabelElem.style.display = grade.label ? "block" : "none";
+    }
+
+  const meta = this.getActiveLevelMeta();
+    const saveStatusElem = root.querySelector<HTMLElement>("#battle-save-status");
+    let bestLine = "";
+    if (meta && meta.id) {
+      const previousBest = this.localSave.getLevelScore(meta.id);
+      const savedScore: SavedBattleScore = {
+        hitsTaken: hits,
+        blocks,
+        rank: grade.rank,
+        score: totalPenalty,
+        timestamp: Date.now(),
+      };
+      const newBest = this.localSave.recordLevelScore(meta.id, savedScore);
+      const bestAfter = this.localSave.getLevelScore(meta.id);
+      if (bestAfter) {
+        bestLine = `${meta.displayName ?? meta.id} best: ${bestAfter.rank} (${bestAfter.score.toFixed(2)})`;
+      }
+      if (saveStatusElem) {
+        if (newBest) {
+          saveStatusElem.textContent = "New personal best saved";
+          saveStatusElem.classList.add("battle-save-status--highlight");
+        } else if (previousBest) {
+          saveStatusElem.textContent = "Personal best unchanged";
+          saveStatusElem.classList.remove("battle-save-status--highlight");
+        } else {
+          saveStatusElem.textContent = "Result stored";
+          saveStatusElem.classList.add("battle-save-status--highlight");
+        }
+      }
+    } else if (saveStatusElem) {
+      saveStatusElem.textContent = "Result not saved (custom level)";
+      saveStatusElem.classList.remove("battle-save-status--highlight");
+    }
+
+    const bestElem = root.querySelector<HTMLElement>("#battle-best-line");
+    if (bestElem) {
+      bestElem.textContent = bestLine;
+      bestElem.style.display = bestLine ? "block" : "none";
+    }
+  }
+
+  private calculateBattleGrade(hits: number, blocks: number): { rank: string; label?: string; score: number } {
+    const blockPenalty = blocks * 0.25;
+    const score = hits + blockPenalty;
+
+    if (hits === 0 && blocks === 0) {
+      return { rank: "S+", label: "Perfect", score };
+    }
+    if (score <= 1) {
+      return { rank: "S", label: "Masterful", score };
+    }
+    if (score <= 2) {
+      return { rank: "A", label: "Excellent", score };
+    }
+    if (score <= 3) {
+      return { rank: "B", label: "Solid", score };
+    }
+    if (score <= 5) {
+      return { rank: "C", label: "Survivor", score };
+    }
+    return { rank: "D", label: "Keep Practicing", score };
+  }
+
+  private getActiveLevelMeta(): LevelMeta | null {
+    return this.currentLevelMeta;
   }
 
   // Returns true if the level is empty (no attacks, no intervals except intro/death, no criticals)

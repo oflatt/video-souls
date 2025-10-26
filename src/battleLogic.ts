@@ -273,6 +273,7 @@ export class BattleLogic {
     battle.numRecentMissedParries = 0;
     battle.parryOrBlockCombo += 1; // <-- increment block combo
     battle.parryCombo = 0; // <-- reset parry combo
+    battle.blocksPerformed += 1;
   }
 
   private playerTakeDamage(battle: BattleState, attackDamage: number) {
@@ -284,6 +285,7 @@ export class BattleLogic {
     battle.hitCombo = 0;
     battle.parryCombo = 0; // <-- reset parry combo on hit
     battle.parryOrBlockCombo = 0; // <-- reset block combo on hit
+  battle.hitsTaken += 1;
 
     // Move sword further and randomize angle
     const staggerDistance = 0.18; // increased from 0.1

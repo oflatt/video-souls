@@ -1,9 +1,17 @@
-import { LevelDataV0, validateLevelData, parseLevelData } from "./leveldata";
+import { LevelDataV0, LevelMeta, parseLevelData } from "./leveldata";
+
+export type CommunityLevelEntry = {
+  title: string;
+  author: string;
+  postId: string;
+  level: LevelDataV0;
+  meta: LevelMeta;
+};
 
 // Helper to fetch posts from Lemmy community
-export async function fetchCommunityLevels(): Promise<{ title: string, author: string, level: LevelDataV0 }[]> {
+export async function fetchCommunityLevels(): Promise<CommunityLevelEntry[]> {
   const apiUrl = "https://lemmy.world/api/v3/post/list?community_name=videosouls";
-  const levels: { title: string, author: string, level: LevelDataV0 }[] = [];
+  const levels: CommunityLevelEntry[] = [];
   try {
     const resp = await fetch(apiUrl);
     if (!resp.ok) return levels;
@@ -14,15 +22,26 @@ export async function fetchCommunityLevels(): Promise<{ title: string, author: s
       const body = post?.post?.body ?? "";
       const author = post?.creator?.name ?? "unknown";
       const title = post?.post?.name ?? "";
+      const postIdRaw = post?.post?.id;
+      const postId = typeof postIdRaw === "number" ? String(postIdRaw) : (typeof postIdRaw === "string" ? postIdRaw : null);
+      if (!postId) continue;
       const levelStr = extractLevelString(body);
       if (levelStr) {
         try {
           const parsed = parseLevelData(levelStr);
           if (parsed) {
+            const levelData = parsed as LevelDataV0;
+            const meta: LevelMeta = {
+              source: "community",
+              id: postId,
+              displayName: title || levelData.title || `Community Level ${postId}`
+            };
             levels.push({
               title: title + " — by " + author,
               author,
-              level: parsed as LevelDataV0
+              postId,
+              level: levelData,
+              meta
             });
           }
         } catch {}

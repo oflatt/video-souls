@@ -1,12 +1,12 @@
-import { fetchCommunityLevels } from "./communityLevels";
-import { LevelDataV0 } from "./leveldata";
+import { CommunityLevelEntry, fetchCommunityLevels } from "./communityLevels";
+import { LevelDataV0, LevelMeta } from "./leveldata";
 
 export class CommunityLevelsPage {
-  levels: { title: string, author: string, level: LevelDataV0 }[] = [];
+  levels: CommunityLevelEntry[] = [];
   loaded: boolean = false;
   rootElement: HTMLElement;
 
-  constructor(onBack?: () => void, onLevelSelected?: (level: LevelDataV0) => void) {
+  constructor(onBack?: () => void, onLevelSelected?: (level: LevelDataV0, meta: LevelMeta) => void) {
     // Instantiate the template and add to DOM
     const template = document.getElementById("community-levels-template") as HTMLTemplateElement;
     if (!template || !template.content) throw new Error("Missing community-levels-template");
@@ -41,7 +41,7 @@ export class CommunityLevelsPage {
     this.loaded = true;
   }
 
-  renderLevels(onLevelSelected?: (level: LevelDataV0) => void) {
+  renderLevels(onLevelSelected?: (level: LevelDataV0, meta: LevelMeta) => void) {
     const listElem = this.rootElement.querySelector<HTMLDivElement>("#community-levels-list");
     if (!listElem) return;
     listElem.innerHTML = "";
@@ -50,7 +50,7 @@ export class CommunityLevelsPage {
       btn.textContent = level.title;
       btn.style.fontSize = "18px";
       btn.onclick = () => {
-        if (onLevelSelected) onLevelSelected(level.level);
+        if (onLevelSelected) onLevelSelected(level.level, level.meta);
       };
 
       // --- Add YouTube thumbnail preview ---

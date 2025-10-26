@@ -39,6 +39,12 @@ export type CriticalData = {
   multiplier: number,
 };
 
+export type LevelMeta = {
+  source: "official" | "community" | "custom";
+  id: string;
+  displayName?: string;
+};
+
 // IMPORTANT: do not add methods to this class, we cast to it and it's just a javascript object
 export class LevelDataV0 {
   video: string | null;

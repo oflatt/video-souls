@@ -205,6 +205,92 @@ button {
   margin-right: 0;
 }
 
+.battle-win-stats {
+  margin-top: 20px;
+  padding: 24px 32px;
+  background: rgba(0, 0, 0, 0.6);
+  border: 2px solid rgba(255, 215, 0, 0.6);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 320px;
+  color: #fdfdfd;
+  font-family: 'Cormorant Unicase', serif;
+}
+
+.battle-stat-row,
+.battle-total-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 28px;
+}
+
+.battle-total-row {
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  padding-top: 10px;
+  margin-top: 6px;
+  font-size: 30px;
+}
+
+.battle-stat-label {
+  flex: 1;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.battle-stat-value {
+  font-weight: 600;
+  min-width: 64px;
+  text-align: right;
+}
+
+.battle-stat-math {
+  font-size: 24px;
+  opacity: 0.8;
+}
+
+.battle-rank-row {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.battle-rank-letter {
+  font-size: 96px;
+  font-weight: 700;
+  color: #ffd700;
+  text-shadow: 0 0 12px rgba(255, 215, 0, 0.8);
+}
+
+.battle-rank-label {
+  font-size: 36px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+}
+
+.battle-best-line {
+  font-size: 20px;
+  text-align: center;
+  opacity: 0.85;
+}
+
+.battle-save-status {
+  font-size: 18px;
+  text-align: center;
+  opacity: 0.75;
+}
+
+.battle-save-status--highlight {
+  opacity: 1;
+  color: #8fffe2;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+}
+
 #community-levels-page {
   position: fixed;
   top: 0;
