@@ -8,12 +8,13 @@ import { BattleRenderer } from './battleRenderer';
 import { BattleLogic } from './battleLogic';
 import { AttackAnimation, BattleState, initialBattleState, directionNumToSwordAngle, updateBattleTime } from './battle';
 import { VideoPlayer } from './videoPlayer';
-import { LocalSave, SavedBattleScore } from './LocalSave';
+import { LocalSave } from './LocalSave';
 import { CommunityLevelsPage } from "./CommunityLevelsPage";
 import { extractVideoID, showFloatingAlert } from './utils';
 import { MainMenu } from './MainMenu'; // <-- import MainMenu
 import { GameMode } from './GameMode';
 import { EventData, EventType, setVideoSouls } from './globalState';
+import { BattleEndHudManager } from './BattleEndHudManager';
 
 type LevelLoadEventData = {
   level: LevelDataV0;
@@ -46,14 +47,13 @@ export class VideoSouls {
   editor: Editor;
   // only defined when in editing mode
   localSave: LocalSave;
-  battleEndHudElement: HTMLElement | null = null;
   communityLevelsPage: CommunityLevelsPage | null = null;
   mainMenu: MainMenu;
   needsFreshAutosave: boolean = true; // <-- track if we need a fresh autosave
   lastAutosaveTime: number = 0; // <-- track last autosave timestamp
   events: EventData[];
   currentLevelMeta: LevelMeta | null = null;
-  private battleHudRevealTimeouts: number[] = [];
+  private battleEndHud: BattleEndHudManager | null = null;
 
   constructor(player: YT.Player) {
     this.videoPlayer = new VideoPlayer(player);
@@ -75,7 +75,7 @@ export class VideoSouls {
 
     this.events = [];
     this.localSave = LocalSave.load();
-    this.mainMenu = new MainMenu(this.localSave); 
+  this.mainMenu = new MainMenu(this.localSave); 
     this.editor = new Editor(new LevelDataV0(), graphics, this.videoPlayer);
     this.battleRenderer = new BattleRenderer(this.elements.canvas);
     this.battleLogic = new BattleLogic(this.mainMenu.audio, this.editor.level());
@@ -354,16 +354,20 @@ export class VideoSouls {
 
     // if the new mode is battle end, show the battle end hud
     if (mode === GameMode.BATTLE_END) {
-      // Only create HUD when entering battle end
+      this.battleEndHud?.destroy();
+      this.battleEndHud = new BattleEndHudManager(this.localSave, this.mainMenu.audio);
       if (this.battle.playerHealth <= 0) {
-        this.createBattleEndHud("lose");
+        this.battleEndHud.showLose();
       } else {
-        this.createBattleEndHud("win");
+        this.battleEndHud.showWin({
+          hits: this.battle.hitsTaken ?? 0,
+          blocks: this.battle.blocksPerformed ?? 0,
+          meta: this.currentLevelMeta,
+        });
       }
-      if (this.battleEndHudElement) this.battleEndHudElement.style.display = "flex";
     } else {
-      this.clearBattleHudRevealTimers();
-      if (this.battleEndHudElement) this.battleEndHudElement.style.display = "none";
+      this.battleEndHud?.destroy();
+      this.battleEndHud = null;
     }
 
     // if the new mode is game, show the game hud and reset battle state
@@ -506,162 +510,6 @@ export class VideoSouls {
     );
   }
 
-  private clearBattleHudRevealTimers() {
-    for (const timeout of this.battleHudRevealTimeouts) {
-      window.clearTimeout(timeout);
-    }
-    this.battleHudRevealTimeouts = [];
-  }
-  
-  // Helper to create and show the battle end HUD
-  private createBattleEndHud(type: "win" | "lose") {
-    // Remove previous HUD if present
-    if (this.battleEndHudElement && this.battleEndHudElement.parentNode) {
-      this.clearBattleHudRevealTimers();
-      this.battleEndHudElement.parentNode.removeChild(this.battleEndHudElement);
-      this.battleEndHudElement = null;
-    }
-
-    // Pick template id
-    const templateId = type === "win" ? "battle-end-hud-win-template" : "battle-end-hud-lose-template";
-    const template = document.getElementById(templateId) as HTMLTemplateElement;
-    if (!template || !template.content) throw new Error(`Missing ${templateId}`);
-
-    const hudFragment = template.content.cloneNode(true) as DocumentFragment;
-    const hudClone = hudFragment.querySelector<HTMLElement>("#battle-end-hud")!;
-    document.body.appendChild(hudClone);
-    this.battleEndHudElement = hudClone;
-
-    // Wire up buttons
-    const backBtn = hudClone.querySelector<HTMLButtonElement>("#back-button");
-    if (backBtn) backBtn.onclick = () => this.setGameMode(GameMode.MENU);
-
-    const retryBtn = hudClone.querySelector<HTMLButtonElement>("#retry-button");
-    if (retryBtn) retryBtn.onclick = () => this.setGameMode(GameMode.PLAYING);
-    hudClone.style.display = "flex";
-
-    if (type === "win") {
-      this.populateWinHud(hudClone);
-    }
-  }
-
-  private populateWinHud(root: HTMLElement) {
-    const hits = this.battle.hitsTaken ?? 0;
-    const blocks = this.battle.blocksPerformed ?? 0;
-    const blockPenalty = blocks * 0.25;
-    const grade = this.calculateBattleGrade(hits, blocks);
-    const totalPenalty = grade.score;
-
-    const hitsElem = root.querySelector<HTMLElement>("#battle-hits-value");
-    if (hitsElem) hitsElem.textContent = hits.toString();
-
-    const blocksElem = root.querySelector<HTMLElement>("#battle-blocks-value");
-    if (blocksElem) blocksElem.textContent = blocks.toString();
-
-    const blockPenaltyElem = root.querySelector<HTMLElement>("#battle-block-penalty-value");
-    if (blockPenaltyElem) blockPenaltyElem.textContent = blockPenalty.toFixed(2);
-
-    const totalPenaltyElem = root.querySelector<HTMLElement>("#battle-score-value");
-    if (totalPenaltyElem) totalPenaltyElem.textContent = totalPenalty.toFixed(2);
-
-    const rankElem = root.querySelector<HTMLElement>("#battle-rank-letter");
-    if (rankElem) rankElem.textContent = grade.rank;
-
-    const rankLabelElem = root.querySelector<HTMLElement>("#battle-rank-label");
-    if (rankLabelElem) {
-      rankLabelElem.textContent = grade.label ?? "";
-      rankLabelElem.style.display = grade.label ? "block" : "none";
-    }
-
-  const meta = this.getActiveLevelMeta();
-    const saveStatusElem = root.querySelector<HTMLElement>("#battle-save-status");
-    let bestLine = "";
-    if (meta && meta.id) {
-      const previousBest = this.localSave.getLevelScore(meta.id);
-      const savedScore: SavedBattleScore = {
-        hitsTaken: hits,
-        blocks,
-        rank: grade.rank,
-        score: totalPenalty,
-        timestamp: Date.now(),
-      };
-      const newBest = this.localSave.recordLevelScore(meta.id, savedScore);
-      const bestAfter = this.localSave.getLevelScore(meta.id);
-      if (bestAfter) {
-        bestLine = `${meta.displayName ?? meta.id} best: ${bestAfter.rank} (${bestAfter.score.toFixed(2)})`;
-      }
-      if (saveStatusElem) {
-        if (newBest) {
-          saveStatusElem.textContent = "New personal best saved";
-          saveStatusElem.classList.add("battle-save-status--highlight");
-        } else if (previousBest) {
-          saveStatusElem.textContent = "Personal best unchanged";
-          saveStatusElem.classList.remove("battle-save-status--highlight");
-        } else {
-          saveStatusElem.textContent = "Result stored";
-          saveStatusElem.classList.add("battle-save-status--highlight");
-        }
-      }
-    } else if (saveStatusElem) {
-      saveStatusElem.textContent = "Result not saved (custom level)";
-      saveStatusElem.classList.remove("battle-save-status--highlight");
-    }
-
-    const bestElem = root.querySelector<HTMLElement>("#battle-best-line");
-    if (bestElem) {
-      bestElem.textContent = bestLine;
-      bestElem.style.display = bestLine ? "block" : "none";
-    }
-
-    this.clearBattleHudRevealTimers();
-    const battleLines = Array.from(root.querySelectorAll<HTMLElement>(".battle-line"));
-    const baseDelay = 150;
-    const delayBetween = 220;
-    let revealIndex = 0;
-
-    for (const line of battleLines) {
-      line.classList.remove("battle-line--visible");
-
-      const isHidden = line.style.display === "none" || (line.offsetParent === null && line.style.display !== "block");
-      const hasContent = line.children.length > 0 || (line.textContent ?? "").trim().length > 0;
-      if (isHidden || !hasContent) {
-        continue;
-      }
-
-      const timeout = window.setTimeout(() => {
-        line.classList.add("battle-line--visible");
-        this.mainMenu.audio.playParrySound();
-      }, baseDelay + revealIndex * delayBetween);
-      this.battleHudRevealTimeouts.push(timeout);
-      revealIndex += 1;
-    }
-  }
-
-  private calculateBattleGrade(hits: number, blocks: number): { rank: string; label?: string; score: number } {
-    const blockPenalty = blocks * 0.25;
-    const score = hits + blockPenalty;
-
-    if (hits === 0 && blocks === 0) {
-      return { rank: "S+", label: "Perfect", score };
-    }
-    if (score <= 1) {
-      return { rank: "S", label: "Masterful", score };
-    }
-    if (score <= 2) {
-      return { rank: "A", label: "Excellent", score };
-    }
-    if (score <= 3) {
-      return { rank: "B", label: "Solid", score };
-    }
-    if (score <= 5) {
-      return { rank: "C", label: "Survivor", score };
-    }
-    return { rank: "D", label: "Keep Practicing", score };
-  }
-
-  private getActiveLevelMeta(): LevelMeta | null {
-    return this.currentLevelMeta;
-  }
 
   // Returns true if the level is empty (no attacks, no intervals except intro/death, no criticals)
   private isLevelEmpty(level: LevelDataV0): boolean {
