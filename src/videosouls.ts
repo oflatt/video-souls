@@ -53,6 +53,7 @@ export class VideoSouls {
   lastAutosaveTime: number = 0; // <-- track last autosave timestamp
   events: EventData[];
   currentLevelMeta: LevelMeta | null = null;
+  private battleHudRevealTimeouts: number[] = [];
 
   constructor(player: YT.Player) {
     this.videoPlayer = new VideoPlayer(player);
@@ -361,6 +362,7 @@ export class VideoSouls {
       }
       if (this.battleEndHudElement) this.battleEndHudElement.style.display = "flex";
     } else {
+      this.clearBattleHudRevealTimers();
       if (this.battleEndHudElement) this.battleEndHudElement.style.display = "none";
     }
 
@@ -503,11 +505,19 @@ export class VideoSouls {
       arrowless
     );
   }
+
+  private clearBattleHudRevealTimers() {
+    for (const timeout of this.battleHudRevealTimeouts) {
+      window.clearTimeout(timeout);
+    }
+    this.battleHudRevealTimeouts = [];
+  }
   
   // Helper to create and show the battle end HUD
   private createBattleEndHud(type: "win" | "lose") {
     // Remove previous HUD if present
     if (this.battleEndHudElement && this.battleEndHudElement.parentNode) {
+      this.clearBattleHudRevealTimers();
       this.battleEndHudElement.parentNode.removeChild(this.battleEndHudElement);
       this.battleEndHudElement = null;
     }
@@ -601,6 +611,29 @@ export class VideoSouls {
     if (bestElem) {
       bestElem.textContent = bestLine;
       bestElem.style.display = bestLine ? "block" : "none";
+    }
+
+    this.clearBattleHudRevealTimers();
+    const battleLines = Array.from(root.querySelectorAll<HTMLElement>(".battle-line"));
+    const baseDelay = 150;
+    const delayBetween = 220;
+    let revealIndex = 0;
+
+    for (const line of battleLines) {
+      line.classList.remove("battle-line--visible");
+
+      const isHidden = line.style.display === "none" || (line.offsetParent === null && line.style.display !== "block");
+      const hasContent = line.children.length > 0 || (line.textContent ?? "").trim().length > 0;
+      if (isHidden || !hasContent) {
+        continue;
+      }
+
+      const timeout = window.setTimeout(() => {
+        line.classList.add("battle-line--visible");
+        this.mainMenu.audio.playParrySound();
+      }, baseDelay + revealIndex * delayBetween);
+      this.battleHudRevealTimeouts.push(timeout);
+      revealIndex += 1;
     }
   }
 

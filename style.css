@@ -291,6 +291,17 @@ button {
   letter-spacing: 3px;
 }
 
+.battle-line {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.battle-line--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 #community-levels-page {
   position: fixed;
   top: 0;

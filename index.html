@@ -167,27 +167,27 @@
         <div id="battle-end-hud" class="battle-end-hud-overlay">
             <h1 class="win">You Won</h1>
             <div class="battle-win-stats">
-                <div class="battle-stat-row">
+                <div class="battle-stat-row battle-line" id="battle-hits-row">
                     <span class="battle-stat-label">Hits taken</span>
                     <span class="battle-stat-value" id="battle-hits-value">0</span>
                 </div>
-                <div class="battle-stat-row">
+                <div class="battle-stat-row battle-line" id="battle-blocks-row">
                     <span class="battle-stat-label">Early parries</span>
                     <span class="battle-stat-value" id="battle-blocks-value">0</span>
                     <span class="battle-stat-math">× ¼</span>
                     <span class="battle-stat-math">=</span>
                     <span class="battle-stat-value" id="battle-block-penalty-value">0.00</span>
                 </div>
-                <div class="battle-total-row">
+                <div class="battle-total-row battle-line" id="battle-total-row">
                     <span class="battle-stat-label">Total penalty</span>
                     <span class="battle-stat-value" id="battle-score-value">0.00</span>
                 </div>
-                <div class="battle-rank-row">
+                <div class="battle-rank-row battle-line" id="battle-rank-row">
                     <span class="battle-rank-letter" id="battle-rank-letter">S+</span>
                     <span class="battle-rank-label" id="battle-rank-label">Perfect</span>
                 </div>
-                <div class="battle-best-line" id="battle-best-line"></div>
-                <div class="battle-save-status" id="battle-save-status"></div>
+                <div class="battle-best-line battle-line" id="battle-best-line"></div>
+                <div class="battle-save-status battle-line" id="battle-save-status"></div>
             </div>
             <div class="battle-end-buttons">
                 <button id="back-button">Back</button>
