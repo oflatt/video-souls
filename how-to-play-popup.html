@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>How to Play – Video Souls</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #111317;
+      --bg-elevated: #1b1f26;
+      --accent: #ffd479;
+      --accent-muted: #ffb347;
+      --text: #f7f8fa;
+      --text-muted: #c8ccd7;
+      --backdrop: rgba(0, 0, 0, 0.7);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Cormorant Unicase", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: radial-gradient(circle at top, #1d222d 0%, #0d0f12 60%, #050608 100%);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 16px 64px;
+      gap: 32px;
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2.5rem, 4vw, 3.5rem);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    p {
+      max-width: 640px;
+      margin: 0;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    button.how-to-btn {
+      padding: 18px 48px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-muted) 100%);
+      color: #1e1e1e;
+      border: none;
+      border-radius: 999px;
+      box-shadow: 0 10px 25px rgba(255, 212, 121, 0.35);
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    button.how-to-btn:hover,
+    button.how-to-btn:focus-visible {
+      outline: none;
+      transform: translateY(-2px);
+      box-shadow: 0 16px 32px rgba(255, 212, 121, 0.4);
+    }
+
+    .popup-backdrop {
+      position: fixed;
+      inset: 0;
+      background: var(--backdrop);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      z-index: 1000;
+      backdrop-filter: blur(2px);
+    }
+
+    .popup-backdrop.open {
+      display: flex;
+    }
+
+    .popup-content {
+      position: relative;
+      width: min(100%, 520px);
+      padding: clamp(24px, 4vw, 40px);
+      background: var(--bg-elevated);
+      border-radius: 18px;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+      text-align: left;
+    }
+
+    .popup-content h2 {
+      margin-top: 0;
+      margin-bottom: 12px;
+      font-size: clamp(1.75rem, 3vw, 2.25rem);
+      letter-spacing: 0.04em;
+    }
+
+    .popup-content p {
+      margin-bottom: 20px;
+      color: var(--text-muted);
+    }
+
+    .controls-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 14px;
+    }
+
+    .controls-list li {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      color: var(--text);
+      line-height: 1.4;
+    }
+
+    .controls-list kbd {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 36px;
+      padding: 6px 12px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: #0d0f12;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: inset 0 -2px 0 rgba(255, 255, 255, 0.08);
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      font-size: 1.4rem;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .close-btn:hover,
+    .close-btn:focus-visible {
+      background: rgba(255, 255, 255, 0.18);
+      outline: none;
+    }
+
+    .tutorial-note {
+      margin-bottom: 24px;
+      padding: 16px 20px;
+      border-radius: 12px;
+      background: rgba(255, 212, 121, 0.12);
+      border: 1px solid rgba(255, 212, 121, 0.3);
+      color: var(--text);
+    }
+
+    @media (max-width: 480px) {
+      button.how-to-btn {
+        width: 100%;
+      }
+
+      .popup-content {
+        padding: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Video Souls</h1>
+    <p>Need a refresher before the boss fight? Tap the button for a quick rundown of the core mechanics.</p>
+  </header>
+
+  <button class="how-to-btn" data-open-popup>How to Play</button>
+
+  <div class="popup-backdrop" id="howToBackdrop" role="dialog" aria-modal="true" aria-labelledby="howToHeading" hidden>
+    <article class="popup-content">
+      <button class="close-btn" type="button" aria-label="Close how to play" data-close-popup>&times;</button>
+      <h2 id="howToHeading">How to Play</h2>
+      <div class="tutorial-note">
+        The in-game tutorial is the best teacher, but here are the essentials so you can practice the timing.
+      </div>
+      <ul class="controls-list">
+        <li><kbd>K</kbd><span>Parry incoming blows. You want to press right before the attack lands.</span></li>
+        <li><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><span>Hold a direction while parrying to perform a directional parry.</span></li>
+        <li><kbd>J</kbd><span>Strike back when you see an opening to keep the pressure on.</span></li>
+        <li><span style="font-weight:700;">Early parries</span><span>still reduce damage but you’ll bleed a portion through, so aim for the exact moment.</span></li>
+        <li><span style="font-weight:700;">Attack indicators</span><span>The glowing arrow telegraphs the direction of the hit. Directional parry in the opposite direction! An X indicator means a center parry, so release all directions to parry it.</span></li>
+      </ul>
+    </article>
+  </div>
+
+  <script>
+    const backdrop = document.getElementById('howToBackdrop');
+    const openTrigger = document.querySelector('[data-open-popup]');
+    const closeTrigger = document.querySelector('[data-close-popup]');
+
+    function openPopup() {
+      backdrop.hidden = false;
+      requestAnimationFrame(() => backdrop.classList.add('open'));
+      closeTrigger?.focus();
+      document.addEventListener('keydown', handleKeydown);
+    }
+
+    function closePopup() {
+      backdrop.classList.remove('open');
+      backdrop.hidden = true;
+      document.removeEventListener('keydown', handleKeydown);
+      openTrigger.focus();
+    }
+
+    function handleKeydown(event) {
+      if (event.key === 'Escape') {
+        closePopup();
+      }
+    }
+
+    openTrigger.addEventListener('click', openPopup);
+    closeTrigger?.addEventListener('click', closePopup);
+
+    backdrop.addEventListener('click', (event) => {
+      if (event.target === backdrop) {
+        closePopup();
+      }
+    });
+  </script>
+</body>
+</html>
