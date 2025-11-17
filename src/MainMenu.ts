@@ -4,7 +4,7 @@ import { LevelDataV0, LevelMeta, parseLevelData, validateLevelData } from "./lev
 import { GameMode } from "./GameMode";
 import { showFloatingAlert } from "./utils";
 import { AutosavesPage } from "./AutosavesPage"; // <-- import new class
-import { global } from './globalState';
+import { global, globalState } from './globalState';
 import { ControlsRebindPanel } from './ControlsRebindPanel';
 
 export class MainMenu {
@@ -285,7 +285,8 @@ export class MainMenu {
     if (floatingMenu) floatingMenu.style.display = "none";
   }
 
-  async loadLevelButtons() {
+  async loadLevelButtons(fallbackLocalSave?: LocalSave) {
+    const localSave = this.resolveLocalSave(fallbackLocalSave);
     const levelFiles = await this.getLevelFiles();
     this.levelsContainer.innerHTML = '';
 
@@ -298,22 +299,77 @@ export class MainMenu {
         titleText = String(level.title);
       }
       const displayName = this.getLevelDisplayName(levelFile);
+      const levelId = titleText || displayName;
       const button = document.createElement('button');
-      button.textContent = titleText
+      button.type = 'button';
+      button.className = 'level-button';
+      button.dataset.levelId = levelId;
+
+      const labelText = titleText
         ? `${displayName} — ${titleText}`
         : displayName;
-      button.className = 'level-button';
+      const labelSpan = document.createElement('span');
+      labelSpan.className = 'level-button-label';
+      labelSpan.textContent = labelText;
+      button.dataset.label = labelSpan.textContent ?? "";
+
+      const rankSpan = document.createElement('span');
+      rankSpan.className = 'level-button-rank';
+
+      button.append(labelSpan, rankSpan);
+
       button.addEventListener('click', () => {
         const meta: LevelMeta = {
           source: "official",
-          id: titleText || displayName,
-          displayName: titleText || displayName,
+          id: levelId,
+          displayName: levelId,
         };
         global().setLevel(level, meta);
         global().setGameMode(GameMode.PLAYING);
       });
+
+      this.updateSingleLevelButtonRank(button, levelId, localSave);
       this.levelsContainer.appendChild(button);
     }
+  }
+
+  updateLevelButtonRanks(fallbackLocalSave?: LocalSave) {
+    const localSave = this.resolveLocalSave(fallbackLocalSave);
+    const buttons = Array.from(this.levelsContainer.querySelectorAll<HTMLButtonElement>('.level-button'));
+    for (const button of buttons) {
+      const levelId = button.dataset.levelId;
+      if (!levelId) continue;
+      this.updateSingleLevelButtonRank(button, levelId, localSave);
+    }
+  }
+
+  private updateSingleLevelButtonRank(button: HTMLButtonElement, levelId: string, fallbackLocalSave?: LocalSave | null) {
+    const rankSpan = button.querySelector<HTMLSpanElement>('.level-button-rank');
+    if (!rankSpan) return;
+
+    const localSave = this.resolveLocalSave(fallbackLocalSave);
+    const score = localSave?.getLevelScore(levelId);
+    const baseLabel = button.dataset.label ?? button.textContent ?? levelId;
+
+    if (score && score.rank) {
+      rankSpan.textContent = score.rank;
+      rankSpan.classList.remove('level-button-rank--empty');
+      rankSpan.title = `Personal best: ${score.rank} (${score.score.toFixed(2)})`;
+      button.setAttribute('aria-label', `${baseLabel} — Best rank ${score.rank}`);
+    } else {
+      rankSpan.textContent = "—";
+      rankSpan.classList.add('level-button-rank--empty');
+      rankSpan.removeAttribute('title');
+      button.setAttribute('aria-label', `${baseLabel} — No rank recorded`);
+    }
+  }
+
+  private resolveLocalSave(fallback?: LocalSave | null): LocalSave | null {
+    const instance = globalState.videoSoulsInstance ?? null;
+    if (instance && instance.localSave) {
+      return instance.localSave;
+    }
+    return fallback ?? null;
   }
 
   async importLevel(): Promise<boolean> {

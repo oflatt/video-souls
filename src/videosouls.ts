@@ -114,7 +114,7 @@ export class VideoSouls {
     this.mainMenu.exportButton.addEventListener('click', () => {
       this.exportLevel();
     });
-    this.mainMenu.loadLevelButtons(); // <-- call mainMenu's method
+  this.mainMenu.loadLevelButtons(this.localSave); // <-- call mainMenu's method
     this.resizeCanvas();
     window.addEventListener('resize', () => this.resizeCanvas());
 
@@ -394,6 +394,7 @@ export class VideoSouls {
       this.videoPlayer.setPlaylist([
         "zXOyzH-_UhQ", // Main menu video
       ]);
+      this.mainMenu.updateLevelButtonRanks();
     } else {
       this.elements.floatingMenu.style.display = 'none';
       this.videoPlayer.setLoop(false);
