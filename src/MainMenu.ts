@@ -122,6 +122,10 @@ export class MainMenu {
     if (this.autosavesButton) {
       this.autosavesButton.onclick = () => {
         if (!this.autosavesPage) {
+          const floatingMenu = document.getElementById("floating-menu");
+          if (floatingMenu) floatingMenu.style.display = "none";
+          const menuAdPlaceholder = document.getElementById("ezoic-pub-ad-placeholder-107");
+          if (menuAdPlaceholder) menuAdPlaceholder.style.display = "none";
           this.autosavesPage = new AutosavesPage(
             global().localSave.autosaves,
             () => {
@@ -129,6 +133,8 @@ export class MainMenu {
               this.autosavesPage = null;
               const floatingMenu = document.getElementById("floating-menu");
               if (floatingMenu) floatingMenu.style.display = "flex";
+              const menuAdPlaceholder = document.getElementById("ezoic-pub-ad-placeholder-107");
+              if (menuAdPlaceholder) menuAdPlaceholder.style.display = "block";
             }
           );
         }

@@ -80,6 +80,7 @@ export class VideoSouls {
       gameHUD: document.querySelector<HTMLInputElement>("#game-hud")!,
       battleEndHUD: document.querySelector<HTMLInputElement>("#battle-end-hud")!,
       floatingMenu: document.querySelector<HTMLInputElement>("#floating-menu")!,
+      menuAdPlaceholder: document.querySelector<HTMLDivElement>("#ezoic-pub-ad-placeholder-107")!,
       currentTimeDebug: document.querySelector<HTMLDivElement>("#current-time")!,
       videoUrlInput: document.querySelector<HTMLInputElement>("#video-url")!,
       recordButton: document.querySelector<HTMLButtonElement>("#record-button")!,
@@ -410,12 +411,14 @@ export class VideoSouls {
         "zXOyzH-_UhQ", // Main menu video
       ]);
       this.mainMenu.updateLevelButtonRanks();
+      this.setMenuAdVisibility(true);
       this.requestMainMenuAd();
     } else {
       this.elements.floatingMenu.style.display = 'none';
       this.videoPlayer.setLoop(false);
       this.mainMenu.cleanup(); // <-- cleanup main menu if switching away
       this.videoPlayer.setPlaylist([]); // Clear playlist when not in menu
+      this.setMenuAdVisibility(false);
     }
 
     // load the video for editing, make new editor
@@ -474,6 +477,7 @@ export class VideoSouls {
   showCommunityLevelsPage() {
     // Hide main menu
     this.elements.floatingMenu.style.display = "none";
+    this.setMenuAdVisibility(false);
     // Remove previous instance if present
     if (this.communityLevelsPage) {
       this.communityLevelsPage.cleanup();
@@ -492,6 +496,7 @@ export class VideoSouls {
       this.communityLevelsPage = null;
     }
     this.elements.floatingMenu.style.display = "flex";
+    this.setMenuAdVisibility(true);
   }
 
   loadCommunityLevel(level: LevelDataV0, meta: LevelMeta) {
@@ -552,6 +557,15 @@ export class VideoSouls {
     } else {
       this.localSave.overwriteLastAutosave(level);
     }
+  }
+
+  private setMenuAdVisibility(visible: boolean): void {
+    const placeholder = this.elements.menuAdPlaceholder;
+    if (!placeholder) {
+      return;
+    }
+
+    placeholder.style.display = visible ? "block" : "none";
   }
 
   private requestMainMenuAd(): void {
