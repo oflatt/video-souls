@@ -388,11 +388,11 @@ export class VideoSouls {
     // if the new mode is menu, show the menu, cue the main menu video
     if (mode === GameMode.MENU) {
       this.elements.floatingMenu.style.display = 'flex';
-      this.videoPlayer.cueVideoById("PVCf3pB-3Mc");
+      this.videoPlayer.cueVideoById("zXOyzH-_UhQ");
       this.videoPlayer.playVideo();
       this.videoPlayer.setLoop(true);
       this.videoPlayer.setPlaylist([
-        "PVCf3pB-3Mc", // Main menu video
+        "zXOyzH-_UhQ", // Main menu video
       ]);
     } else {
       this.elements.floatingMenu.style.display = 'none';

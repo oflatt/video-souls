@@ -161,22 +161,9 @@ We support ES5 JavaScript: internally we use this javascript interpreter for saf
 
 - ability to change things like health and other stats in the level editor
 - in the park tree video
-- give ranks for levels (combination of time and times hit, author time part of calculation)
-- crits tutorial
-  turtle- belly has crit
-  music with turtle
-  attacking with back turned 
-  box painted green
-  How to do critical hits, and what do they do
-    they give you more damage and a quicker attack
-  If you are early on your parry you may still block most of the damage
-  Spamming parry makes the parry end lag longer
-- editor tutorial (rickroll?)
 - Auto special effects preprocessing on videos?
-- Different weapons
+- Different weapons?
   - Different attack speeds/damage tradeoff
   - Custom weapons, upload png or use link to png
-- Video tutorial for video souls
-- ability for enemies to parry
+- ability for enemies to parry?
 - make custom javascript more powerful (healing, damage, detecting or parrying attacks, etc)
-- documentation for custom javascript
