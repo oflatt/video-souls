@@ -39,8 +39,8 @@ jobs:
         with:
           node-version: 18
       - run: npm ci
-      - name: Fetch ads.txt
-        run: curl -sSfL https://srv.adstxtmanager.com/19390/videosouls.com > ads.txt
+      #- name: Fetch ads.txt
+      #  run: curl -sSfL https://srv.adstxtmanager.com/19390/videosouls.com > ads.txt
       - run: make build
       - name: Setup Pages
         uses: actions/configure-pages@v5
