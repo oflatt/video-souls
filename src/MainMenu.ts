@@ -27,6 +27,8 @@ export class MainMenu {
   videoUrlInput: HTMLInputElement;
   autosavesButton: HTMLButtonElement;
   autosavesPage: AutosavesPage | null = null; // <-- now stores instance
+  private howToPlayLoadPromise: Promise<boolean> | null = null;
+  private howToPlayLoaded = false;
 
   constructor(localSave: LocalSave) {
     this.audio = new AudioPlayer();
@@ -47,6 +49,7 @@ export class MainMenu {
     this.customLevelEditButton = document.getElementById("custom-level-edit-button") as HTMLButtonElement;
     this.videoUrlInput = document.getElementById("video-url") as HTMLInputElement;
     this.autosavesButton = document.getElementById("autosaves-main-menu-button") as HTMLButtonElement;
+  this.setupHowToPlayModal();
     const rebindControlsButton = document.getElementById("main-menu-rebind-controls-button") as HTMLButtonElement;
     if (rebindControlsButton) {
       rebindControlsButton.onclick = () => {
@@ -135,6 +138,137 @@ export class MainMenu {
     window.addEventListener("editor-back-to-menu", () => {
       global().setGameMode(GameMode.MENU);
     });
+  }
+
+  private setupHowToPlayModal(): void {
+    const button = document.getElementById("how-to-play-button") as HTMLButtonElement | null;
+    const backdrop = document.getElementById("how-to-play-backdrop") as HTMLDivElement | null;
+    const dialog = backdrop?.querySelector(".how-to-play-dialog") as HTMLDivElement | null;
+    const closeButton = backdrop?.querySelector(".how-to-play-close") as HTMLButtonElement | null;
+    const content = document.getElementById("how-to-play-dialog-content") as HTMLDivElement | null;
+
+    if (!button || !backdrop || !dialog || !closeButton || !content) {
+      return;
+    }
+
+    dialog.setAttribute("aria-describedby", "how-to-play-dialog-content");
+
+    const focusableSelector = 'a[href], button, textarea, input, select, [tabindex]:not([tabindex="-1"])';
+    let focusableElements: HTMLElement[] = [];
+    let lastFocusedElement: HTMLElement | null = null;
+
+    const updateFocusableElements = () => {
+      focusableElements = Array.from(dialog.querySelectorAll<HTMLElement>(focusableSelector))
+        .filter(el => !el.hasAttribute("disabled"));
+    };
+
+    const handleKeydown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeModal();
+        return;
+      }
+
+      if (event.key !== "Tab") {
+        return;
+      }
+
+      updateFocusableElements();
+
+      if (focusableElements.length === 0) {
+        event.preventDefault();
+        closeButton.focus();
+        return;
+      }
+
+      const first = focusableElements[0];
+      const last = focusableElements[focusableElements.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+
+      if (event.shiftKey) {
+        if (active === first) {
+          event.preventDefault();
+          last.focus();
+        }
+      } else if (active === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    const openModal = async () => {
+      lastFocusedElement = (document.activeElement as HTMLElement) ?? null;
+      backdrop.hidden = false;
+      requestAnimationFrame(() => backdrop.classList.add("open"));
+      closeButton.focus();
+      document.addEventListener("keydown", handleKeydown);
+
+      if (!this.howToPlayLoaded) {
+        if (!this.howToPlayLoadPromise) {
+          content.innerHTML = '<p class="how-to-play-loading">Loading...</p>';
+          this.howToPlayLoadPromise = this.loadHowToPlayContent(content);
+        }
+        const loaded = await this.howToPlayLoadPromise;
+        this.howToPlayLoaded = loaded;
+        if (!loaded) {
+          this.howToPlayLoadPromise = null;
+        }
+      }
+
+      updateFocusableElements();
+      (focusableElements[0] ?? closeButton).focus();
+    };
+
+    const closeModal = () => {
+      backdrop.classList.remove("open");
+      backdrop.hidden = true;
+      document.removeEventListener("keydown", handleKeydown);
+      focusableElements = [];
+      const fallback = lastFocusedElement ?? button;
+      fallback?.focus();
+    };
+
+    button.addEventListener("click", () => { void openModal(); });
+    closeButton.addEventListener("click", () => closeModal());
+    backdrop.addEventListener("click", event => {
+      if (event.target === backdrop) {
+        closeModal();
+      }
+    });
+  }
+
+  private async loadHowToPlayContent(target: HTMLElement): Promise<boolean> {
+    try {
+      const response = await fetch("how-to-play.html", {
+        headers: { Accept: "text/html" },
+        cache: "no-cache",
+      });
+      if (!response.ok) {
+        throw new Error(`Unexpected status ${response.status}`);
+      }
+
+      const htmlText = await response.text();
+      const parser = new DOMParser();
+      const parsed = parser.parseFromString(htmlText, "text/html");
+      const content = parsed.getElementById("how-to-play-content");
+
+      if (content) {
+        target.innerHTML = content.innerHTML;
+      } else {
+        target.innerHTML = htmlText;
+      }
+
+      const heading = target.querySelector<HTMLElement>("#how-to-play-heading");
+      if (heading && !heading.hasAttribute("tabindex")) {
+        heading.setAttribute("tabindex", "-1");
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Failed to load how-to-play instructions", error);
+      target.innerHTML = '<p class="how-to-play-error">Unable to load instructions right now. Please check your connection and try again.</p>';
+      return false;
+    }
   }
 
   saveSettings() {

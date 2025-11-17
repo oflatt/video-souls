@@ -38,6 +38,7 @@
                 Fight through funny and challenging battles, custom levels made by the community, or create your own!<br>
             </p>
         </div>
+        <button id="how-to-play-button" class="big-menu-button">How to Play</button>
         <div id="levels-container"></div>
         <div id="main-menu-sidebyside-wrapper">
             <button id="community-levels-main-menu-button" class="big-menu-button">Community Levels</button>
@@ -72,6 +73,14 @@
                 <input id="main-menu-sfx-volume-slider" class="slider" type="range" min="0" max="100" />
             </div>
             <button id="main-menu-rebind-controls-button" class="big-menu-button">Rebind Controls</button>
+        </div>
+    </div>
+    <div id="how-to-play-backdrop" class="how-to-play-backdrop" hidden>
+        <div class="how-to-play-dialog" role="dialog" aria-modal="true" aria-labelledby="how-to-play-heading">
+            <button class="how-to-play-close" type="button" aria-label="Close how to play">&times;</button>
+            <div id="how-to-play-dialog-content" class="how-to-play-dialog-content">
+                <p class="how-to-play-loading">Loading...</p>
+            </div>
         </div>
     </div>
     <div id="floating-menu-ad">

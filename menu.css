@@ -287,3 +287,136 @@
   align-self: center;
   margin-top: 18px;
 }
+
+#how-to-play-backdrop {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(2px);
+  z-index: 10002;
+}
+
+#how-to-play-backdrop.open {
+  display: flex;
+}
+
+.how-to-play-dialog {
+  position: relative;
+  width: min(560px, 100%);
+  padding: 32px 36px;
+  background: rgba(10, 12, 18, 0.95);
+  border-radius: 18px;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.55);
+  color: var(--color-white);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.how-to-play-dialog h1,
+.how-to-play-dialog h2,
+.how-to-play-dialog h3 {
+  font-family: 'Cormorant Unicase', serif;
+  margin: 0;
+}
+
+.how-to-play-dialog p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.how-to-play-dialog ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.how-to-play-dialog li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  line-height: 1.5;
+}
+
+.how-to-play-dialog-content {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.how-to-play-dialog kbd,
+.how-to-play-dialog .key-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  font-size: 0.95rem;
+  font-weight: bold;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.how-to-play-dialog kbd {
+  min-width: 36px;
+}
+
+.how-to-play-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--color-white);
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.how-to-play-close:hover,
+.how-to-play-close:focus-visible {
+  background: rgba(255, 255, 255, 0.22);
+  outline: none;
+}
+
+.how-to-play-loading {
+  margin: 16px 0 0 0;
+  text-align: center;
+  opacity: 0.8;
+}
+
+.how-to-play-error {
+  color: #ff8a80;
+  text-align: center;
+  font-weight: bold;
+}
+
+@media (max-width: 560px) {
+  .how-to-play-dialog {
+    padding: 24px;
+    gap: 16px;
+  }
+
+  .how-to-play-dialog li {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .how-to-play-close {
+    width: 36px;
+    height: 36px;
+  }
+}

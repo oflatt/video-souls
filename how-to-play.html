@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>How to Play - Video Souls</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: radial-gradient(circle at top, #20242f 0%, #12141c 60%, #06070a 100%);
+      --surface: rgba(15, 18, 26, 0.9);
+      --accent: #ffd479;
+      --text-primary: #f6f7fb;
+      --text-secondary: #c4c8d6;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 16px;
+      font-family: "Cormorant Unicase", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+    }
+
+    main {
+      width: min(620px, 100%);
+      padding: clamp(28px, 5vw, 40px);
+      background: var(--surface);
+      border-radius: 22px;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2.4rem, 5vw, 3.2rem);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      text-align: center;
+    }
+
+    p {
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    .tutorial-note {
+      padding: 16px 20px;
+      border-radius: 14px;
+      background: rgba(255, 212, 121, 0.12);
+      border: 1px solid rgba(255, 212, 121, 0.3);
+      color: var(--text-secondary);
+    }
+
+    ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    li {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .controls-label {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    kbd,
+    .key-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 12px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      font-size: 0.95rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    kbd {
+      min-width: 36px;
+    }
+
+    .controls-detail {
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    @media (max-width: 520px) {
+      main {
+        padding: 24px;
+      }
+
+      li {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+
+      .controls-label {
+        justify-content: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main id="how-to-play-content">
+  <h1 id="how-to-play-heading">How to Play</h1>
+    <p class="tutorial-note">The tutorial level is the best way to learn the rhythm, but here’s a quick refresher before you dive in.</p>
+    <ul>
+      <li>
+        <span class="controls-label">
+          <kbd>k</kbd>
+        </span>
+        <span class="controls-detail">Parry incoming blows. Hit it just before the strike lands to block all damage.</span>
+      </li>
+      <li>
+        <span class="controls-label">
+          <kbd>w</kbd>
+          <kbd>a</kbd>
+          <kbd>s</kbd>
+          <kbd>d</kbd>
+        </span>
+        <span class="controls-detail">Hold a direction while parrying to deflect to that side. Let go for a neutral parry.</span>
+      </li>
+      <li>
+        <span class="controls-label">
+          <kbd>j</kbd>
+        </span>
+        <span class="controls-detail">Strike back when you see an opening to keep the pressure on.</span>
+      </li>
+      <li>
+        <span class="controls-label">
+          <span class="key-chip">Early parries</span>
+        </span>
+        <span class="controls-detail">Reduce the damage but don’t fully block it—you’ll still take a sliver. Aim for perfect timing.</span>
+      </li>
+      <li>
+        <span class="controls-label">
+          <span class="key-chip">Attack indicator</span>
+        </span>
+        <span class="controls-detail">Watch the glowing arrow to learn which direction to parry.</span>
+      </li>
+      <li>
+        <span class="controls-label">
+          <kbd>x</kbd>
+        </span>
+        <span class="controls-detail">An X in the center means hold no direction—parry straight ahead.</span>
+      </li>
+    </ul>
+  </main>
+</body>
+</html>
