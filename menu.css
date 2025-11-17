@@ -19,24 +19,6 @@
   box-sizing: border-box;
 }
 
-#floating-menu-ad {
-  position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: 0;
-  z-index: 9999;
-  width: 100%;
-  height: 10%;
-  max-width: 700px;
-  pointer-events: auto;
-  background: none;
-  display: none;
-}
-
-#floating-menu[style*="display: flex"]~#floating-menu-ad,
-#floating-menu:has(~ #floating-menu-ad) {
-  display: block;
-}
 
 #levels-container {
   display: flex;

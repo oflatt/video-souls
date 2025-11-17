@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact · Video Souls</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Unicase:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: radial-gradient(circle at top, #1d222d 0%, #0d0f12 60%, #050608 100%);
+      --surface: rgba(12, 15, 24, 0.9);
+      --text-primary: #f7f8fa;
+      --text-secondary: #c8ccd7;
+      --accent: #ffd479;
+      --accent-soft: rgba(255, 212, 121, 0.2);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 16px 64px;
+      background: var(--bg);
+      color: var(--text-primary);
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    main {
+      width: min(720px, 100%);
+      padding: clamp(28px, 5vw, 40px);
+      background: var(--surface);
+      border-radius: 24px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+      display: grid;
+      gap: 24px;
+    }
+
+    header {
+      text-align: center;
+      display: grid;
+      gap: 12px;
+    }
+
+    h1 {
+      margin: 0;
+      font-family: 'Cormorant Unicase', serif;
+      font-size: clamp(2.6rem, 5vw, 3.4rem);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    p {
+      margin: 0;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+
+    .contact-card {
+      padding: 24px;
+      border-radius: 18px;
+      border: 1px solid var(--accent-soft);
+      background: rgba(255, 212, 121, 0.06);
+      display: grid;
+      gap: 16px;
+    }
+
+    .contact-card strong {
+      color: var(--accent);
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    a:hover,
+    a:focus-visible {
+      text-decoration: underline;
+    }
+
+    ul {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--text-secondary);
+      display: grid;
+      gap: 10px;
+    }
+
+    footer {
+      padding-top: 24px;
+      border-top: 1px solid var(--accent-soft);
+      text-align: center;
+      display: grid;
+      gap: 12px;
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+    }
+
+    nav {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .license {
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    .section-heading {
+      font-family: 'Cormorant Unicase', serif;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin: 0 0 12px;
+      font-size: clamp(1.6rem, 3vw, 2rem);
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 32px 16px 48px;
+      }
+
+      main {
+        gap: 20px;
+      }
+
+      nav {
+        gap: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Contact</h1>
+      <p>Questions, bug reports, or collaboration ideas? Reach out any time.</p>
+    </header>
+
+    <section class="contact-card">
+      <p><strong>Email</strong></p>
+      <p><a href="mailto:oflatt@gmail.com">oflatt@gmail.com</a></p>
+      <p>Include as much detail as you can so we can reproduce any issues quickly.</p>
+    </section>
+
+    <section>
+      <h2 class="section-heading">What to Include</h2>
+      <ul>
+        <li>Which level, video, or feature you were using.</li>
+        <li>What you expected to happen versus what actually happened.</li>
+        <li>Screenshots, logs, or custom level files if relevant.</li>
+      </ul>
+    </section>
+
+    <footer>
+      <nav>
+        <a href="/">Home</a>
+        <a href="/privacy">Privacy Policy</a>
+        <a href="/contact">Contact</a>
+      </nav>
+      <p class="license">© 2025 Oliver Flatt · Video Souls · Licensed under CC BY-NC 4.0 · Commercial reuse or commercial clones of Video Souls are not allowed.</p>
+    </footer>
+  </main>
+</body>
+</html>
