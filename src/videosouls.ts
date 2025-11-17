@@ -16,6 +16,21 @@ import { GameMode } from './GameMode';
 import { EventData, EventType, setVideoSouls } from './globalState';
 import { BattleEndHudManager } from './BattleEndHudManager';
 
+type EzStandaloneQueue = Array<() => void> | { push: (handler: () => void) => unknown };
+
+type EzStandalone = {
+  cmd?: EzStandaloneQueue;
+  showAds?: (slotId: number) => void;
+};
+
+declare global {
+  interface Window {
+    ezstandalone?: EzStandalone;
+  }
+
+  var ezstandalone: EzStandalone | undefined;
+}
+
 type LevelLoadEventData = {
   level: LevelDataV0;
   meta: LevelMeta | null;
@@ -395,6 +410,7 @@ export class VideoSouls {
         "zXOyzH-_UhQ", // Main menu video
       ]);
       this.mainMenu.updateLevelButtonRanks();
+      this.requestMainMenuAd();
     } else {
       this.elements.floatingMenu.style.display = 'none';
       this.videoPlayer.setLoop(false);
@@ -536,6 +552,61 @@ export class VideoSouls {
     } else {
       this.localSave.overwriteLastAutosave(level);
     }
+  }
+
+  private requestMainMenuAd(): void {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const resolveStandalone = (): EzStandalone => {
+      if (window.ezstandalone) {
+        return window.ezstandalone;
+      }
+
+      if (typeof ezstandalone !== "undefined") {
+        window.ezstandalone = ezstandalone;
+        return window.ezstandalone ?? {};
+      }
+
+      window.ezstandalone = { cmd: [] };
+      return window.ezstandalone;
+    };
+
+    const standalone = resolveStandalone();
+
+    if (typeof standalone.showAds === "function") {
+      standalone.showAds(107);
+      return;
+    }
+
+    let queue = standalone.cmd;
+    if (!queue) {
+      standalone.cmd = [];
+      queue = standalone.cmd;
+    }
+
+    if (Array.isArray(queue)) {
+      queue.push(() => {
+        const active = window.ezstandalone ?? (typeof ezstandalone !== "undefined" ? ezstandalone : undefined);
+        if (active && typeof active.showAds === "function") {
+          active.showAds(107);
+        }
+      });
+      return;
+    }
+
+    if (queue && typeof queue.push === "function") {
+      queue.push(() => {
+        const active = window.ezstandalone ?? (typeof ezstandalone !== "undefined" ? ezstandalone : undefined);
+        if (active && typeof active.showAds === "function") {
+          active.showAds(107);
+        }
+      });
+      return;
+    }
+
+    console.warn("ezstandalone command queue unavailable; ad slot 107 not queued");
   }
 }
 
