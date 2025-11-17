@@ -84,8 +84,7 @@
       gap: 8px;
     }
 
-    kbd,
-    .key-chip {
+    kbd {
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -101,6 +100,21 @@
 
     kbd {
       min-width: 36px;
+    }
+
+    .info-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: rgba(255, 212, 121, 0.16);
+      border: 1px solid rgba(255, 212, 121, 0.4);
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: none;
+      color: #ffeab0;
     }
 
     .controls-detail {
@@ -152,19 +166,19 @@
       </li>
       <li>
         <span class="controls-label">
-          <span class="key-chip">Early parries</span>
+          <span class="info-chip">Early parries</span>
         </span>
         <span class="controls-detail">Reduce the damage but don’t fully block it—you’ll still take a sliver. Aim for perfect timing.</span>
       </li>
       <li>
         <span class="controls-label">
-          <span class="key-chip">Attack indicator</span>
+          <span class="info-chip">Attack indicator</span>
         </span>
         <span class="controls-detail">Watch the glowing arrow to learn which direction to parry.</span>
       </li>
       <li>
         <span class="controls-label">
-          <kbd>x</kbd>
+          <span class="info-chip">Center X</span>
         </span>
         <span class="controls-detail">An X in the center means hold no direction—parry straight ahead.</span>
       </li>

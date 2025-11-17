@@ -352,8 +352,7 @@
   gap: 18px;
 }
 
-.how-to-play-dialog kbd,
-.how-to-play-dialog .key-chip {
+.how-to-play-dialog kbd {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -369,6 +368,21 @@
 
 .how-to-play-dialog kbd {
   min-width: 36px;
+}
+
+.how-to-play-dialog .info-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(255, 215, 0, 0.16);
+  border: 1px solid rgba(255, 215, 0, 0.4);
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: #ffeab0;
 }
 
 .how-to-play-close {
