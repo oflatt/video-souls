@@ -80,7 +80,6 @@ export class VideoSouls {
       gameHUD: document.querySelector<HTMLInputElement>("#game-hud")!,
       battleEndHUD: document.querySelector<HTMLInputElement>("#battle-end-hud")!,
       floatingMenu: document.querySelector<HTMLInputElement>("#floating-menu")!,
-      menuAdPlaceholder: document.querySelector<HTMLDivElement>("#ezoic-pub-ad-placeholder-107")!,
       siteFooter: document.querySelector<HTMLElement>(".site-footer")!,
       currentTimeDebug: document.querySelector<HTMLDivElement>("#current-time")!,
       videoUrlInput: document.querySelector<HTMLInputElement>("#video-url")!,

@@ -124,8 +124,6 @@ export class MainMenu {
         if (!this.autosavesPage) {
           const floatingMenu = document.getElementById("floating-menu");
           if (floatingMenu) floatingMenu.style.display = "none";
-          const menuAdPlaceholder = document.getElementById("ezoic-pub-ad-placeholder-107");
-          if (menuAdPlaceholder) menuAdPlaceholder.style.display = "none";
           const siteFooter = document.querySelector<HTMLElement>(".site-footer");
           if (siteFooter) siteFooter.style.display = "none";
           this.autosavesPage = new AutosavesPage(
@@ -135,8 +133,6 @@ export class MainMenu {
               this.autosavesPage = null;
               const floatingMenu = document.getElementById("floating-menu");
               if (floatingMenu) floatingMenu.style.display = "flex";
-              const menuAdPlaceholder = document.getElementById("ezoic-pub-ad-placeholder-107");
-              if (menuAdPlaceholder) menuAdPlaceholder.style.display = "block";
               const siteFooter = document.querySelector<HTMLElement>(".site-footer");
               if (siteFooter) siteFooter.style.display = "";
             }
@@ -293,8 +289,6 @@ export class MainMenu {
     // Hide main menu
     const floatingMenu = document.getElementById("floating-menu");
     if (floatingMenu) floatingMenu.style.display = "none";
-    const menuAdPlaceholder = document.getElementById("ezoic-pub-ad-placeholder-107");
-    if (menuAdPlaceholder) menuAdPlaceholder.style.display = "none";
     const siteFooter = document.querySelector<HTMLElement>(".site-footer");
     if (siteFooter) siteFooter.style.display = "none";
   }
