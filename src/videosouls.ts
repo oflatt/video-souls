@@ -560,11 +560,6 @@ export class VideoSouls {
   }
 
   private setMenuChromeVisibility(visible: boolean): void {
-    const placeholder = this.elements.menuAdPlaceholder;
-    if (placeholder) {
-      placeholder.style.display = visible ? "block" : "none";
-    }
-
     const footer = this.elements.siteFooter;
     if (footer) {
       footer.style.display = visible ? "" : "none";
